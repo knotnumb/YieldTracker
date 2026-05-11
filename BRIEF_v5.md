@@ -1,7 +1,11 @@
 # YieldTracker V5 — Task Brief
 
-**Context:** Continuation from V4 chat session (2026-04-24). Repo: `github.com/knotnumb/YieldTracker` (private). Current version `v2026-04-23f`.
+**Context:** Continuation from V4 chat session (2026-04-24). Repo: `github.com/knotnumb/YieldTracker` (private). Current version `v2026-05-11a`.
 
+**Parser history (v2026-05-09a → v2026-05-11a):**
+- Scrape data comes from the Dropbox bookmarklet (`bookmarklet.txt`) — **old format**: clean tabs, TVL before APY, ~10 columns.
+- On 2026-05-09, raw DOM innerText was pasted (not bookmarklet) — **new format**: 15+ spacer tabs, APY before TVL, "Hidden" markers.
+- Parser auto-detects: `raw.length > 15` → new format. Both use positional offsets — fragile. Task 3 fixes this.
 ---
 
 ## Task 0 — Git hygiene setup
@@ -221,11 +225,20 @@ Before writing backfill code, the user needs to populate the `XREF_VAULTS` array
 
 ---
 
-## Task 3 — Rewrite bookmarklet to extract columns by header name
+## Task 3 — Rewrite bookmarklet with header-based column extraction
 
 ### Why
 
 The bookmarklet currently dumps each row's `innerText` as tab-separated values. Column order depends on DeFi Llama's DOM structure, which can change without notice (it did on ~2026-05-09 when APY and TVL swapped positions in `innerText`). A quick fix was applied in `parseScrape()` (v2026-05-09a) using raw tab offsets, but this is fragile — any further DOM change will break it again.
+Additionally, raw copy-paste from the DeFi Llama page (selecting the table and pasting, instead of running the bookmarklet) produces yet another format. The parser should either handle this gracefully or show a clear error telling the user to use the bookmarklet.
+
+### Three input formats to handle
+
+| Format | Source | Detection | TVL/APY order |
+|---|---|---|---|
+| Old bookmarklet | `bookmarklet.txt` | ≤15 tabs | TVL before APY |
+| Raw DOM paste | Copy-paste from DL table | >15 tabs, "Hidden" | APY before TVL |
+| New bookmarklet (Task 3) | First line has field names | Header row present | Defined by header |
 
 ### Design
 
@@ -309,4 +322,5 @@ Best done interactively in browser DevTools, not speculatively.
 - `CLAUDE.md` (already in repo)
 - `BRIEF_v5.md` (already in repo)
 - `master.csv` (for sparseness analysis / testing if needed)
+- `bookmarklet.txt` (current bookmarklet for reference during Task 3)
 
