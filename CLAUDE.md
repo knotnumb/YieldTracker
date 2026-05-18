@@ -4,14 +4,14 @@
 
 Local-first DeFi stablecoin yield tracker. Single-file vanilla JS app (`tracker.html`) that runs from `file://` in Brave/Chrome. Uses File System Access API to read/write a local folder containing CSV data. No server, no build step, no dependencies.
 
-Current version: `v2026-04-23f`
+Current version: `v2026-05-14c`
 
 ## Repo structure
 
 ```
 tracker.html          # The app — all HTML/CSS/JS in one file
 chart.html            # Historical chart viewer (reads master.csv)
-bookmarklet.txt       # DefiLlama scraper bookmarklet
+bookmarklet.txt       # DefiLlama scraper bookmarklet (v2 — extracts by child index)
 master.csv            # Append-only time-series data (public market data, no secrets)
 snapshots/            # Daily raw CSV captures (YYYY-MM-DD.csv)
 config.json           # LOCAL ONLY — API keys, never committed
@@ -63,7 +63,26 @@ The `0x...` addresses in `YS_VAULTS` and `OFFCHAIN_VAULTS` are public on-chain c
 | 347–429 | vaults.fyi fetch + enrichment functions |
 | 431–600 | Morpho API fetch + enrichment |
 | 660+ | YieldSeeker panel logic |
-| 903–963 | `parseScrape()` — anchors on first `%` cell (APY), uses raw tab offsets for column mapping (v2026-05-09a fix) |
+| 903–1000 | `parseScrape()` — three-format parser (v2 bookmarklet / DOM paste / old bookmarklet) |
+
+## Bookmarklet (v2)
+
+The current bookmarklet (`bookmarklet.txt`) extracts each column by `row.children[N]` index instead of `row.innerText`. It strips "Bookmark\nopen in new tab" UI noise from the pool cell and reads chain from `children[2]` image src.
+
+Output format: 14 tab-separated columns per line, no spacer tabs:
+```
+pool \t project \t $TVL \t APY% \t base% \t reward% \t 7d% \t il% \t 30d% \t inception% \t supplied \t borrowed \t available \t chain
+```
+
+## Parser (`parseScrape`) — three formats
+
+The parser auto-detects input format by column count (after popping chain from end):
+
+| Columns | Format | Source |
+|---|---|---|
+| 13 | **V2 bookmarklet** — direct field mapping by index | `bookmarklet.txt` v2 |
+| >15 | **DOM paste** — spacer tabs, APY before TVL, raw offsets | Copy-paste from DeFi Llama |
+| Other | **Old bookmarklet** — TVL before APY, positional offsets | Legacy `bookmarklet.txt` |
 
 ## Config system (after Task 1)
 

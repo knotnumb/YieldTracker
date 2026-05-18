@@ -1,11 +1,19 @@
 # YieldTracker V5 — Task Brief
 
-**Context:** Continuation from V4 chat session (2026-04-24). Repo: `github.com/knotnumb/YieldTracker` (private). Current version `v2026-05-11a`.
+**Context:** Continuation from V4 chat session (2026-04-24). Repo: `github.com/knotnumb/YieldTracker` (private). Current version `v2026-05-14c`.
 
-**Parser history (v2026-05-09a → v2026-05-11a):**
-- Scrape data comes from the Dropbox bookmarklet (`bookmarklet.txt`) — **old format**: clean tabs, TVL before APY, ~10 columns.
-- On 2026-05-09, raw DOM innerText was pasted (not bookmarklet) — **new format**: 15+ spacer tabs, APY before TVL, "Hidden" markers.
-- Parser auto-detects: `raw.length > 15` → new format. Both use positional offsets — fragile. Task 3 fixes this.
+**Parser history (v2026-04-23f → v2026-05-14c):**
+- v2026-04-23f: Original parser, anchored on first `$` cell for TVL. Worked with old bookmarklet output.
+- v2026-05-09a: DeFi Llama DOM changed — APY before TVL in `innerText`. Fixed parser to anchor on first `%` cell. Used raw tab offsets after TVL for column mapping.
+- v2026-05-11a: Discovered the 2026-05-09 scrape was raw DOM paste, not the bookmarklet. Added dual-format detection: `raw.length > 15` → DOM paste format, else old bookmarklet format.
+- v2026-05-14b: New v2 bookmarklet extracts columns by `row.children[N]` index instead of `row.innerText`. Outputs 14 clean tab-separated columns (13 + chain). Parser updated with three-format detection by column count (13 = v2, >15 = DOM paste, other = old).
+- v2026-05-14c: Fixed `$0` showing for empty liquidity fields — `parseTVL()` returns 0 for empty DL cells, now treated as null via `|| null`.
+
+**Bookmarklet history:**
+- Original (`bookmarklet.txt` in Dropbox): Used `row.innerText` + `getChain(row.children[4])`. Worked on home PC.
+- On work laptop: `.vf-row` children included "Bookmark" / "open in new tab" UI text in `children[0]`, and chain image moved to `children[2]`.
+- v2 bookmarklet: Extracts each column by child index. Strips UI noise from pool cell. Chain from `children[2]`. Output: `pool, project, TVL, APY, base, reward, 7d, IL, 30d, inception, supplied, borrowed, available, chain`.
+
 ---
 
 ## Task 0 — Git hygiene setup
@@ -132,7 +140,7 @@ Call `loadConfig()` at the end of `pickFolder()` and `restoreFolderHandle()` suc
 
 ### The problem (now quantified)
 
-CSV sparseness analysis of `master.csv` (2,517 rows):
+CSV sparseness analysis of `master.csv` (2,517 rows at time of analysis):
 
 | Column | % Blank | Notes |
 |---|---|---|
@@ -144,6 +152,8 @@ CSV sparseness analysis of `master.csv` (2,517 rows):
 | `total_borrowed` | 95.1% | vaults.fyi can't help (not in schema) |
 | `inception_apy` | 100% | vaults.fyi can't help (PRO tier) |
 | `il_7d` | 99.2% | Expected — stablecoin pools have no IL |
+
+**Note:** The v2 bookmarklet now captures supplied/borrowed/available directly from DeFi Llama's DOM, so some of these fields are already less sparse for new scrapes. The backfill is still valuable for protocols where DL shows empty cells.
 
 **Target fields for backfill:** `base_apy_7d`, `total_pool`, `avail_liquidity`, `supply_cap_util`, `avg_30d`
 
@@ -217,110 +227,48 @@ Before writing backfill code, the user needs to populate the `XREF_VAULTS` array
 
 ---
 
+## Task 3 — Bookmarklet robustness (PARTIALLY DONE)
+
+### Status
+
+The v2 bookmarklet (v2026-05-14) already extracts by `children[N]` index, which is a major improvement over `row.innerText`. However, it still uses hardcoded child indices (0=pool, 1=project, 2=chain, 3=TVL, etc.) which will break if DeFi Llama adds/removes columns.
+
+### Remaining work
+
+The fully robust version would read column headers from the DOM and map dynamically. This requires:
+
+1. Inspect DeFi Llama's DOM to find the header element (`.vf-header`, `thead`, etc.)
+2. Read header text to build a name→index map
+3. Extract data rows using the dynamic map instead of hardcoded indices
+4. Output a header line so the parser can map by name
+
+### Known issues with current v2 bookmarklet
+
+- **Hardcoded `children[2]` for chain**: Will break if DL adds/removes a column before the chain icon. Already broke once (was `children[4]` on home PC, `children[2]` on work laptop).
+- **Reward-only LP pools**: Velodrome V2, Aerodrome V1 show `base=APY, reward=APY` because empty base cell falls through to APY fallback. Cosmetic — APY itself is correct.
+- **`$0` in empty liquidity cells**: DeFi Llama renders empty supplied/borrowed/available as `$0` in some cases. Parser handles this with `|| null` but bookmarklet could filter at source.
+
+### Acceptance criteria (for full Task 3)
+
+- [ ] Bookmarklet reads column headers from DOM
+- [ ] Column mapping driven by header text, not hardcoded index
+- [ ] Output includes header line for parser to map by name
+- [ ] `parseScrape()` detects header line and parses by name
+- [ ] Backward compatibility with v2 bookmarklet output (13 columns, no header)
+- [ ] Backward compatibility with old bookmarklet and DOM paste formats
+
+---
+
 ## Execution order
 
 1. **Task 0 + Task 1 together** — externalise the key, then make the initial commit with clean history
 2. **Task 2** — after Task 1 is verified working
-3. **Task 3** — bookmarklet rewrite (can be done independently)
-
----
-
-## Task 3 — Rewrite bookmarklet with header-based column extraction
-
-### Why
-
-The bookmarklet currently dumps each row's `innerText` as tab-separated values. Column order depends on DeFi Llama's DOM structure, which can change without notice (it did on ~2026-05-09 when APY and TVL swapped positions in `innerText`). A quick fix was applied in `parseScrape()` (v2026-05-09a) using raw tab offsets, but this is fragile — any further DOM change will break it again.
-Additionally, raw copy-paste from the DeFi Llama page (selecting the table and pasting, instead of running the bookmarklet) produces yet another format. The parser should either handle this gracefully or show a clear error telling the user to use the bookmarklet.
-
-### Three input formats to handle
-
-| Format | Source | Detection | TVL/APY order |
-|---|---|---|---|
-| Old bookmarklet | `bookmarklet.txt` | ≤15 tabs | TVL before APY |
-| Raw DOM paste | Copy-paste from DL table | >15 tabs, "Hidden" | APY before TVL |
-| New bookmarklet (Task 3) | First line has field names | Header row present | Defined by header |
-
-### Design
-
-**Bookmarklet** reads the `<thead>` column headers from the yields table, maps each header to a known field name, then extracts each data row by column index. The output includes a header line so the parser can map by name.
-
-**Step 1 — Read headers:**
-
-```js
-const thead = document.querySelector('thead tr') || document.querySelector('.vf-header');
-const headers = [...thead.children].map(th => th.innerText.trim().toLowerCase());
-```
-
-Build a mapping from header text → output field name:
-
-```js
-const HEADER_MAP = {
-  'pool': 'pool',
-  'project': 'project', 
-  'chain': 'chain',
-  'tvl': 'tvl',
-  'apy': 'apy',
-  'base apy': 'base_apy',
-  'reward apy': 'reward_apy',
-  '7d base apy': 'base_apy_7d',
-  '7d il': 'il_7d',
-  '30d avg apy': 'avg_30d',
-  'inception apy': 'inception_apy',
-  'supplied': 'total_pool',       // or 'total supplied'
-  'borrowed': 'total_borrowed',   // or 'total borrowed'  
-  'available': 'avail_liquidity',
-};
-```
-
-**Step 2 — Extract each row by column index** instead of `row.innerText`:
-
-```js
-const colIdx = {};
-headers.forEach((h, i) => { if (HEADER_MAP[h]) colIdx[HEADER_MAP[h]] = i; });
-
-// For each .vf-row:
-const values = OUTPUT_FIELDS.map(field => {
-  const idx = colIdx[field];
-  if (idx == null) return '';
-  const cell = row.children[idx];
-  return cell ? cell.innerText.trim().replace(/\n/g, ' ') : '';
-});
-```
-
-**Step 3 — Output with header line:**
-
-```
-pool\tproject\tchain\ttvl\tapy\tbase_apy\treward_apy\tbase_apy_7d\til_7d\tavg_30d\tinception_apy\ttotal_pool\ttotal_borrowed\tavail_liquidity
-USDC\tAave V3\tBase\t$24.27m\t3.35%\t3.35%\t\t\t\t3.34%\t\t$177.22m\t$152.94m\t$24.27m
-```
-
-**Step 4 — Update `parseScrape()`** to detect the header line (first line contains known field names) and parse by column name instead of positional offsets. Fall back to the current offset-based logic if no header line is present (backward compatibility with old bookmarklet).
-
-### Pre-work
-
-Someone needs to inspect the live DeFi Llama DOM to confirm:
-- The exact CSS selector for header cells (`.vf-header`, `thead tr`, etc.)
-- The exact header text strings (case, spacing, abbreviations)
-- Whether chain is a column or extracted from an image (current bookmarklet does image regex)
-
-Best done interactively in browser DevTools, not speculatively.
-
-### Acceptance criteria
-
-- [ ] Bookmarklet outputs a header line followed by data lines
-- [ ] Column mapping is driven by header text, not DOM position
-- [ ] `parseScrape()` detects header line and parses by name
-- [ ] `parseScrape()` still works with old-format (no header) input for backward compat
-- [ ] Chain extraction still works (may need special handling if it's image-based)
-- [ ] All fields populated correctly regardless of DL column reordering
-
----
+3. **Task 3 remainder** — header-based bookmarklet (can be done independently, requires DevTools inspection)
 
 ## Files to upload for Claude Code session
 
-- `tracker.html` (from repo after Task 0+1, or from local folder)
-- `CLAUDE.md` (already in repo)
-- `BRIEF_v5.md` (already in repo)
+- `tracker.html` (from repo or Dropbox)
+- `bookmarklet.txt` (v2 — from Dropbox)
+- `CLAUDE.md` (in repo)
+- `BRIEF_v5.md` (in repo)
 - `master.csv` (for sparseness analysis / testing if needed)
-- `bookmarklet.txt` (current bookmarklet for reference during Task 3)
-
