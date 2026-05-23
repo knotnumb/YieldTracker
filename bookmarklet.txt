@@ -1,0 +1,15 @@
+Save this entire line (starting with javascript:) as the URL of a bookmark in Brave. by right clicking on bookmarks bar-add page.
+Give the bookmark a name like "Scrape DefiLlama".
+
+Run it while on https://defillama.com/yields with your filters applied and sorted by APY desc.
+Scrolls the table, extracts chain from img alt, caps at top 100, copies tab-separated rows to clipboard.
+Then open tracker.html and paste (Ctrl+V) into the textarea, click Parse Data.
+
+Output columns (tab-separated, per line):
+  pool, project, chain, tvl, apy, base_apy, reward_apy, base_apy_7d, il_7d, avg_30d, inception_apy, top_10_pct
+
+========================================
+BOOKMARKLET (copy everything below this line, all on one line):
+========================================
+
+javascript:(async()=>{const seen=new Map();const container=document.scrollingElement;const step=300;const target=150;function cellText(row,i){const c=row.children[i];if(!c)return'';return c.innerText.trim();}function getPool(row){return cellText(row,0).replace(/^Bookmark\nopen in new tab\n/i,'').trim().replace(/\n/g,'|');}function getProject(row){return cellText(row,1).replace(/^🪂\n?/,'').trim().replace(/\n/g,'|');}function getChain(row){const c=row.children[2];if(!c)return'';const img=c.querySelector('img');if(!img||!img.src)return'';const m=img.src.match(/chains\/rsz_([^?/]+)/i);if(!m)return'';return decodeURIComponent(m[1]).replace(/[-_]/g,' ').replace(/\b\w/g,ch=>ch.toUpperCase());}function getTVL(row){return cellText(row,3);}function getPct(row,i){const t=cellText(row,i);return/^<?[\s]*[\d.]+%$/.test(t)?t:'';}for(let y=0;y<=container.scrollHeight+2000;y+=step){container.scrollTo(0,y);await new Promise(r=>setTimeout(r,300));document.querySelectorAll('.vf-row').forEach(row=>{if(row.children.length<10)return;const pool=getPool(row);const project=getProject(row);const chain=getChain(row);const tvl=getTVL(row);const apy=getPct(row,4);const base=getPct(row,5);const reward=getPct(row,6);const base7d=getPct(row,7);const il7d=getPct(row,8);const avg30d=getPct(row,9);const inception=getPct(row,10);const supplied=cellText(row,11);const borrowed=cellText(row,12);const available=cellText(row,13);const key=pool+'|'+project+'|'+chain;if(!seen.has(key)){seen.set(key,[pool,project,tvl,apy,base,reward,base7d,il7d,avg30d,inception,supplied,borrowed,available,chain].join('\t'));}});if(seen.size>=target)break;}const lines=[...seen.values()].slice(0,target);const out=lines.join('\n');const filled=lines.filter(l=>{const p=l.split('\t');return p[p.length-1];}).length;try{await navigator.clipboard.writeText(out);alert('Copied '+lines.length+' rows. Chain: '+filled+'/'+lines.length);}catch(e){const ta=document.createElement('textarea');ta.value=out;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();alert('Copied '+lines.length+' rows (fallback). Chain: '+filled+'/'+lines.length);}})();

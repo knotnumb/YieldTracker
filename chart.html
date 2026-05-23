@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Yield Chart</title>
+<style>
+  :root {
+    --bg: #0e0e10;
+    --panel: #17171b;
+    --border: #2a2a30;
+    --text: #e4e4e7;
+    --muted: #8a8a95;
+    --accent: #3ddc97;
+    --accent-dim: #2a9d6f;
+    --warn: #f5a623;
+    --err: #e55c5c;
+    --info: #60a5fa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 20px; color: var(--accent); margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: 11px; margin-bottom: 20px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .panel h2 { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  button {
+    background: var(--accent);
+    color: #0a0a0c;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 8px;
+    margin-top: 6px;
+  }
+  button:hover { background: var(--accent-dim); }
+  button.sec {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  button.sec:hover { border-color: var(--accent); color: var(--accent); }
+  button.active { background: var(--accent); color: #0a0a0c; }
+  .status { font-size: 12px; padding: 8px 12px; border-radius: 4px; margin-top: 10px; }
+  .status.ok { background: rgba(61,220,151,0.1); color: var(--accent); border: 1px solid var(--accent-dim); }
+  .status.err { background: rgba(229,92,92,0.1); color: var(--err); border: 1px solid var(--err); }
+  .status.info { background: rgba(96,165,250,0.1); color: var(--info); border: 1px solid var(--info); }
+
+  /* Filter/sort bar */
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center; }
+  .filter-bar button { margin: 0; padding: 5px 11px; font-size: 11px; }
+  .filter-bar .divider { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+  .sort-label { color: var(--muted); font-size: 11px; margin-right: 2px; }
+  input[type=text] {
+    background: #0a0a0c;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    padding: 7px 10px;
+    width: 280px;
+  }
+  input[type=text]:focus { outline: none; border-color: var(--accent); }
+  .vault-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: #0a0a0c;
+  }
+  .vault-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .vault-item:last-child { border-bottom: none; }
+  .vault-item:hover { background: rgba(61,220,151,0.06); }
+  .vault-item.selected { background: rgba(61,220,151,0.12); }
+  .vault-item .vname { color: var(--text); }
+  .vault-item .vmeta { color: var(--muted); font-size: 10px; }
+  .vault-item .vapy { color: var(--accent); font-size: 11px; }
+  .ys-badge { display: inline-block; background: rgba(61,220,151,0.15); color: var(--accent); font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-left: 6px; }
+
+  /* Selected chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 28px; }
+  .chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid;
+  }
+  .chip .x { opacity: 0.6; font-size: 13px; }
+  .chip:hover .x { opacity: 1; }
+
+  /* Chart area */
+  #chartWrap {
+    position: relative;
+    width: 100%;
+    height: 380px;
+  }
+  canvas { width: 100% !important; }
+
+  /* Metric toggle */
+  .metric-btns { display: flex; gap: 6px; margin-bottom: 12px; }
+  .metric-btns button { margin: 0; padding: 5px 12px; font-size: 11px; }
+
+  /* Stats bar */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+  .stat { background: #0a0a0c; border: 1px solid var(--border); border-radius: 4px; padding: 10px; }
+  .stat .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat .value { font-size: 18px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+  .stat .sub2 { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+  /* Legend */
+  #legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<h1>DeFi Yield Chart</h1>
+<div class="sub">Load master.csv → select vaults → chart</div>
+
+<div class="panel">
+  <h2>1. Load Data</h2>
+  <button onclick="pickFile()">Open master.csv</button>
+  <div id="loadStatus"></div>
+</div>
+
+<div class="panel" id="selectPanel" style="display:none">
+  <h2>2. Select Vaults</h2>
+
+  <!-- Filter buttons -->
+  <div class="filter-bar" id="filterBar">
+    <button id="f-all" class="active" onclick="setFilter('all')">All</button>
+    <button id="f-ys" class="sec" onclick="setFilter('ys')">⚡ YS Whitelist</button>
+    <div class="divider"></div>
+    <button id="f-morpho" class="sec" onclick="setFilter('morpho')">Morpho</button>
+    <button id="f-aave" class="sec" onclick="setFilter('aave')">Aave</button>
+    <button id="f-base" class="sec" onclick="setFilter('base')">Base</button>
+    <button id="f-arbitrum" class="sec" onclick="setFilter('arbitrum')">Arbitrum</button>
+    <button id="f-solana" class="sec" onclick="setFilter('solana')">Solana</button>
+    <button id="f-monad" class="sec" onclick="setFilter('monad')">Monad</button>
+    <button id="f-full" class="sec" onclick="setFilter('full')">7d Only</button>
+    <div class="divider"></div>
+    <span class="sort-label">Sort:</span>
+    <button id="s-apy" class="active" onclick="setSort('apy')">APY</button>
+    <button id="s-tvl" class="sec" onclick="setSort('tvl')">TVL</button>
+    <button id="s-days" class="sec" onclick="setSort('days')">Days</button>
+  </div>
+
+  <!-- Search -->
+  <input type="text" id="search" placeholder="Search pool or project..." oninput="renderVaultList()" style="margin-bottom:10px;width:100%;max-width:400px;">
+
+  <div class="chips" id="chips"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <span id="vaultCount" style="color:var(--muted);font-size:11px;"></span>
+    <div>
+      <button class="sec" style="font-size:11px;padding:4px 10px;margin:0 4px 0 0;" onclick="selectFiltered()">Select All Visible</button>
+      <button class="sec" style="font-size:11px;padding:4px 10px;margin:0;" onclick="clearAll()">Clear All</button>
+    </div>
+  </div>
+  <div class="vault-list" id="vaultList"></div>
+</div>
+
+<div class="panel" id="chartPanel" style="display:none">
+  <h2>3. Chart</h2>
+  <div class="metric-btns">
+    <button id="btn-apy" class="active" onclick="setMetric('apy')">APY</button>
+    <button id="btn-base_apy" class="sec" onclick="setMetric('base_apy')">Base APY</button>
+    <button id="btn-reward_apy" class="sec" onclick="setMetric('reward_apy')">Reward APY</button>
+    <button id="btn-tvl_raw" class="sec" onclick="setMetric('tvl_raw')">TVL</button>
+    <button id="btn-avail_liquidity" class="sec" onclick="setMetric('avail_liquidity')">Avail. Liq.</button>
+  </div>
+  <div class="stats-row" id="statsRow"></div>
+  <div id="chartWrap"><canvas id="chart"></canvas></div>
+  <div id="legend"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// ============ YS Whitelist ============
+const YS_VAULTS = [
+  { pool: /40 acres/i, project: /harvest/i },
+  { pool: /steakusdc/i, project: /morpho/i },
+  { pool: /steakusdcp/i, project: /morpho/i },
+  { pool: /usdc/i, project: /aave v3/i, chain: /base/i },
+  { pool: /sparkusdc/i, project: /morpho/i },
+  { pool: /gtusdcf/i, project: /morpho/i },
+  { pool: /usdc/i, project: /revert/i },
+  { pool: /yoUSD|yovault/i },
+  { pool: /re7usdc|yearn.*og|og.*usdc/i, project: /morpho/i },
+  { project: /tokemak/i },
+];
+
+function isYS(vault) {
+  return YS_VAULTS.some(rule => {
+    if (rule.pool && !rule.pool.test(vault.pool)) return false;
+    if (rule.project && !rule.project.test(vault.project)) return false;
+    if (rule.chain && !rule.chain.test(vault.chain)) return false;
+    return true;
+  });
+}
+
+// ============ Colors ============
+const COLORS = [
+  '#3ddc97','#60a5fa','#f5a623','#e55c5c','#a78bfa',
+  '#34d399','#fb923c','#f472b6','#38bdf8','#facc15',
+  '#c084fc','#4ade80','#f87171','#93c5fd','#fbbf24',
+];
+
+// ============ State ============
+let allRows = [];
+let vaults = []; // {key, pool, project, chain, days, latestApy, latestTvl, ys}
+let selected = []; // vault keys
+let metric = 'apy';
+let chartInst = null;
+let activeFilter = 'all';
+let activeSort = 'apy';
+let maxDays = 7;
+
+// ============ Filter/Sort ============
+function setFilter(f) {
+  activeFilter = f;
+  document.querySelectorAll('[id^="f-"]').forEach(b => b.className = 'sec');
+  const el = document.getElementById('f-' + f);
+  if (el) el.className = 'active';
+  renderVaultList();
+}
+
+function setSort(s) {
+  activeSort = s;
+  document.querySelectorAll('[id^="s-"]').forEach(b => b.className = 'sec');
+  document.getElementById('s-' + s).className = 'active';
+  renderVaultList();
+}
+
+function getFiltered() {
+  const q = (document.getElementById('search')?.value || '').toLowerCase();
+  return vaults.filter(v => {
+    if (q && !v.pool.toLowerCase().includes(q) && !v.project.toLowerCase().includes(q) && !v.chain.toLowerCase().includes(q)) return false;
+    switch (activeFilter) {
+      case 'ys': return v.ys;
+      case 'morpho': return /morpho/i.test(v.project);
+      case 'aave': return /aave/i.test(v.project);
+      case 'base': return /base/i.test(v.chain);
+      case 'arbitrum': return /arbitrum/i.test(v.chain);
+      case 'solana': return /solana/i.test(v.chain);
+      case 'monad': return /monad/i.test(v.chain);
+      case 'full': return v.days >= maxDays;
+      default: return true;
+    }
+  }).sort((a, b) => {
+    if (activeSort === 'tvl') return (b.latestTvl ?? 0) - (a.latestTvl ?? 0);
+    if (activeSort === 'days') return b.days - a.days;
+    return (b.latestApy ?? 0) - (a.latestApy ?? 0);
+  });
+}
+
+function selectFiltered() {
+  const filtered = getFiltered();
+  const toAdd = filtered.map(v => v.key).filter(k => !selected.includes(k));
+  const spots = 15 - selected.length;
+  if (spots <= 0) { alert('Max 15 vaults selected.'); return; }
+  selected = [...selected, ...toAdd.slice(0, spots)];
+  renderVaultList();
+  renderChips();
+  if (selected.length > 0) {
+    document.getElementById('chartPanel').style.display = 'block';
+    drawChart();
+  }
+}
+
+// ============ File loading ============
+async function pickFile() {
+  try {
+    const [fh] = await window.showOpenFilePicker({ types: [{ description: 'CSV', accept: { 'text/csv': ['.csv'] } }] });
+    const file = await fh.getFile();
+    const text = await file.text();
+    loadCSV(text);
+  } catch (e) {
+    if (e.name !== 'AbortError') showStatus('loadStatus', 'Error: ' + e.message, 'err');
+  }
+}
+
+function parseNum(s) {
+  if (!s || s === '') return null;
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+
+function loadCSV(text) {
+  const lines = text.trim().split('\n');
+  const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  allRows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    // Handle quoted fields
+    const cells = [];
+    let cur = '', inQ = false;
+    for (let j = 0; j < line.length; j++) {
+      if (line[j] === '"') { inQ = !inQ; continue; }
+      if (line[j] === ',' && !inQ) { cells.push(cur); cur = ''; }
+      else cur += line[j];
+    }
+    cells.push(cur);
+    const row = {};
+    header.forEach((h, idx) => row[h] = cells[idx] ?? '');
+    allRows.push(row);
+  }
+
+  // Build vault index
+  const vaultMap = {};
+  for (const r of allRows) {
+    const key = r.pool + '|' + r.project + '|' + r.chain;
+    if (!vaultMap[key]) {
+      vaultMap[key] = { key, pool: r.pool, project: r.project, chain: r.chain, days: 0, latestApy: null, latestTvl: null };
+    }
+    vaultMap[key].days++;
+    if (parseNum(r.apy) !== null) vaultMap[key].latestApy = parseNum(r.apy);
+    if (parseNum(r.tvl_raw) !== null) vaultMap[key].latestTvl = parseNum(r.tvl_raw);
+  }
+
+  vaults = Object.values(vaultMap)
+    .map(v => ({ ...v, ys: isYS(v) }))
+    .sort((a, b) => (b.latestApy ?? 0) - (a.latestApy ?? 0));
+
+  maxDays = Math.max(...vaults.map(v => v.days));
+
+  const dates = [...new Set(allRows.map(r => r.date))].sort();
+  showStatus('loadStatus', `✓ Loaded ${allRows.length} rows · ${vaults.length} vaults · ${dates.length} days (${dates[0]} → ${dates[dates.length-1]})`, 'ok');
+
+  selected = [];
+  activeFilter = 'all';
+  activeSort = 'apy';
+  document.querySelectorAll('[id^="f-"]').forEach(b => b.className = 'sec');
+  document.getElementById('f-all').className = 'active';
+  document.querySelectorAll('[id^="s-"]').forEach(b => b.className = 'sec');
+  document.getElementById('s-apy').className = 'active';
+  document.getElementById('selectPanel').style.display = 'block';
+  document.getElementById('chartPanel').style.display = 'none';
+  renderVaultList();
+}
+
+// ============ Vault list ============
+function renderVaultList() {
+  const filtered = getFiltered();
+  const el = document.getElementById('vaultList');
+  document.getElementById('vaultCount').textContent = `${filtered.length} vaults`;
+  el.innerHTML = filtered.slice(0, 100).map(v => {
+    const sel = selected.includes(v.key);
+    const apy = v.latestApy !== null ? v.latestApy.toFixed(2) + '%' : '—';
+    const tvl = v.latestTvl !== null ? fmtVal(v.latestTvl) : '—';
+    return `<div class="vault-item ${sel ? 'selected' : ''}" onclick="toggleVault('${v.key.replace(/'/g,"\\'")}')">
+      <div>
+        <span class="vname">${escHtml(v.pool)}</span>
+        ${v.ys ? '<span class="ys-badge">YS</span>' : ''}
+        <div class="vmeta">${escHtml(v.project)} · ${escHtml(v.chain || '—')} · ${v.days}d</div>
+      </div>
+      <div style="text-align:right">
+        <div class="vapy">${apy}</div>
+        <div class="vmeta">${activeSort === 'tvl' ? tvl : (activeSort === 'days' ? v.days + 'd' : tvl)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleVault(key) {
+  if (selected.includes(key)) {
+    selected = selected.filter(k => k !== key);
+  } else {
+    if (selected.length >= 15) { alert('Max 15 vaults at once.'); return; }
+    selected.push(key);
+  }
+  renderVaultList();
+  renderChips();
+  if (selected.length > 0) {
+    document.getElementById('chartPanel').style.display = 'block';
+    drawChart();
+  } else {
+    document.getElementById('chartPanel').style.display = 'none';
+  }
+}
+
+function clearAll() {
+  selected = [];
+  renderVaultList();
+  renderChips();
+  document.getElementById('chartPanel').style.display = 'none';
+}
+
+
+function renderChips() {
+  const el = document.getElementById('chips');
+  el.innerHTML = selected.map((key, idx) => {
+    const v = vaults.find(x => x.key === key);
+    if (!v) return '';
+    const col = COLORS[idx % COLORS.length];
+    return `<div class="chip" style="color:${col};border-color:${col};background:${col}18" onclick="toggleVault('${key.replace(/'/g,"\\'")}')">
+      <span>${escHtml(v.pool)} · ${escHtml(v.project)}</span>
+      <span class="x">×</span>
+    </div>`;
+  }).join('');
+}
+
+// ============ Metric ============
+function setMetric(m) {
+  metric = m;
+  ['apy','base_apy','reward_apy','tvl_raw','avail_liquidity'].forEach(id => {
+    document.getElementById('btn-' + id).className = id === m ? 'active' : 'sec';
+  });
+  drawChart();
+}
+
+function metricLabel() {
+  return { apy: 'APY %', base_apy: 'Base APY %', reward_apy: 'Reward APY %', tvl_raw: 'TVL USD', avail_liquidity: 'Avail. Liq. USD' }[metric] || metric;
+}
+
+function isCurrency() { return metric === 'tvl_raw' || metric === 'avail_liquidity'; }
+
+function fmtVal(v) {
+  if (v === null) return '—';
+  if (isCurrency()) {
+    if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'b';
+    if (v >= 1e6) return '$' + (v/1e6).toFixed(2) + 'm';
+    if (v >= 1e3) return '$' + (v/1e3).toFixed(1) + 'k';
+    return '$' + v.toFixed(0);
+  }
+  return v.toFixed(2) + '%';
+}
+
+// ============ Chart ============
+function drawChart() {
+  const dates = [...new Set(allRows.map(r => r.date))].sort();
+
+  // Build datasets
+  const datasets = selected.map((key, idx) => {
+    const v = vaults.find(x => x.key === key);
+    const col = COLORS[idx % COLORS.length];
+    const data = dates.map(d => {
+      const row = allRows.find(r => r.date === d && (r.pool + '|' + r.project + '|' + r.chain) === key);
+      return row ? parseNum(row[metric]) : null;
+    });
+    return {
+      label: v.pool + ' · ' + v.project,
+      data,
+      borderColor: col,
+      backgroundColor: col + '18',
+      pointBackgroundColor: col,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      borderWidth: 2,
+      tension: 0.3,
+      spanGaps: true,
+      fill: selected.length === 1,
+    };
+  });
+
+  // Stats
+  renderStats(datasets, dates);
+
+  // Draw
+  const ctx = document.getElementById('chart').getContext('2d');
+  if (chartInst) chartInst.destroy();
+  chartInst = new Chart(ctx, {
+    type: 'line',
+    data: { labels: dates, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#17171b',
+          borderColor: '#2a2a30',
+          borderWidth: 1,
+          titleColor: '#8a8a95',
+          bodyColor: '#e4e4e7',
+          callbacks: {
+            label: ctx => ' ' + ctx.dataset.label + ': ' + fmtVal(ctx.parsed.y)
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#2a2a30' },
+          ticks: { color: '#8a8a95', font: { family: 'ui-monospace', size: 11 } }
+        },
+        y: {
+          grid: { color: '#2a2a30' },
+          ticks: {
+            color: '#8a8a95',
+            font: { family: 'ui-monospace', size: 11 },
+            callback: v => fmtVal(v)
+          }
+        }
+      }
+    }
+  });
+
+  // Legend
+  document.getElementById('legend').innerHTML = selected.map((key, idx) => {
+    const v = vaults.find(x => x.key === key);
+    const col = COLORS[idx % COLORS.length];
+    return `<div class="leg-item"><div class="leg-dot" style="background:${col}"></div><span>${escHtml(v.pool)} · ${escHtml(v.project)} · ${escHtml(v.chain||'—')}</span>${v.ys ? '<span class="ys-badge">YS</span>':''}</div>`;
+  }).join('');
+}
+
+function renderStats(datasets, dates) {
+  if (!datasets.length) { document.getElementById('statsRow').innerHTML = ''; return; }
+  const lastDate = dates[dates.length - 1];
+  const latestVals = datasets.map(ds => ds.data[dates.length - 1]).filter(v => v !== null);
+  const allVals = datasets.flatMap(ds => ds.data).filter(v => v !== null);
+
+  const avg = latestVals.length ? latestVals.reduce((s,v) => s+v, 0) / latestVals.length : null;
+  const max = allVals.length ? Math.max(...allVals) : null;
+  const min = allVals.length ? Math.min(...allVals) : null;
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat"><div class="label">Latest Avg</div><div class="value">${fmtVal(avg)}</div><div class="sub2">${lastDate}</div></div>
+    <div class="stat"><div class="label">Period High</div><div class="value">${fmtVal(max)}</div></div>
+    <div class="stat"><div class="label">Period Low</div><div class="value">${fmtVal(min)}</div></div>
+    <div class="stat"><div class="label">Vaults</div><div class="value">${selected.length}</div><div class="sub2">selected</div></div>
+  `;
+}
+
+// ============ Utils ============
+function escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function showStatus(id, msg, type) {
+  document.getElementById(id).innerHTML = `<div class="status ${type}">${msg}</div>`;
+}
+</script>
+</body>
+</html>

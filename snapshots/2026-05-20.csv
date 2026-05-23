@@ -1,0 +1,152 @@
+rank,pool,project,chain,tvl,tvl_raw,apy,base_apy,reward_apy,base_apy_7d,il_7d,avg_30d,inception_apy,top_10_pct,total_pool,total_borrowed,avail_liquidity,supply_cap_util,collateral_exposure
+1,SUSDU,Unitas,Solana,$9.28m,9280000,32.19,32.19,,,,12.79,,,,,,,
+2,LIMUSD|For LP | Maturity 26NOV2026,Pendle,Hyperliquid L1,"$810,400",810400,20.96,15.73,5.23,,,18.79,,,,,,,
+3,GTUSDT,Morpho Blue,Katana,$3.23m,3230000,18.77,5.74,13.03,,,3.49,,,9.989758696762151e-7,,39959.03,0,"{""WHYPE"":100}"
+4,USDC,Sprinter,Base,$2.96m,2960000,16.66,16.66,,,,13.18,,,,,,,
+5,USDC,Metrom,Base,$1.25m,1250000,16.49,16.49,,,,16.77,,,,,,,
+6,AUSD-USDC-USDT0,Curve DEX,Monad,$2.88m,2880000,16.1,0,16.1,,,14.22,,,,,,,
+7,USDC-USDM,Mento V3,Monad,"$570,063",570063,13.54,0.23,13.3,,,14.58,,,,,,,
+8,WNUSDT0-WNAUSD-WNUSDC|Balancer,Beefy,Monad,$4.26m,4260000,12.81,12.81,,,,13.27,,,,,,,
+9,USDC|yoUSD,YO Protocol,Base,$15.98m,15980000,12.31,4.51,7.8,,,13.39,,,,,,,
+10,USDC|yoUSD,YO Protocol,Arbitrum,"$548,625",548625,12.31,4.51,7.8,,,13.4,,,,,,,
+11,USDC|40 Acres,Harvest Finance,Base,$1.97m,1970000,12.25,12.25,,,,8.75,,,,,,,
+12,USDC,Metrom,Katana,$15.9m,15900000,12.03,2.77,9.26,,,12.28,,,,,,,
+13,USDC|vault,Avantis,Base,$45.28m,45280000,11.97,11.97,,,,10.1,,,,,,,
+14,USDC-MSUSD|stable - 0.05%,Velodrome V2,Op Mainnet,"$857,407",857407,11.95,11.95,11.95,,,14.39,,,,,,,
+15,APXUSD|For buying PT-apxUSD-18JUN2026,Pendle,Base,$3.78m,3780000,11.64,11.64,,,,14.76,,,,,,,
+16,USDC-USDT|CL1 - 0.0009%,Aerodrome Slipstream,Base,$1.18m,1180000,11.58,9.62,1.95,10.51,,14.51,,,,,,,
+17,MIM-USDC|Mim,Beefy,Arbitrum,$1.24m,1240000,11.39,11.39,,,,16.18,,,,,,,
+18,MSUSD-FRXUSD,Aerodrome V1,Base,"$788,918",788918,11.33,11.33,11.33,,,15.49,,,,,,,
+19,AUSD|EVK Vault eAUSD-16,Euler V2,Monad,"$867,924",867924,11.26,7.93,3.33,,,9.14,,,9470000,8600000,867925,,
+20,ALPHAUSDTPRIME,Morpho Blue,Hyperliquid L1,$4.05m,4050000,10.61,8.11,2.5,,,17.71,,,,,,,
+21,MIM-USDT0|Mim,Beefy,Arbitrum,$1.12m,1120000,10.41,10.41,,,,11.13,,,,,,,
+22,USDC,Harmonix Finance,Hyperliquid L1,$10.74m,10740000,10.12,10.12,,,,10.51,,,,,,,
+23,USDT,Metrom,Katana,$4.14m,4139999.9999999995,9.99,2.73,7.26,,,10.18,,,,,,,
+24,ALUSD-USDC|Curve,Stake DAO,Arbitrum,"$751,204",751204,9.81,0.06,9.75,,,9.93,,,,,,,
+25,ALUSD-USDC,Curve DEX,Arbitrum,"$756,606",756606,9.81,0.11,9.7,,,10.02,,,,,,,
+26,SUSDAI|For buying PT-sUSDai-15OCT2026,Pendle,Arbitrum,$13.15m,13150000,9.69,9.69,,,,9.22,,,,,,,
+27,SUPERUSDC|SuperVault,Superform,Base,$3.82m,3820000,9.58,4.26,5.32,,,12.54,,,,,,,
+28,SUSDAI|For buying PT-sUSDai-18JUN2026,Pendle,Arbitrum,$9.74m,9740000,9.46,9.46,,,,9.17,,,,,,,
+29,ZVUSDC,Zircuit Finance,Base,$1.5m,1500000,9.44,9.44,,,,8.56,,,,,,,
+30,FEUSDC2,Morpho Blue,Hyperliquid L1,$27.09m,27090000,9.29,9.29,,,,7.45,,,27302049.44064942,,32684182.15,45.51,"{""kHYPE"":9.85,""WHYPE"":89.28,""wstHYPE"":0.86}"
+31,USDC,YieldSeeker,Base,$1.26m,1260000,9.12,9.12,,,,9.04,,,,,,,
+32,FEUSD|WHYPE Stability Pool,Felix CDP,Hyperliquid L1,$8.33m,8330000,9.05,9.05,,,,9.26,,,,,,,
+33,USDT,ZEROBASE CeDeFi,Arbitrum,$7.92m,7920000,9,7,2,,,9,,,,,,,
+34,USDC,ZEROBASE CeDeFi,Arbitrum,"$782,992",782992,9,7,2,,,9,,,,,,,
+35,USDC,Neverland,Monad,$13.36m,13360000,8.66,3.93,4.73,,,8.48,,,59440000,46080000,13360000,,
+36,CSUSDC,Morpho Blue,Base,$2.92m,2920000,8.64,8.64,,,,5.11,,,1.0059011194095477,,75982559.01,0,"{""wstETH"":64.88,""weETH"":35.12}"
+37,AUSD,Neverland,Monad,$10.34m,10340000,8.58,3.89,4.68,,,9.18,,,45020000,34680000,10340000,,
+38,USDAI|For buying PT-USDai-15OCT2026,Pendle,Arbitrum,"$781,458",781458,8.41,8.41,,,,7.22,,,,,,,
+39,AUSD,Metrom,Katana,$1.73m,1730000,8.35,3.9,4.45,,,13.31,,,,,,,
+40,USDC,DeltaPrime,Arbitrum,"$649,967",649967,8.34,8.34,,,,7.54,,,,,,,
+41,USDC|baseUSD,AUTOfinance,Base,$7m,7000000,8.32,5.04,3.28,,,8.81,,,,,,,
+42,FEUSDH2,Morpho Blue,Hyperliquid L1,$1.81m,1810000,8.23,8.23,,,,6.89,,,1814275.6296008276,,38173603.39,4.54,"{""WHYPE"":39.17,""wstHYPE"":15.69,""kHYPE"":45.14}"
+43,USDC,Loopscale,Solana,$1.68m,1680000,8.23,7.17,1.06,,,8.28,,,,,,,
+44,SUSDAI|For LP | Maturity 15OCT2026,Pendle,Arbitrum,$13.15m,13150000,8.14,7.5,0.64,,,8.17,,,,,,,
+45,LIMUSD|For buying PT-limUSD-26NOV2026,Pendle,Hyperliquid L1,"$810,400",810400,8.08,8.08,,,,8.73,,,,,,,
+46,FEUSD|kHYPE Stability Pool,Felix CDP,Hyperliquid L1,$1.25m,1250000,8.04,8.04,,,,7.39,,,,,,,
+47,AUSD|vUSD/AUSD,Curvance,Monad,$1.01m,1010000,7.95,5.25,2.7,,,7.7,,,7580000,6570000,1010000,,
+48,SUSDAI|For LP | Maturity 18JUN2026,Pendle,Arbitrum,$9.74m,9740000,7.95,7.52,0.43,,,8.28,,,,,,,
+49,BBQUSD1,Morpho Blue,Monad,$3.99m,3990000,7.54,1.48,6.05,,,8.07,,,690.0931538762107,,49994977.74,0,"{""wsrUSD"":100}"
+50,AUSD|earnAUSD/AUSD,Curvance,Monad,$2.07m,2069999.9999999998,7.4,4.9,2.5,,,8.25,,,7890000,5830000,2069999.9999999998,,
+51,SYZUSD,Yuzu Money,Monad,$11.94m,11940000,7.34,7.34,,,,7.54,,,,,,,
+52,EDGEUSDC,Morpho Blue,Base,"$684,131",684131,7.33,4.12,3.21,,,7.09,,,101919.85120904751,,29891195.95,0.34,"{""sUSDS"":1.18,""WBTC"":90.45,""wstETH"":8.37}"
+53,VBUSDT,Yearn Finance,Katana,$4.85m,4850000,7.29,2.74,4.55,,,4.16,,,,,,,
+54,HYPERUSDCA,Morpho Blue,Monad,$17.39m,17390000,7.26,5.32,1.94,,,7.62,,,779843.4224617392,,199174263.09,0,"{""PT-sUSDai-18JUN2026"":11.9,""sUSDS"":0.02,""weETH"":13.08,""syrupUSDC"":0.38,""WBTC"":18.46,""WETH"":0.38,""sUSDai"":0.77,""PT-USDai-18JUN2026"":35.77,""wstETH"":19.23,""Unknown"":0}"
+55,FEUSDT02,Morpho Blue,Hyperliquid L1,$1.87m,1870000,7.23,7.23,,,,7.58,,,1872368.41225509,,55069859.68,3.29,"{""UETH"":9.1,""WHLP"":0.52,""WHYPE"":2.79,""UBTC"":7.13,""thBILL"":58.07,""kHYPE"":17.36,""hwHLP"":3.46,""hbUSDT"":1.54,""PT-hbUSDT-18DEC2025"":0.03}"
+56,USDC,Gains Network,Arbitrum,$5.15m,5150000,7.12,7.12,,,,6.65,,,,,,,
+57,SUSDAI|30d unlock,USD AI,Arbitrum,$296.88m,296880000,7.09,7.09,,,,7.24,,,,,,,
+58,AUSD|syzUSD/AUSD,Curvance,Monad,"$621,737",621737,7.05,4.55,2.5,,,7.1,,,2810000,2190000,621738,,
+59,USDAI|For buying PT-USDai-18JUN2026,Pendle,Arbitrum,$35.64m,35640000,6.92,6.92,,,,6.57,,,,,,,
+60,FEUSDE,Morpho Blue,Hyperliquid L1,"$872,874",872874,6.9,6.9,,,,8.84,,,872983.7586530158,,16115612.03,5.14,"{""UBTC"":31.5,""WHYPE"":68.5}"
+61,GHO,Fluid Lending,Arbitrum,$3.11m,3110000,6.9,3.55,3.35,,,6.05,,,,,,,
+62,AUGUSTUSDCV2,Morpho Blue,Monad,$12.94m,12940000,6.89,4.59,2.31,,,8.86,,,,,,,
+63,USDC|arbUSD,AUTOfinance,Arbitrum,"$877,661",877661,6.89,4.27,2.62,,,9.07,,,,,,,
+64,USDAI|For LP | Maturity 15OCT2026,Pendle,Arbitrum,"$781,458",781458,6.66,5.01,1.65,,,2.32,,,,,,,
+65,WABASGHO-WABASUSDC|Aura,Beefy,Base,"$969,362",969362,6.4,6.4,,,,6.35,,,,,,,
+66,USDT0,Neverland,Monad,$8.34m,8340000,6.38,2.17,4.21,,,8.35,,,16700000,8359999.999999999,8340000,,
+67,DTUSDC,Lagoon,Base,"$682,236",682236,6.24,6.24,,,,6.22,,,,,,,
+68,USDC,Harmonix Finance,Arbitrum,"$706,722",706722,6.2,6.2,,,,5.85,,,,,,,
+69,USDC,Extra Finance Leverage Farming,Base,$3.75m,3750000,6.15,6.15,,,,6.04,,,,,,,
+70,VBUSDC,Yearn Finance,Katana,$7.5m,7500000,6.08,4.92,1.16,,,4.48,,,,,,,
+71,USDC,Compound V3,Base,"$884,658",884658,5.92,5.92,,,,4.76,,,9660000,8770000,884658,,
+72,USDC-ALUSD|stable - 0.05%,Velodrome V2,Op Mainnet,$1.59m,1590000,5.81,5.81,5.81,,,5.34,,,,,,,
+73,USDC,Fluid Lending,Arbitrum,$47.57m,47570000,5.77,5.77,,,,6,,,,,,,
+74,BBQAUSD,Morpho Blue,Monad,"$901,513",901513,5.76,3.06,2.7,,,6.86,,,901560.9457261639,,229010119.29,0,"{""WBTC"":32.55,""wstETH"":36.22,""WETH"":8.09,""wsrUSD"":22.06,""WMON"":0.53,""XAUt0"":0.56,""SOL"":0}"
+75,MWUSDC,Morpho Blue,Base,$10.26m,10260000,5.69,4.81,0.88,,,5.04,,,22597.396261102684,,,,"{""Unknown"":100}"
+76,MSUSD-USDC,Extra Finance Leverage Farming,Base,$1.09m,1090000,5.63,5.63,,,,9.17,,,,,,,
+77,EARNAUSD,Upshift,Monad,$32.83m,32830000,5.57,3.79,1.78,,,6.35,,,,,,,
+78,BBQUSDC,Morpho Blue,Base,$25.27m,25270000,5.51,5.51,,,,5.67,,,2456316.18641226,,507426652.35,0,"{""wstETH"":6.74,""weETH"":89.88,""WETH"":0.15,""siUSD"":0,""wsrUSD"":0,""WBTC"":2.6,""PT-USDai-18JUN2026"":0.62,""sUSDS"":0.01}"
+79,GTUSDCP,Morpho Blue,Op Mainnet,$5.28m,5280000,5.51,3.51,1.99,,,5.04,,,1767206.216753296,,63217878.01,0,"{""WBTC"":97.35,""WETH"":2.65,""sUSDS"":0}"
+80,MSUSD-USDC,Aerodrome V1,Base,$8.13m,8130000.000000001,5.49,5.49,5.49,,,8.64,,,,,,,
+81,FEUSDC,Morpho Blue,Hyperliquid L1,$15.73m,15730000,5.46,5.46,,,,6.36,,,15680446.995352596,,78297982.5,16.69,"{""kHYPE"":97.36,""UBTC"":0.01,""WHYPE"":2.57,""PT-kHYPE-19MAR2026"":0.05}"
+82,FEUSDT0,Morpho Blue,Hyperliquid L1,$9.93m,9930000,5.44,5.44,,,,7.76,,,9530299.24690113,,97659811.57,8.89,"{""UBTC"":8.44,""beHYPE"":0.19,""PT-kHYPE-19MAR2026"":5.61,""kHYPE"":53.39,""WHYPE"":31.76,""wstHYPE"":0.61}"
+83,USDC,Kamino Lend,Solana,$6.97m,6970000,5.33,5.33,,,,5.34,,,148880000,141900000,6970000,,
+84,USDT,ZEROBASE CeDeFi,Op Mainnet,$8.09m,8090000,5.3,3.3,2,,,5.3,,,,,,,
+85,USDC,Moonwell Lending,Base,$1.63m,1630000,5.26,4.09,1.17,,,4.94,,,15090000,13460000,1630000,,
+86,GTUSDCC,Morpho Blue,Hyperliquid L1,$1.77m,1770000,5.25,5.25,,,,5.8,,,1763431.3419496985,,6234732.87,0,"{""kHYPE"":23.65,""UBTC"":43.76,""WHYPE"":32.58}"
+87,USDC,HyperLend Pooled,Hyperliquid L1,$12.63m,12630000,5.23,5.23,,,,5.31,,,76440000,63820000,12630000,,
+88,GTUSDCF,Morpho Blue,Base,"$976,369",976369,5.23,5.23,,,,5.12,,,351360.7904947505,,112222800.5,0,"{""wstETH"":0.09,""cbADA"":55.42,""SOL"":44.49}"
+89,YCSUSDC,Morpho Blue,Base,"$550,179",550179,5.19,5.19,,,,5.32,,,550106.3424014947,,107425241.88,0,"{""mBASIS"":1.33,""rETH"":0.58,""cbADA"":26.81,""wstETH"":0.46,""cbDOGE"":33.26,""cbLTC"":11.33,""cbXRP"":13.76,""superOETHb"":0.51,""cbETH"":2.54,""cbBTC"":9.4}"
+90,MSUSD-USDC|Aerodrome,Beefy,Base,"$671,429",671429,5.11,5.11,,,,8.12,,,,,,,
+91,USDG,Kamino Lend,Solana,$3.36m,3360000,5.11,5.11,,,,6.17,,,36540000,33180000,3360000,,
+92,BBQUSDT0,Morpho Blue,Monad,$1.8m,1800000,5.01,2.31,2.7,,,6.78,,,129148.91664138898,,659194925.07,0,"{""XAUt0"":0.69,""syrupUSDC"":0,""sUSDS"":97.95,""siUSD"":1.33,""sUSDe"":0.03}"
+93,USDC,Fluid Lending,Base,$13.63m,13630000,4.98,4.98,,,,6.12,,,,,,,
+94,USDC|Harvest USDC vault Base,Fusion by IPOR,Base,"$914,715",914715,4.77,4.77,,,,4.97,,,,,,,
+95,STEAKUSDCFARCASTER,Morpho Blue,Base,"$504,830",504830,4.77,4.77,,,,4.31,,,,,,,
+96,GTUSDCP,Morpho Blue,Base,$79.73m,79730000,4.77,4.77,,,,4.31,,,1767206.216753296,,63217878.01,0,"{""WBTC"":97.35,""WETH"":2.65,""sUSDS"":0}"
+97,STEAKUSDC,Morpho Blue,Base,$129.4m,129400000,4.77,4.77,,,,4.31,,,140707.81290133472,,64844376.41,0,"{""wstETH"":46.8,""WETH"":44.28,""WBTC"":8.91}"
+98,USDC,MortgageFi,Base,"$751,084",751084,4.76,4.76,,,,6.27,,,,,,,
+99,GHO,Fluid Lending,Base,"$833,808",833808,4.72,4.72,,,,4.44,,,,,,,
+100,USDC|Autopilot,Harvest Finance,Base,"$914,667",914667,4.68,4.68,,,,5.34,,,,,,,
+101,FRUSDC,Morpho Blue,Base,$23.81m,23810000,4.64,4.64,,,,4.26,,,23811797.05465605,,0,0,"{""cbBTC"":100}"
+102,PUSDC,Morpho Blue,Base,$37.18m,37180000,4.63,4.63,,,,4.3,,,38329228.01044559,,1011429824.86,3.65,"{""cbBTC"":100}"
+103,APXUSD|For LP | Maturity 18JUN2026,Pendle,Base,$3.78m,3780000,4.55,3.96,0.6,,,8.63,,,,,,,
+104,USDC|Morpho,Beefy,Base,$1.88m,1880000,4.41,4.41,,,,5.12,,,,,,,
+105,SUSDAI-USDC,Curve DEX,Arbitrum,$1.84m,1840000,4.35,4.35,,,,4.37,,,,,,,
+106,HFUSDC,Morpho Blue,Base,"$883,021",883021,4.35,4.35,,,,2.17,,,883079.4429335502,,11114166.88,7.36,"{""Unknown"":6.12,""cbBTC"":56.24,""WETH"":37.64}"
+107,USDC,Gains Network,Base,$2.19m,2190000,4.28,4.28,,,,2.31,,,,,,,
+108,GTUSDCC,Morpho Blue,Base,$2.02m,2020000,4.16,4.16,,,,3.94,,,1763431.3419496985,,6234732.87,0,"{""kHYPE"":23.65,""UBTC"":43.76,""WHYPE"":32.58}"
+109,SPARKUSDC,Morpho Blue,Base,$9.02m,9020000,4.16,4.16,,,,3.93,,,0,,,,
+110,USDC|2027-01-14,Exactly,Op Mainnet,$1.61m,1610000,4.16,4.16,,,,4.07,,,1390000,7167,1380000,,
+111,USDC|2026-07-02,Exactly,Op Mainnet,$1.61m,1610000,4.13,4.13,,,,4.03,,,1430000,58188,1370000,,
+112,USDC|Dolomite Balance,Dolomite,Arbitrum,$1.77m,1770000,4.12,4.12,,,,5.34,,,5090000,3320000,1770000,,
+113,USDC|Clearstar Earn USDC,Euler V2,Monad,$2.38m,2380000,4.11,4.11,,,,8.32,,,,,,,
+114,GTUSDCC,Morpho Blue,Unichain,"$830,023",830023,4.09,4.09,,,,5.75,,,1763431.3419496985,,6234732.87,0,"{""kHYPE"":23.65,""UBTC"":43.76,""WHYPE"":32.58}"
+115,USDC|TermMax USDC Vault,TermMax,Base,$1.26m,1260000,4.07,4.07,,,,2.17,,,,,,,
+116,USDC|2026-12-17,Exactly,Op Mainnet,$1.61m,1610000,4.04,4.04,,,,3.94,,,1390000,5497,1380000,,
+117,USDC|2026-06-04,Exactly,Op Mainnet,$1.61m,1610000,3.99,3.99,,,,4.04,,,1450000,70432,1380000,,
+118,USDC|2026-09-24,Exactly,Op Mainnet,$1.61m,1610000,3.97,3.97,,,,3.86,,,1400000,17052,1380000,,
+119,USDC|2026-10-22,Exactly,Op Mainnet,$1.61m,1610000,3.96,3.96,,,,3.83,,,1410000,26115,1380000,,
+120,USDC|2026-11-19,Exactly,Op Mainnet,$1.61m,1610000,3.94,3.94,,,,3.83,,,1390000,8155,1390000,,
+121,USDC|2026-07-30,Exactly,Op Mainnet,$1.61m,1610000,3.94,3.94,,,,3.43,,,1420000,36288,1380000,,
+122,USDC|2026-08-27,Exactly,Op Mainnet,$1.61m,1610000,3.93,3.93,,,,3.8,,,1410000,23147,1380000,,
+123,HYPERUSDCA,Morpho Blue,Arbitrum,"$779,791",779791,3.85,3.85,,,,4.53,,,779843.4224617392,,199174263.09,0,"{""PT-sUSDai-18JUN2026"":11.9,""sUSDS"":0.02,""weETH"":13.08,""syrupUSDC"":0.38,""WBTC"":18.46,""WETH"":0.38,""sUSDai"":0.77,""PT-USDai-18JUN2026"":35.77,""wstETH"":19.23,""Unknown"":0}"
+124,SUSDS,Sky Lending,Arbitrum,$358.62m,358620000,3.65,3.65,,,,3.66,,,,,,,
+125,USDY,Toros,Base,"$879,645",879645,3.62,3.62,,,,4.26,,,,,,,
+126,USDY|US Dollar Yield,Ondo Yield Assets,Solana,$180.71m,180710000,3.55,3.55,,3.55,,3.55,,,,,,,
+127,USDY|US Dollar Yield,Ondo Yield Assets,Arbitrum,$5.59m,5590000,3.55,3.55,,3.55,,3.55,,,,,,,
+128,USDC-USDT|0.01%,Uniswap V3,Arbitrum,$2.61m,2610000,3.52,3.52,,3.14,,3.35,,,,,,,
+129,USX,Loopscale,Solana,"$651,935",651935,3.52,3.52,,,,4.04,,,,,,,
+130,BBQUSDC,Morpho Blue,Arbitrum,$2.46m,2460000,3.45,3.45,,,,4.44,,,2456316.18641226,,507426652.35,0,"{""wstETH"":6.74,""weETH"":89.88,""WETH"":0.15,""siUSD"":0,""wsrUSD"":0,""WBTC"":2.6,""PT-USDai-18JUN2026"":0.62,""sUSDS"":0.01}"
+131,USDS,Kamino Lend,Solana,$1.36m,1360000,3.32,3.32,,,,3.03,,,8620000,7270000,1360000,,
+132,GTUSDCP,Morpho Blue,Arbitrum,$1.77m,1770000,3.31,3.31,,,,4.02,,,1767206.216753296,,63217878.01,0,"{""WBTC"":97.35,""WETH"":2.65,""sUSDS"":0}"
+133,GTUSDCC,Morpho Blue,Arbitrum,$3.43m,3430000,3.28,3.28,,,,3.71,,,1763431.3419496985,,6234732.87,0,"{""kHYPE"":23.65,""UBTC"":43.76,""WHYPE"":32.58}"
+134,PYUSD,Kamino Lend,Solana,$10.12m,10120000,3.26,3.26,,,,3.66,,,75470000,65349999.99999999,10120000,,
+135,WYLDS,Hastra,Solana,$1.84m,1840000,3.18,3.18,,,,3.27,,,,,,,
+136,CUSDO,OpenEden USDO,Solana,$5.7m,5700000,3.1,3.1,,3.23,,3.23,,,,,,,
+137,USDT|Main Pool,Save,Solana,"$645,033",645033,3.09,3.09,,,,3.03,,,3680000,3040000,645033,,
+138,GTUSDC,Morpho Blue,Katana,$5.66m,5660000,3.05,1.64,1.42,,,4.08,,,,,,,
+139,USDC,Aave V3,Arbitrum,$21.72m,21720000,3.01,3.01,,,,4.65,,,164260000,142540000,21720000,,
+140,STEAKUSDC,Morpho Blue,Katana,$32.86m,32860000,2.94,1.52,1.42,,,2.62,,,140707.81290133472,,64844376.41,0,"{""wstETH"":46.8,""WETH"":44.28,""WBTC"":8.91}"
+141,USDC,Aave V3,Base,$36.01m,36010000,2.9,2.9,,,,3.37,,,183210000,147200000,36010000,,
+142,SYRUPUSDC-USDC|CL1 - 0.035%,Aerodrome Slipstream,Base,"$560,640",560640,2.88,2.88,2.88,,,9.33,,,,,,,
+143,USDC,Aave V3,Op Mainnet,$2.1m,2100000,2.86,2.86,,,,2.34,,,13550000,11450000,2100000,,
+144,WAARBUSDCN-WAARBUSDT-WAARBGHO|Aura,Beefy,Arbitrum,$1.42m,1420000,2.83,2.83,,,,4.73,,,,,,,
+145,USDT,Aave V3,Op Mainnet,"$874,825",874825,2.71,2.71,,,,2.81,,,4960000,4090000,874825,,
+146,USDT,Compound V3,Op Mainnet,"$895,594",895594,2.69,2.69,,,,2.47,,,3550000,2650000,895594,,
+147,EARNAUSD,Neverland,Monad,$3.35m,3350000,2.62,0,2.62,,,3.07,,,3350000,,3350000,,
+148,BBQUSDT0,Morpho Blue,Arbitrum,$15.75m,15750000,2.62,2.62,,,,2.98,,,129148.91664138898,,659194925.07,0,"{""XAUt0"":0.69,""syrupUSDC"":0,""sUSDS"":97.95,""siUSD"":1.33,""sUSDe"":0.03}"
+149,FEUSD|feUBTC Stability Pool,Felix CDP,Hyperliquid L1,$2.2m,2200000,2.61,2.61,,,,2.63,,,,,,,
+150,USDC,Compound V3,Arbitrum,$5.18m,5180000,2.57,2.57,,,,2.54,,,18160000,12990000,5180000,,
+151,USDC,Revert Lend,Base,$3.08m,3081022,7.19,7.19,0,10.2,,8.36,,,3081022,,,,

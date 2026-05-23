@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DeFi Yield Tracker</title>
+<style>
+  :root {
+    --bg: #0e0e10;
+    --panel: #17171b;
+    --border: #2a2a30;
+    --text: #e4e4e7;
+    --muted: #8a8a95;
+    --accent: #3ddc97;
+    --accent-dim: #2a9d6f;
+    --warn: #f5a623;
+    --err: #e55c5c;
+    --info: #60a5fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 1600px;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px 0; color: var(--accent); }
+  .sub { color: var(--muted); margin-bottom: 20px; font-size: 12px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .panel h2 { font-size: 12px; margin: 0 0 12px 0; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    background: #0a0a0c;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 11px;
+    resize: vertical;
+  }
+  button {
+    background: var(--accent);
+    color: #0a0a0c;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 8px;
+    margin-top: 8px;
+  }
+  button:hover { background: var(--accent-dim); }
+  button.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  button.secondary:hover { border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+  .status {
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-top: 10px;
+  }
+  .status.ok { background: rgba(61,220,151,0.1); color: var(--accent); border: 1px solid var(--accent-dim); }
+  .status.warn { background: rgba(245,166,35,0.1); color: var(--warn); border: 1px solid var(--warn); }
+  .status.err { background: rgba(229,92,92,0.1); color: var(--err); border: 1px solid var(--err); }
+  .status.info { background: rgba(96,165,250,0.1); color: var(--info); border: 1px solid var(--info); }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; position: sticky; top: 0; background: var(--panel); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:hover td { background: rgba(61,220,151,0.04); }
+  .preview-wrap { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+  .stat { background: #0a0a0c; border: 1px solid var(--border); border-radius: 4px; padding: 10px; }
+  .stat .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat .value { font-size: 18px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+  .folder-status { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .folder-status.set { color: var(--accent); }
+  .overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+  /* YieldSeeker panel styles */
+  .ys-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .ys-fee-warning {
+    background: rgba(229,92,92,0.12);
+    border: 1px solid var(--err);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: var(--err);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ys-fee-warning strong { font-size: 13px; }
+  .ys-card {
+    background: #0a0a0c;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+  .ys-card.eligible { border-left: 3px solid var(--accent); }
+  .ys-card.ineligible { border-left: 3px solid var(--err); opacity: 0.6; }
+  .ys-card.no-data { border-left: 3px solid var(--muted); opacity: 0.5; }
+  .ys-card .ys-name { font-weight: 600; font-size: 12px; color: var(--text); }
+  .ys-card .ys-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .ys-apy { font-size: 20px; font-weight: 700; color: var(--accent); }
+  .ys-apy.warn { color: var(--warn); }
+  .ys-apy.err { color: var(--err); }
+  .ys-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .ys-badge.pass { background: rgba(61,220,151,0.15); color: var(--accent); }
+  .ys-badge.fail { background: rgba(229,92,92,0.15); color: var(--err); }
+  .ys-badge.warn { background: rgba(245,166,35,0.15); color: var(--warn); }
+  .ys-badge.info { background: rgba(96,165,250,0.15); color: var(--info); }
+  .ys-metric { font-size: 11px; }
+  .ys-metric .label { color: var(--muted); font-size: 10px; text-transform: uppercase; }
+  .ys-metric .val { color: var(--text); font-weight: 500; margin-top: 2px; }
+  .ys-metric .val.ok { color: var(--accent); }
+  .ys-metric .val.warn { color: var(--warn); }
+  .ys-metric .val.err { color: var(--err); }
+  .ys-reasons { font-size: 10px; color: var(--err); margin-top: 4px; }
+  .morpho-loading { color: var(--muted); font-size: 11px; font-style: italic; }
+  .ys-empty { color: var(--muted); font-size: 12px; padding: 20px; text-align: center; }
+  .ys-section-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 12px 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<h1>DeFi Yield Tracker</h1>
+<div class="sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-23a</div>
+
+<!-- ===== FOLDER ===== -->
+<div class="panel">
+  <h2>1. Folder</h2>
+  <div id="folderStatus" class="folder-status">No folder selected. Click below to pick your YieldTracking folder.</div>
+  <button id="pickFolder">Pick Folder</button>
+  <button id="reconnectFolder" class="secondary" style="display:none;">Reconnect</button>
+  <button id="clearFolder" class="secondary">Forget Folder</button>
+</div>
+
+<!-- ===== PASTE ===== -->
+<div class="panel">
+  <h2>2. Paste Scrape Data</h2>
+  <textarea id="input" placeholder="Paste DefiLlama scrape here (tab-separated rows from the bookmarklet)..."></textarea>
+  <button id="parse">Parse Data</button>
+  <button id="loadClipboard" class="secondary">Paste from Clipboard</button>
+  <button id="clearInput" class="secondary">Clear</button>
+  <div id="parseStatus"></div>
+  <div id="morphoFetchRow" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+    <button id="fetchMorpho">Fetch Protocol Data</button>
+    <span style="font-size:11px; color:var(--muted); margin-left:8px;">Enriches Morpho vaults with live liquidity, supply cap & collateral data before saving.</span>
+    <div id="morphoStatus"></div>
+  </div>
+</div>
+
+<!-- ===== PREVIEW ===== -->
+<div class="panel" id="previewPanel" style="display:none;">
+  <h2>3. Preview</h2>
+  <div class="stats" id="stats"></div>
+  <div id="sortWarning" style="display:none; margin-bottom:12px;"></div>
+  <div class="preview-wrap">
+    <table id="preview"></table>
+  </div>
+</div>
+
+<!-- ===== SAVE ===== -->
+<div class="panel" id="savePanel" style="display:none;">
+  <h2>4. Save</h2>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">
+    Will save to: <code id="saveTarget"></code>
+  </div>
+  <button id="save">Save Snapshot + Append to Master</button>
+  <button id="download" class="secondary">Download Only</button>
+  <div id="saveStatus"></div>
+</div>
+
+<!-- ===== YIELDSEEKER ===== -->
+<div class="panel">
+  <div class="ys-header">
+    <h2 style="margin:0;">⚡ YieldSeeker — Eligible Vaults</h2>
+  </div>
+
+  <div class="ys-fee-warning">
+    <span style="font-size:18px;">🚨</span>
+    <div>
+      <strong>COMPULSORY MANUAL CHECK BEFORE ANY ENTRY</strong><br>
+      Verify withdrawal fee ≤ 0.005% on the protocol's own app. This cannot be automated.
+    </div>
+  </div>
+
+  <div id="ysContent">
+    <div class="ys-empty">Parse today's scrape data above to populate YieldSeeker, or click Refresh Morpho Data for live vault status.</div>
+  </div>
+</div>
+
+<!-- ===== OVERVIEW ===== -->
+<div class="panel">
+  <h2>Data Overview</h2>
+  <div id="overview">No folder selected yet.</div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let folderHandle = null;
+let parsedRows = [];
+let morphoData = {}; // keyed by vault address
+
+// ============ YieldSeeker config ============
+
+const DEPOSIT_SIZE = 20000;
+const MIN_TVL = 500000;
+const MIN_LIQUIDITY = Math.min(250000, 4 * DEPOSIT_SIZE); // = $80k
+const MAX_UTIL = 0.95;
+
+// Whitelisted vaults: name, match strings for pool/project, optional Morpho address + chainId
+const YS_VAULTS = [
+  {
+    name: '40 Acres USDC Vault',
+    match: { pool: /40 acres/i, project: /harvest/i },
+    maxAlloc: 0.5, // 50% of portfolio
+    morpho: null,
+    type: 'aggregator'
+  },
+  {
+    name: 'Steakhouse High Yield USDC v1.1',
+    match: { project: /morpho/i, pool: /steakusdc/i },
+    morpho: { address: '0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB', chainId: 1 },
+    type: 'lending'
+  },
+  {
+    name: 'Steakhouse Prime USDC',
+    match: { project: /morpho/i, pool: /steakusdcp/i },
+    morpho: { address: '0xbeef047a543e45807105e51a8bbefcc5950fcfba', chainId: 8453 },
+    type: 'lending'
+  },
+  {
+    name: 'Aave Base USDC',
+    match: { project: /aave v3/i, pool: /usdc/i, chain: /base/i },
+    morpho: null,
+    type: 'lending'
+  },
+  {
+    name: 'Spark USDC Vault',
+    match: { project: /morpho/i, pool: /sparkusdc/i },
+    morpho: { address: '0x7BfA7C4f149E7415b73bdeDfe609237e29CBF34A', chainId: 8453 },
+    type: 'lending'
+  },
+  {
+    name: 'Gauntlet USDC Frontier',
+    match: { project: /morpho/i, pool: /gtusdcf/i },
+    morpho: { address: '0xc080f56504e0278828a4DebB694f400ea4De882b', chainId: 8453 },
+    type: 'lending'
+  },
+  {
+    name: 'Revert Lend Base USDC',
+    match: { project: /revert/i, chain: /base/i },
+    morpho: null,
+    type: 'lending'
+  },
+  {
+    name: 'Tokemak baseUSD',
+    match: { project: /tokemak/i, chain: /base/i },
+    morpho: null,
+    type: 'lending'
+  },
+  {
+    name: 'yoVaultUSD',
+    match: { pool: /yoUSD|yovault/i },
+    minApy: 16,
+    morpho: null,
+    type: 'aggregator'
+  },
+  {
+    name: 'Yearn OG USDC',
+    match: { project: /morpho/i, pool: /re7usdc|yearn.*og|og.*usdc/i },
+    morpho: { address: '0xef417a2512C5a41f69AE4e021648b69a7CdE5D03', chainId: 8453 },
+    type: 'lending'
+  }
+];
+
+function matchVault(row, vault) {
+  const { match } = vault;
+  if (match.pool && !match.pool.test(row.pool)) return false;
+  if (match.project && !match.project.test(row.project)) return false;
+  if (match.chain && !match.chain.test(row.chain)) return false;
+  return true;
+}
+
+// ============ Off-chain vaults (vaults.fyi API) ============
+// Revert Lend and Tokemak are not on DefiLlama.
+// Auth: x-api-key header. No PRO required for detailed-vaults endpoints.
+
+let vaultsFyiApiKey = '';
+
+async function loadConfig() {
+  if (!folderHandle) return;
+  try {
+    const fh = await folderHandle.getFileHandle('config.json', { create: true });
+    const file = await fh.getFile();
+    const text = await file.text();
+    if (!text.trim()) {
+      const template = {
+        _note: 'Paste your vaults.fyi API key between the quotes. Sign up free at https://vaults.fyi/api',
+        vaultsFyiApiKey: ''
+      };
+      await writeFile(folderHandle, 'config.json', JSON.stringify(template, null, 2));
+      vaultsFyiApiKey = '';
+      setStatus('morphoStatus', 'Created config.json — paste your vaults.fyi API key and click Reconnect.', 'warn');
+      return;
+    }
+    const parsed = JSON.parse(text);
+    vaultsFyiApiKey = parsed.vaultsFyiApiKey || '';
+  } catch (e) {
+    setStatus('morphoStatus', `config.json read failed: ${e.message}`, 'warn');
+    vaultsFyiApiKey = '';
+  }
+}
+
+const OFFCHAIN_VAULTS = [
+  {
+    name: 'Revert Lend Base USDC',
+    address: '0x36AEAe0E411a1E28372e0d66f02E57744EbE7599',
+    network: 'base',
+    chain: 'Base', project: 'Revert Lend', pool: 'USDC',
+    matchProject: 'Revert Lend',
+  },
+  {
+    name: 'Tokemak baseUSD',
+    address: '0x9c6864105AEC23388C89600046213a44C384c831',
+    network: 'base',
+    chain: 'Base', project: 'Tokemak', pool: 'baseUSD',
+    matchProject: 'Tokemak',
+  },
+];
+
+const VAULTS_FYI_BASE = 'https://api.vaults.fyi/v2/detailed-vaults';
+
+async function vaultsFyiGet(path) {
+  const resp = await fetch(`${VAULTS_FYI_BASE}${path}`, {
+    headers: { 'x-api-key': vaultsFyiApiKey }
+  });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
+}
+
+async function fetchVaultsFyi(vault) {
+  try {
+    if (!vaultsFyiApiKey) throw new Error('No API key configured — add vaultsFyiApiKey to config.json and click Reconnect');
+    const [apyData, vaultData] = await Promise.all([
+      vaultsFyiGet(`/${vault.network}/${vault.address}/apy`),
+      vaultsFyiGet(`/${vault.network}/${vault.address}`),
+    ]);
+
+    // APY values are decimals (0.07 = 7%) — multiply by 100
+    const apy1d    = (apyData['1day']?.total  ?? 0) * 100;
+    const base1d   = (apyData['1day']?.base   ?? 0) * 100;
+    const reward1d = (apyData['1day']?.reward ?? 0) * 100;
+    const apy7d    = (apyData['7day']?.total  ?? 0) * 100;
+    const apy30d   = (apyData['30day']?.total ?? 0) * 100;
+
+    const tvl = parseFloat(vaultData?.tvl?.usd ?? vaultData?.totalAssets?.usd ?? 0);
+
+    return {
+      ok: true,
+      apy: apy1d,
+      base_apy: base1d,
+      reward_apy: reward1d,
+      avg_7d: apy7d,
+      avg_30d: apy30d,
+      tvl,
+    };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+async function fetchAndEnrichOffchain() {
+  let enriched = 0;
+  const errors = [];
+
+  for (const vault of OFFCHAIN_VAULTS) {
+    const result = await fetchVaultsFyi(vault);
+    if (!result.ok) { errors.push(`${vault.name}: ${result.error}`); continue; }
+
+    let row = parsedRows.find(r =>
+      r.project.toLowerCase().includes(vault.matchProject.toLowerCase()) &&
+      r.chain.toLowerCase() === vault.chain.toLowerCase()
+    );
+
+    const tvlDisplay = result.tvl >= 1e6
+      ? `$${(result.tvl/1e6).toFixed(2)}m`
+      : `$${Math.round(result.tvl).toLocaleString()}`;
+
+    if (!row) {
+      row = {
+        pool: vault.pool, project: vault.project, chain: vault.chain,
+        tvl_display: tvlDisplay, tvl: result.tvl,
+        apy: result.apy, base_apy: result.base_apy, reward_apy: result.reward_apy,
+        base_apy_7d: result.avg_7d, il_7d: null,
+        avg_30d: result.avg_30d, inception_apy: null, top_10_pct: null,
+        total_pool: result.tvl, total_borrowed: null,
+        avail_liquidity: null, supply_cap_util: null,
+        collateral_exposure: null, synthetic: true, raw: ''
+      };
+      parsedRows.push(row);
+    } else {
+      row.tvl = result.tvl;
+      row.tvl_display = tvlDisplay;
+      row.apy = result.apy;
+      row.base_apy = result.base_apy;
+      row.reward_apy = result.reward_apy;
+      row.base_apy_7d = result.avg_7d;
+      row.avg_30d = result.avg_30d;
+      row.total_pool = result.tvl;
+    }
+    enriched++;
+  }
+
+  return { enriched, errors };
+}
+
+// ============ Morpho API ============
+
+let morphoFetched = false;
+
+async function fetchAndEnrichMorpho() {
+  const btn = $('fetchMorpho');
+  btn.disabled = true;
+  btn.textContent = 'Fetching…';
+  setStatus('morphoStatus', 'Querying Morpho API…', 'info');
+  morphoFetched = false;
+
+  // Find all Morpho V1 rows in parsed data
+  const morphoRows = parsedRows.filter(r => /morpho/i.test(r.project));
+  if (morphoRows.length === 0) {
+    setStatus('morphoStatus', 'No Morpho V1 vaults found in parsed data.', 'warn');
+    btn.disabled = false;
+    btn.textContent = 'Fetch Protocol Data';
+    return;
+  }
+
+  // Single query — all vaults on supported chains
+  // Supported chain IDs (verified 2026-05-22):
+  // 8453=Base, 10=Optimism, 42161=Arbitrum, 137=Polygon,
+  // 130=Unichain, 143=Monad, 999=HyperEVM, 747474=Katana, 480=WorldChain,
+  // 4217=Lisk, 988=Hemi
+  // Excluding Ethereum (1) — fees too high
+  // Unsupported: Scroll=534352, Ink=57073, Corn=21000000, Fraxtal=252, BOB=98866, Katana-old=747
+  const query = `{
+    vaults(first: 900, where: { chainId_in: [8453, 10, 42161, 137, 130, 143, 999, 747474, 480, 4217, 988] }) {
+      items {
+        address
+        symbol
+        state {
+          totalAssetsUsd
+          allocation {
+            supplyAssets
+            supplyAssetsUsd
+            supplyCap
+            supplyCapUsd
+            market {
+              collateralAsset { symbol }
+            }
+          }
+        }
+      }
+    }
+  }`;
+
+  let vaultItems = [];
+  try {
+    const resp = await fetch('https://api.morpho.org/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    const json = await resp.json();
+    if (json.errors) throw new Error(json.errors[0].message);
+    vaultItems = json?.data?.vaults?.items ?? [];
+  } catch (e) {
+    setStatus('morphoStatus', `Morpho API error: ${e.message}`, 'err');
+    btn.disabled = false;
+    btn.textContent = 'Fetch Protocol Data';
+    return;
+  }
+
+  // Build lookup: symbol (lowercase) → vault data
+  const morphoBySymbol = {};
+  vaultItems.forEach(v => {
+    const key = (v.symbol || '').toLowerCase().trim();
+    if (key) morphoBySymbol[key] = v;
+  });
+
+  let enrichedCount = 0;
+  const notFound = [];
+
+  parsedRows.forEach(r => {
+    if (!/morpho/i.test(r.project)) return;
+
+    // Match pool name against Morpho symbol
+    const poolSymbol = r.pool.split('/')[0].trim().toLowerCase();
+    const vault = morphoBySymbol[poolSymbol];
+
+    if (!vault) {
+      if (!notFound.includes(r.pool)) notFound.push(r.pool);
+      return;
+    }
+
+    const alloc = vault.state?.allocation ?? [];
+    const totalUsd = vault.state?.totalAssetsUsd ?? 0;
+
+    // Available liquidity = Σ(supplyCapUsd - supplyAssetsUsd)
+    let availLiquidity = 0;
+    let totalCap = 0;
+    let totalSupplied = 0;
+    const exposure = {};
+
+    alloc.forEach(a => {
+      const capUsd = parseFloat(a.supplyCapUsd ?? 0);
+      const supUsd = parseFloat(a.supplyAssetsUsd ?? 0);
+      const cap = parseFloat(a.supplyCap ?? 0);
+      const sup = parseFloat(a.supplyAssets ?? 0);
+
+      // If supplyCapUsd is unrealistically large (>$500m per market), the cap is
+      // effectively unlimited (MaxUint256) — skip this market for liquidity calc
+      const SANE_CAP = 500e6;
+      if (capUsd < SANE_CAP) {
+        availLiquidity += Math.max(0, capUsd - supUsd);
+      }
+      // Still count for utilisation calc using raw token amounts
+      // but only if cap is sane (avoid MaxUint256 skewing the ratio)
+      if (cap < 1e27) {
+        totalCap += cap;
+        totalSupplied += sup;
+      }
+
+      // Collateral exposure as % of totalAssetsUsd
+      const sym = a.market?.collateralAsset?.symbol ?? 'Unknown';
+      const pct = totalUsd > 0 ? (supUsd / totalUsd) * 100 : 0;
+      if (pct > 0) exposure[sym] = parseFloat(((exposure[sym] ?? 0) + pct).toFixed(2));
+    });
+
+    const util = totalCap > 0 ? parseFloat(((totalSupplied / totalCap) * 100).toFixed(2)) : null;
+
+    r.total_pool = totalUsd;
+    // If availLiquidity is 0 and totalCap is also 0, all markets had uncapped supply — null it
+    r.avail_liquidity = (availLiquidity === 0 && totalCap === 0) ? null : parseFloat(availLiquidity.toFixed(2));
+    r.supply_cap_util = util;
+    r.collateral_exposure = Object.keys(exposure).length ? JSON.stringify(exposure) : null;
+
+    morphoData[vault.address.toLowerCase()] = vault;
+    enrichedCount++;
+  });
+
+  morphoFetched = enrichedCount > 0;
+
+  // Fetch off-chain vaults (Revert, Tokemak) via vaults.fyi proxy
+  setStatus('morphoStatus', `Morpho: ${enrichedCount} enriched. Fetching off-chain vaults…`, 'info');
+  const offchainResult = await fetchAndEnrichOffchain();
+
+  btn.disabled = false;
+  btn.textContent = 'Fetch Protocol Data';
+
+  let msg = `✓ Morpho: ${enrichedCount} vault${enrichedCount !== 1 ? 's' : ''} enriched.`;
+  let type = (morphoFetched || offchainResult.enriched > 0) ? 'ok' : 'err';
+  if (notFound.length > 0) {
+    msg += ` Unmatched: ${notFound.slice(0,5).join(', ')}${notFound.length > 5 ? ` +${notFound.length - 5} more` : ''}.`;
+    if (enrichedCount > 0) type = 'warn';
+  }
+  if (offchainResult.enriched > 0) {
+    msg += ` ✓ Off-chain: ${offchainResult.enriched} vault${offchainResult.enriched !== 1 ? 's' : ''} fetched (Revert/Tokemak).`;
+  }
+  if (offchainResult.errors.length > 0) {
+    msg += ` Off-chain errors: ${offchainResult.errors.join('; ')}.`;
+    type = 'warn';
+  }
+  setStatus('morphoStatus', msg, type);
+
+  renderPreview(parsedRows);
+  renderYS();
+}
+
+// ============ YieldSeeker render ============
+
+function getMorphoMetrics(vault) {
+  // Read from the enriched parsed row if available
+  const row = parsedRows.find(r => matchVault(r, vault));
+  if (!row || row.supply_cap_util === null || row.supply_cap_util === undefined) return null;
+  return {
+    totalUsd: row.total_pool,
+    liquidityUsd: row.avail_liquidity,
+    utilisation: row.supply_cap_util !== null ? row.supply_cap_util / 100 : null
+  };
+}
+
+function evaluateVault(vault, row) {
+  // row may be null if not in today's scrape
+  const failures = [];
+  const warnings = [];
+
+  // 1. TVL check (from scrape)
+  if (row && row.tvl < MIN_TVL) {
+    failures.push(`TVL ${fmtUsd(row.tvl)} < $500k minimum`);
+  }
+
+  // 2. APY gate for yoVaultUSD
+  if (vault.minApy && row && row.apy < vault.minApy) {
+    failures.push(`APY ${row.apy?.toFixed(2)}% < ${vault.minApy}% minimum for this vault`);
+  }
+
+  // 3. Liquidity check
+  const morphoM = getMorphoMetrics(vault);
+  let liquidityUsd = null;
+  let utilisationPct = null;
+
+  if (morphoM) {
+    liquidityUsd = morphoM.liquidityUsd;
+    utilisationPct = morphoM.utilisation;
+  } else if (row && row.avail_liquidity) {
+    liquidityUsd = row.avail_liquidity;
+  }
+
+  if (liquidityUsd !== null) {
+    if (liquidityUsd < MIN_LIQUIDITY) {
+      failures.push(`Available liquidity ${fmtUsd(liquidityUsd)} < ${fmtUsd(MIN_LIQUIDITY)} required`);
+    }
+  }
+
+  // 4. Utilisation ≥ 95% (supply cap full)
+  if (utilisationPct !== null && utilisationPct >= MAX_UTIL) {
+    failures.push(`Supply cap utilisation ${(utilisationPct*100).toFixed(1)}% ≥ 95% — vault near full`);
+  }
+
+  // 5. Max allocation warning (40 Acres)
+  if (vault.maxAlloc) {
+    warnings.push(`Max ${(vault.maxAlloc*100).toFixed(0)}% of portfolio ($${(DEPOSIT_SIZE * vault.maxAlloc).toLocaleString()})`);
+  }
+
+  return { failures, warnings, liquidityUsd, utilisationPct };
+}
+
+function fmtUsd(v) {
+  if (v === null || v === undefined) return '—';
+  if (v >= 1e6) return `$${(v/1e6).toFixed(2)}m`;
+  if (v >= 1e3) return `$${(v/1e3).toFixed(1)}k`;
+  return `$${v.toFixed(0)}`;
+}
+
+function renderYS() {
+  const container = $('ysContent');
+
+  // Match each whitelisted vault against today's parsed rows
+  const matched = YS_VAULTS.map(vault => {
+    const row = parsedRows.find(r => matchVault(r, vault)) ?? null;
+    const eval_ = evaluateVault(vault, row);
+    const eligible = row !== null && eval_.failures.length === 0;
+    return { vault, row, eval_, eligible };
+  });
+
+  const eligible = matched.filter(m => m.eligible && m.row);
+  const ineligible = matched.filter(m => !m.eligible && m.row);
+  const missing = matched.filter(m => !m.row);
+
+  // Sort eligible by APY descending
+  eligible.sort((a, b) => (b.row?.apy ?? 0) - (a.row?.apy ?? 0));
+
+  let html = '';
+
+  if (eligible.length === 0 && parsedRows.length === 0) {
+    html = '<div class="ys-empty">Parse today\'s scrape data above, or click Refresh Morpho Data.</div>';
+  } else {
+    if (eligible.length > 0) {
+      html += `<div class="ys-section-label">✓ Eligible (${eligible.length}) — sorted by APY</div>`;
+      html += eligible.map(m => renderYSCard(m, 'eligible')).join('');
+    }
+    if (ineligible.length > 0) {
+      html += `<div class="ys-section-label">✗ Ineligible (${ineligible.length})</div>`;
+      html += ineligible.map(m => renderYSCard(m, 'ineligible')).join('');
+    }
+    if (missing.length > 0) {
+      html += `<div class="ys-section-label">— Not in today's scrape (${missing.length})</div>`;
+      html += missing.map(m => renderYSCard(m, 'no-data')).join('');
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+function renderYSCard({ vault, row, eval_, eligible }, cardClass) {
+  const apy = row?.apy ?? null;
+  const apyClass = apy === null ? '' : apy >= 10 ? '' : apy >= 6 ? 'warn' : 'err';
+  const apyStr = apy !== null ? `${apy.toFixed(2)}%` : '—';
+
+  const morphoM = getMorphoMetrics(vault);
+
+  // Liquidity display
+  let liquidityStr = '—';
+  let liquidityClass = '';
+  const liq = eval_.liquidityUsd;
+  if (liq !== null) {
+    liquidityStr = fmtUsd(liq);
+    liquidityClass = liq >= MIN_LIQUIDITY ? 'ok' : 'err';
+  } else if (vault.morpho && !morphoM) {
+    liquidityStr = '<span class="morpho-loading">Fetch Protocol Data ↑</span>';
+  }
+
+  // Utilisation display
+  let utilStr = '—';
+  let utilClass = '';
+  if (eval_.utilisationPct !== null) {
+    utilStr = `${(eval_.utilisationPct * 100).toFixed(1)}%`;
+    utilClass = eval_.utilisationPct >= MAX_UTIL ? 'err' : eval_.utilisationPct >= 0.85 ? 'warn' : 'ok';
+  } else if (vault.morpho && !morphoM) {
+    utilStr = '<span class="morpho-loading">Fetch Protocol Data ↑</span>';
+  }
+
+  // TVL display
+  const tvlStr = row ? row.tvl_display : '—';
+  const tvlClass = row && row.tvl >= MIN_TVL ? 'ok' : row ? 'err' : '';
+
+  // Failures/warnings badges
+  const failBadges = eval_.failures.map(f =>
+    `<span class="ys-badge fail">✗ ${f}</span>`).join(' ');
+  const warnBadges = eval_.warnings.map(w =>
+    `<span class="ys-badge warn">⚠ ${w}</span>`).join(' ');
+
+  // Morpho fee info
+  let feeStr = '';
+  if (morphoM?.performanceFee) {
+    feeStr = `<div class="ys-badge info">Perf fee: ${(morphoM.performanceFee * 100).toFixed(1)}%</div>`;
+  }
+
+  // Type badge
+  const typeBadge = `<span class="ys-badge info">${vault.type}</span>`;
+
+  return `<div class="ys-card ${cardClass}">
+    <div>
+      <div class="ys-name">${vault.name}</div>
+      <div class="ys-sub">${row ? `${row.pool} · ${row.project} · ${row.chain}` : 'Not in scrape today'}</div>
+      <div style="margin-top:6px;">${typeBadge} ${feeStr}</div>
+      ${failBadges ? `<div style="margin-top:4px;">${failBadges}</div>` : ''}
+      ${warnBadges ? `<div style="margin-top:4px;">${warnBadges}</div>` : ''}
+    </div>
+    <div class="ys-metric">
+      <div class="label">APY (24h)</div>
+      <div class="ys-apy ${apyClass}">${apyStr}</div>
+      ${row?.base_apy !== null && row?.base_apy !== undefined ? `<div style="font-size:10px;color:var(--muted);">Base: ${row.base_apy.toFixed(2)}%</div>` : ''}
+    </div>
+    <div class="ys-metric">
+      <div class="label">TVL</div>
+      <div class="val ${tvlClass}">${tvlStr}</div>
+      <div style="font-size:10px;color:var(--muted);">Min: $500k</div>
+    </div>
+    <div class="ys-metric">
+      <div class="label">Avail. Liquidity</div>
+      <div class="val ${liquidityClass}">${liquidityStr}</div>
+      <div style="font-size:10px;color:var(--muted);">Min: ${fmtUsd(MIN_LIQUIDITY)}</div>
+    </div>
+    <div class="ys-metric">
+      <div class="label">Supply Cap Util.</div>
+      <div class="val ${utilClass}">${utilStr}</div>
+      <div style="font-size:10px;color:var(--muted);">Max: 95%</div>
+    </div>
+    <div style="text-align:center;">
+      ${eligible ? '<span class="ys-badge pass" style="font-size:12px;padding:6px 10px;">✓ ELIGIBLE</span>' :
+        cardClass === 'no-data' ? '<span class="ys-badge info" style="font-size:12px;padding:6px 10px;">NO DATA</span>' :
+        '<span class="ys-badge fail" style="font-size:12px;padding:6px 10px;">✗ BLOCKED</span>'}
+    </div>
+  </div>`;
+}
+
+// ============ IndexedDB ============
+
+function dbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('yieldtracker', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('handles');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function saveFolderHandle(handle) {
+  const db = await dbOpen();
+  const tx = db.transaction('handles', 'readwrite');
+  tx.objectStore('handles').put(handle, 'folder');
+  return new Promise(r => tx.oncomplete = r);
+}
+async function loadFolderHandle() {
+  try {
+    const db = await dbOpen();
+    const tx = db.transaction('handles', 'readonly');
+    return new Promise(r => {
+      const req = tx.objectStore('handles').get('folder');
+      req.onsuccess = () => r(req.result);
+      req.onerror = () => r(null);
+    });
+  } catch { return null; }
+}
+async function deleteFolderHandle() {
+  const db = await dbOpen();
+  const tx = db.transaction('handles', 'readwrite');
+  tx.objectStore('handles').delete('folder');
+  return new Promise(r => tx.oncomplete = r);
+}
+
+// ============ Folder ============
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function setStatus(elId, msg, type='ok') {
+  $(elId).innerHTML = `<div class="status ${type}">${msg}</div>`;
+}
+
+async function pickFolder() {
+  try {
+    folderHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    await folderHandle.getDirectoryHandle('snapshots', { create: true });
+    await saveFolderHandle(folderHandle);
+    updateFolderStatus();
+    await refreshOverview();
+    await loadConfig();
+  } catch (e) {
+    if (e.name !== 'AbortError') alert('Could not open folder: ' + e.message);
+  }
+}
+
+async function queryPermission(handle, rw=true) {
+  return (await handle.queryPermission({ mode: rw ? 'readwrite' : 'read' })) === 'granted';
+}
+
+async function requestPermissionWithActivation(handle, rw=true) {
+  const opts = { mode: rw ? 'readwrite' : 'read' };
+  if ((await handle.queryPermission(opts)) === 'granted') return true;
+  if ((await handle.requestPermission(opts)) === 'granted') return true;
+  return false;
+}
+
+async function tryReconnect() {
+  const handle = await loadFolderHandle();
+  if (!handle) return false;
+  const ok = await requestPermissionWithActivation(handle, true);
+  if (ok) {
+    folderHandle = handle;
+    await folderHandle.getDirectoryHandle('snapshots', { create: true });
+    updateFolderStatus();
+    await refreshOverview();
+    await loadConfig();
+    return true;
+  }
+  return false;
+}
+
+async function clearFolder() {
+  folderHandle = null;
+  await deleteFolderHandle();
+  $('folderStatus').textContent = 'No folder selected.';
+  $('folderStatus').classList.remove('set');
+  $('reconnectFolder').style.display = 'none';
+  $('overview').textContent = 'No folder selected yet.';
+}
+
+function updateFolderStatus() {
+  if (folderHandle) {
+    $('folderStatus').textContent = `Connected: ${folderHandle.name}`;
+    $('folderStatus').classList.add('set');
+    $('reconnectFolder').style.display = 'none';
+    $('saveTarget').textContent = `${folderHandle.name}/snapshots/${todayISO()}.csv + master.csv`;
+  }
+}
+
+// ============ Parsing ============
+
+function cleanCell(s) {
+  return s.replace(/^Bookmark\s*/i, '')
+          .replace(/open in new tab\s*/gi, '')
+          .replace(/^Hidden\s*$/i, '')
+          .trim();
+}
+
+function parseTVL(s) {
+  if (!s) return 0;
+  const m = s.match(/\$?([\d,.]+)\s*([mkb]?)/i);
+  if (!m) return 0;
+  const n = parseFloat(m[1].replace(/,/g, ''));
+  const mult = { k: 1e3, m: 1e6, b: 1e9 }[(m[2]||'').toLowerCase()] || 1;
+  return n * mult;
+}
+
+function parsePercent(s) {
+  if (!s || s === '—' || s === '-') return null;
+  const m = s.match(/(-?[\d.]+)/);
+  return m ? parseFloat(m[1]) : null;
+}
+
+function parseScrape(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const rows = [];
+  const pctRe = /^<?[\s]*[\d.]+%$/;
+  const dolRe = /^\$[\d.,]+[mkb]?$/i;
+  for (const line of lines) {
+    const raw = line.split('\t');
+    const chain = raw.pop().trim();
+    const colCount = raw.length;
+
+    let poolName, project, apy, tvlDisplay;
+    let base_apy = null, reward_apy = null, base_apy_7d = null;
+    let il_7d = null, avg_30d = null, inception_apy = null, top_10_pct = null;
+    let total_pool = null, total_borrowed = null, avail_liquidity = null;
+
+    if (colCount === 13) {
+      // --- V2 BOOKMARKLET: 13 explicit columns by child index ---
+      // pool, project, $TVL, APY%, base%, reward%, 7d%, il%, 30d%, inception%, supplied, borrowed, available
+      poolName = raw[0].trim();
+      project  = raw[1].trim();
+      tvlDisplay = raw[2].trim();
+      apy         = parsePercent(raw[3]);
+      base_apy    = parsePercent(raw[4]);
+      reward_apy  = parsePercent(raw[5]);
+      base_apy_7d = parsePercent(raw[6]);
+      il_7d       = parsePercent(raw[7]);
+      avg_30d     = parsePercent(raw[8]);
+      inception_apy = parsePercent(raw[9]);
+      total_pool    = parseTVL(raw[10]) || null;
+      total_borrowed = parseTVL(raw[11]) || null;
+      avail_liquidity = parseTVL(raw[12]) || null;
+
+    } else if (colCount > 15) {
+      // --- DOM PASTE: spacer tabs, APY before TVL in DOM innerText ---
+      const cells = raw.map(cleanCell).filter(c => c && c !== '🪂');
+      if (cells.length < 4) continue;
+
+      const apyIdx = cells.findIndex(c => pctRe.test(c));
+      const tvlIdx = cells.findIndex(c => dolRe.test(c));
+      if (apyIdx < 1 || tvlIdx < 0) continue;
+
+      project = cells[apyIdx - 1];
+      poolName = apyIdx > 1 ? cells.slice(0, apyIdx - 1).join(' / ') : cells[0];
+      apy = parsePercent(cells[apyIdx]);
+      tvlDisplay = cells[tvlIdx];
+
+      // Raw tab offsets after TVL: base@3, reward@6, 7d@8, 30d@8-10
+      const tvlRaw = raw.findIndex(c => dolRe.test(c.trim()));
+      const after = raw.slice(tvlRaw + 1);
+      const pctAt = i => (i < after.length ? parsePercent(after[i]) : null);
+
+      base_apy    = pctAt(3);
+      reward_apy  = pctAt(6);
+      base_apy_7d = pctAt(8) !== null && pctAt(10) !== null ? pctAt(8) : null;
+      avg_30d     = pctAt(10) ?? pctAt(9) ?? pctAt(8);
+
+      // Liquidity: 3 consecutive $ values in cleaned cells after TVL
+      const rest = cells.slice(tvlIdx + 1);
+      const dollarIdxs = [];
+      rest.forEach((c, i) => { if (dolRe.test(c)) dollarIdxs.push(i); });
+      if (dollarIdxs.length >= 3) {
+        const last3 = dollarIdxs.slice(-3);
+        if (last3[2] - last3[0] <= 4) {
+          total_pool = parseTVL(rest[last3[0]]);
+          total_borrowed = parseTVL(rest[last3[1]]);
+          avail_liquidity = parseTVL(rest[last3[2]]);
+        }
+      }
+
+    } else {
+      // --- OLD BOOKMARKLET: clean tabs, TVL before APY, | subtitles ---
+      // pool[|sub] \t project \t $TVL \t APY \t base \t reward \t 7d \t il \t 30d ...
+      const tvlIdx = raw.findIndex(c => dolRe.test(c.trim()));
+      if (tvlIdx < 1) continue;
+
+      const poolParts = raw.slice(0, tvlIdx - 1).map(c => c.trim()).filter(Boolean);
+      poolName = poolParts.length ? poolParts.join(' / ') : raw[0].trim();
+      project = raw[tvlIdx - 1].trim();
+      tvlDisplay = raw[tvlIdx].trim();
+
+      // Positional offsets after TVL: [0]=APY [1]=base [2]=reward [3]=7d [4]=il [5]=30d
+      const after = raw.slice(tvlIdx + 1);
+      const pctAt = i => (i < after.length ? parsePercent(after[i]) : null);
+
+      apy         = pctAt(0);
+      base_apy    = pctAt(1);
+      reward_apy  = pctAt(2);
+      base_apy_7d = pctAt(3);
+      avg_30d     = pctAt(5) ?? pctAt(4);
+
+      // Liquidity: $ values in the tail
+      const dolVals = after.filter(c => dolRe.test(c.trim()));
+      if (dolVals.length >= 3) {
+        total_pool = parseTVL(dolVals[dolVals.length - 3]);
+        total_borrowed = parseTVL(dolVals[dolVals.length - 2]);
+        avail_liquidity = parseTVL(dolVals[dolVals.length - 1]);
+      }
+    }
+
+    rows.push({
+      pool: poolName, project, chain,
+      tvl_display: tvlDisplay, tvl: parseTVL(tvlDisplay),
+      apy, base_apy: base_apy ?? apy, reward_apy, base_apy_7d, il_7d, avg_30d,
+      inception_apy, top_10_pct,
+      total_pool, total_borrowed, avail_liquidity,
+      raw: line
+    });
+  }
+  return rows;
+}
+
+// ============ Preview ============
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function formatCollateral(jsonStr) {
+  try {
+    const obj = JSON.parse(jsonStr);
+    return Object.entries(obj)
+      .sort((a,b) => b[1]-a[1])
+      .map(([k,v]) => `${k} ${v.toFixed(0)}%`)
+      .join(' · ');
+  } catch { return jsonStr; }
+}
+
+function renderPreview(rows) {
+  const t = $('preview');
+  const head = `<thead><tr>
+    <th>#</th><th>Pool</th><th>Project</th><th>Chain</th>
+    <th class="num">TVL</th><th class="num">APY</th><th class="num">Base</th>
+    <th class="num">Reward</th><th class="num">30d Avg</th><th class="num">Top 10%</th>
+    <th class="num">Total Pool</th><th class="num">Borrowed</th><th class="num">Avail. Liq.</th>
+    <th class="num">Cap Util%</th><th>Collateral</th>
+  </tr></thead>`;
+  const body = rows.map((r, i) => {
+    const liqClass = r.avail_liquidity !== null
+      ? (r.avail_liquidity < MIN_LIQUIDITY ? ' style="color:var(--err)"' : ' style="color:var(--accent)"')
+      : '';
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${escapeHtml(r.pool)}</td>
+      <td>${escapeHtml(r.project)}</td>
+      <td>${escapeHtml(r.chain)}</td>
+      <td class="num">${escapeHtml(r.tvl_display)}</td>
+      <td class="num">${r.apy?.toFixed(2) ?? '—'}%</td>
+      <td class="num">${r.base_apy?.toFixed(2) ?? '—'}%</td>
+      <td class="num">${r.reward_apy?.toFixed(2) ?? '—'}%</td>
+      <td class="num">${r.avg_30d?.toFixed(2) ?? '—'}%</td>
+      <td class="num">${r.top_10_pct?.toFixed(1) ?? '—'}%</td>
+      <td class="num">${r.total_pool !== null ? fmtUsd(r.total_pool) : '—'}</td>
+      <td class="num">${r.total_borrowed !== null ? fmtUsd(r.total_borrowed) : '—'}</td>
+      <td class="num"${liqClass}>${r.avail_liquidity !== null ? fmtUsd(r.avail_liquidity) : '—'}</td>
+      <td class="num"${r.supply_cap_util !== null && r.supply_cap_util !== undefined ? (r.supply_cap_util >= 95 ? ' style="color:var(--err)"' : r.supply_cap_util >= 85 ? ' style="color:var(--warn)"' : ' style="color:var(--accent)"') : ''}>${r.supply_cap_util !== null && r.supply_cap_util !== undefined ? r.supply_cap_util.toFixed(1) + '%' : '—'}</td>
+      <td style="font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(r.collateral_exposure ?? '')}">${r.collateral_exposure ? formatCollateral(r.collateral_exposure) : '—'}</td>
+    </tr>`;
+  }).join('');
+  t.innerHTML = head + '<tbody>' + body + '</tbody>';
+
+  const apys = rows.map(r => r.apy).filter(v => v !== null);
+  const avgApy = apys.reduce((s,v) => s+v, 0) / (apys.length || 1);
+  const totalTvl = rows.reduce((s,r) => s+r.tvl, 0);
+  const topApy = Math.max(...apys);
+
+  $('stats').innerHTML = `
+    <div class="stat"><div class="label">Rows</div><div class="value">${rows.length}</div></div>
+    <div class="stat"><div class="label">Avg APY</div><div class="value">${avgApy.toFixed(2)}%</div></div>
+    <div class="stat"><div class="label">Top APY</div><div class="value">${topApy.toFixed(2)}%</div></div>
+    <div class="stat"><div class="label">Total TVL</div><div class="value">$${(totalTvl/1e6).toFixed(1)}m</div></div>
+  `;
+
+  const sortWarning = checkSortOrder(rows);
+  const sortWarnEl = $('sortWarning');
+  if (sortWarning) {
+    sortWarnEl.innerHTML = `<div class="status warn">⚠ ${sortWarning}</div>`;
+    sortWarnEl.style.display = 'block';
+  } else {
+    sortWarnEl.style.display = 'none';
+  }
+
+  $('previewPanel').style.display = 'block';
+  $('savePanel').style.display = 'block';
+
+  // Refresh YS panel with new data
+  renderYS();
+}
+
+function checkSortOrder(rows) {
+  const apys = rows.map(r => r.apy).filter(v => v !== null);
+  if (apys.length < 2) return null;
+  const topApy = Math.max(...apys);
+  const firstRowApy = rows[0]?.apy;
+  if (firstRowApy !== null && firstRowApy < topApy - 0.01) {
+    return `Data NOT sorted by APY descending. Top row shows ${firstRowApy.toFixed(2)}% but max is ${topApy.toFixed(2)}%. Go back to DefiLlama, sort by APY, re-run bookmarklet.`;
+  }
+  let inversions = 0;
+  for (let i = 1; i < apys.length; i++) {
+    if (apys[i] > apys[i-1] + 0.01) inversions++;
+  }
+  if (inversions / apys.length > 0.15) {
+    return `Data doesn't appear sorted by APY. ${inversions}/${apys.length} rows break descending order.`;
+  }
+  return null;
+}
+
+// ============ CSV ============
+
+function csvEscape(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  if (/[,"\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+const MASTER_COLS = [
+  'date','rank','pool','project','chain','tvl','tvl_raw',
+  'apy','base_apy','reward_apy','base_apy_7d','il_7d','avg_30d','inception_apy','top_10_pct',
+  'total_pool','total_borrowed','avail_liquidity',
+  'supply_cap_util','collateral_exposure'
+];
+
+function rowsToCSV(rows, includeDate=false, date=null) {
+  const cols = includeDate ? MASTER_COLS : MASTER_COLS.filter(c => c !== 'date');
+  const lines = [cols.join(',')];
+  rows.forEach((r, i) => {
+    const obj = {
+      date, rank: i+1,
+      pool: r.pool, project: r.project, chain: r.chain,
+      tvl: r.tvl_display, tvl_raw: r.tvl,
+      apy: r.apy, base_apy: r.base_apy, reward_apy: r.reward_apy,
+      base_apy_7d: r.base_apy_7d, il_7d: r.il_7d, avg_30d: r.avg_30d,
+      inception_apy: r.inception_apy, top_10_pct: r.top_10_pct,
+      total_pool: r.total_pool, total_borrowed: r.total_borrowed,
+      avail_liquidity: r.avail_liquidity,
+      supply_cap_util: r.supply_cap_util ?? null,
+      collateral_exposure: r.collateral_exposure ?? null
+    };
+    lines.push(cols.map(c => csvEscape(obj[c])).join(','));
+  });
+  return lines.join('\n');
+}
+
+// ============ Save ============
+
+async function writeFile(dirHandle, filename, content) {
+  const fh = await dirHandle.getFileHandle(filename, { create: true });
+  const writable = await fh.createWritable();
+  await writable.write(content);
+  await writable.close();
+}
+
+async function appendToFile(dirHandle, filename, newContent, header) {
+  let existingData = '';
+  try {
+    const fh = await dirHandle.getFileHandle(filename);
+    const text = await (await fh.getFile()).text();
+    // Strip existing header — always rewrite with current schema header
+    const lines = text.trimEnd().split('\n');
+    existingData = lines.slice(1).join('\n'); // drop old header
+  } catch {}
+  const finalContent = existingData
+    ? header + '\n' + existingData + '\n' + newContent
+    : header + '\n' + newContent;
+  await writeFile(dirHandle, filename, finalContent);
+}
+
+async function save() {
+  if (!parsedRows.length) { setStatus('saveStatus', 'No parsed data. Parse first.', 'warn'); return; }
+  if (!folderHandle) { setStatus('saveStatus', 'Folder not connected.', 'err'); return; }
+
+  // Warn if Morpho data not fetched
+  if (!morphoFetched) {
+    const proceed = confirm('No protocol data has been fetched.\n\nMorpho vaults will be saved without liquidity/collateral data. Revert and Tokemak rows will not be included.\n\nSave anyway?');
+    if (!proceed) {
+      setStatus('saveStatus', 'Save cancelled — click "Fetch Protocol Data" then save.', 'warn');
+      return;
+    }
+  }
+
+  const sortWarning = checkSortOrder(parsedRows);
+  if (sortWarning) {
+    if (!confirm(`SORT WARNING:\n\n${sortWarning}\n\nSave anyway?`)) {
+      setStatus('saveStatus', 'Save cancelled.', 'warn'); return;
+    }
+  }
+  const hasPermission = await requestPermissionWithActivation(folderHandle, true);
+  if (!hasPermission) { setStatus('saveStatus', 'Folder permission denied.', 'err'); return; }
+  try {
+    const date = todayISO();
+    const snapDir = await folderHandle.getDirectoryHandle('snapshots', { create: true });
+    await writeFile(snapDir, `${date}.csv`, rowsToCSV(parsedRows, false));
+    const masterHeader = MASTER_COLS.join(',');
+    const masterDataOnly = rowsToCSV(parsedRows, true, date).split('\n').slice(1).join('\n');
+    await appendToFile(folderHandle, 'master.csv', masterDataOnly, masterHeader);
+    const offchainCount = parsedRows.filter(r => r.synthetic).length;
+    const morphoNote = morphoFetched
+      ? ` (Morpho enriched${offchainCount > 0 ? `, ${offchainCount} off-chain vaults` : ''})`
+      : ' (no protocol data)';
+    setStatus('saveStatus', `✓ Saved ${parsedRows.length} rows to snapshots/${date}.csv · Appended to master.csv${morphoNote}`, 'ok');
+    await refreshOverview();
+  } catch (e) {
+    setStatus('saveStatus', `Error: ${e.message}`, 'err');
+  }
+}
+
+function downloadCSV() {
+  if (!parsedRows.length) return;
+  const date = todayISO();
+  const csv = rowsToCSV(parsedRows, true, date);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `yield-${date}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============ Overview ============
+
+async function refreshOverview() {
+  if (!folderHandle) return;
+  try {
+    let snapCount = 0, masterRows = 0, firstDate = null, lastDate = null;
+    const snapDir = await folderHandle.getDirectoryHandle('snapshots', { create: true });
+    const dates = [];
+    for await (const [name, handle] of snapDir.entries()) {
+      if (handle.kind === 'file' && name.endsWith('.csv')) {
+        snapCount++;
+        dates.push(name.replace('.csv', ''));
+      }
+    }
+    dates.sort();
+    if (dates.length) { firstDate = dates[0]; lastDate = dates[dates.length-1]; }
+    try {
+      const fh = await folderHandle.getFileHandle('master.csv');
+      const text = await (await fh.getFile()).text();
+      masterRows = text.split('\n').length - 2;
+    } catch {}
+    $('overview').innerHTML = `
+      <div class="overview-grid">
+        <div class="stat"><div class="label">Snapshots</div><div class="value">${snapCount}</div></div>
+        <div class="stat"><div class="label">Master Rows</div><div class="value">${Math.max(0,masterRows)}</div></div>
+        <div class="stat"><div class="label">Date Range</div><div class="value" style="font-size:13px;">${firstDate||'—'} → ${lastDate||'—'}</div></div>
+      </div>`;
+  } catch (e) {
+    $('overview').textContent = 'Could not read folder: ' + e.message;
+  }
+}
+
+// ============ Event wiring ============
+
+$('pickFolder').onclick = pickFolder;
+$('reconnectFolder').onclick = tryReconnect;
+$('clearFolder').onclick = clearFolder;
+
+$('parse').onclick = () => {
+  const text = $('input').value;
+  if (!text.trim()) { setStatus('parseStatus', 'Paste data first.', 'warn'); return; }
+  parsedRows = parseScrape(text);
+  if (!parsedRows.length) { setStatus('parseStatus', 'Could not parse any rows.', 'err'); return; }
+  morphoFetched = false;
+  setStatus('parseStatus', `Parsed ${parsedRows.length} rows.`, 'ok');
+  $('morphoFetchRow').style.display = 'block';
+  $('morphoStatus').innerHTML = '';
+  renderPreview(parsedRows);
+};
+
+$('fetchMorpho').onclick = fetchAndEnrichMorpho;
+
+$('loadClipboard').onclick = async () => {
+  try {
+    const text = await navigator.clipboard.readText();
+    $('input').value = text;
+    setStatus('parseStatus', 'Loaded from clipboard. Click "Parse Data".', 'ok');
+  } catch {
+    setStatus('parseStatus', 'Clipboard blocked. Right-click → Paste in box above, or Ctrl+V.', 'warn');
+  }
+};
+
+$('clearInput').onclick = () => {
+  $('input').value = '';
+  $('previewPanel').style.display = 'none';
+  $('savePanel').style.display = 'none';
+  $('parseStatus').innerHTML = '';
+  $('morphoFetchRow').style.display = 'none';
+  $('morphoStatus').innerHTML = '';
+  parsedRows = [];
+  morphoFetched = false;
+  morphoData = {};
+  renderYS();
+};
+
+$('save').onclick = save;
+$('download').onclick = downloadCSV;
+
+// ============ Init ============
+
+(async function init() {
+  if (!('showDirectoryPicker' in window)) {
+    $('folderStatus').innerHTML = '<span style="color:var(--err);">⚠ This browser does not support File System Access. Use Brave, Chrome, or Edge.</span>';
+    $('pickFolder').disabled = true;
+    return;
+  }
+  const saved = await loadFolderHandle();
+  if (saved) {
+    const granted = await queryPermission(saved, true);
+    if (granted) {
+      folderHandle = saved;
+      try {
+        await folderHandle.getDirectoryHandle('snapshots', { create: true });
+        updateFolderStatus();
+        await refreshOverview();
+      } catch {
+        $('folderStatus').innerHTML = `<span style="color:var(--warn);">⚠ Saved folder "${saved.name}" — click <b>Reconnect</b>.</span>`;
+        $('reconnectFolder').style.display = 'inline-block';
+      }
+    } else {
+      $('folderStatus').innerHTML = `<span style="color:var(--warn);">⚠ Previously connected to "<b>${saved.name}</b>" — click <b>Reconnect</b>.</span>`;
+      $('reconnectFolder').style.display = 'inline-block';
+    }
+  }
+  renderYS(); // show empty state
+})();
+</script>
+</body>
+</html>
