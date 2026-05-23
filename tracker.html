@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-23x</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-23y</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -841,11 +841,7 @@ async function fetchOffchainVaults() {
       (!vault.matchRe.pool    || vault.matchRe.pool.test(r.pool)) &&
       (!vault.matchRe.chain   || vault.matchRe.chain.test(r.chain))
     );
-    if (alreadyPresent) {
-      if (/40 acres|tokemak|otto/i.test(vault.name))
-        console.log('[YT]', vault.name, 'alreadyPresent in DL rows — skipping fetch');
-      fetched++; continue;
-    }
+    if (alreadyPresent) { fetched++; continue; }
 
     // ── Attempt 1: vaults.fyi (APY + TVL) ──────────────────────────────
     let vfyOk = false;
@@ -855,12 +851,8 @@ async function fetchOffchainVaults() {
           fetch(`${vfyBase}/${vault.network}/${vault.address}/apy`, { headers: vfyHeaders }),
           fetch(`${vfyBase}/${vault.network}/${vault.address}`, { headers: vfyHeaders })
         ]);
-        if (/40 acres|tokemak|otto|alphagrowth|yovault|spark|moonwell/i.test(vault.name))
-          console.log('[YT]', vault.name, 'vfy:', apyRes.status, apyRes.value?.status ?? apyRes.reason?.message ?? String(apyRes.reason));
         if (apyRes.status === 'fulfilled' && apyRes.value.ok) {
           const apyData = await apyRes.value.json();
-          if (/40 acres|tokemak|otto|alphagrowth|yovault/i.test(vault.name))
-            console.log('[YT]', vault.name, 'vfy APY data:', JSON.stringify(apyData).slice(0, 200));
           let tvl = 0;
           if (vaultRes.status === 'fulfilled' && vaultRes.value.ok) {
             const vd = await vaultRes.value.json();
@@ -907,8 +899,6 @@ async function fetchOffchainVaults() {
       try {
         const { rpc, decimals } = vault.erc4626;
         const assetsHex = await rpcCall(rpc, vault.address, '0x01e1d114'); // totalAssets()
-        if (/40 acres|tokemak|otto|alphagrowth|yovault|spark|moonwell/i.test(vault.name))
-          console.log('[YT]', vault.name, 'erc4626:', assetsHex ? 'OK hex=' + assetsHex.slice(0,18) : 'NULL');
         if (!assetsHex) continue;
         const tvl = parseInt(assetsHex, 16) / Math.pow(10, decimals);
         const tvlDisplay = tvl >= 1e6 ? `$${(tvl/1e6).toFixed(2)}m`
@@ -918,8 +908,6 @@ async function fetchOffchainVaults() {
         let derivedApy = null;
         if (vault.erc4626.shareApy) {
           derivedApy = await fetchSharePriceApy(vault.address, rpc).catch(() => null);
-          if (/40 acres|tokemak|alphagrowth|yovault/i.test(vault.name))
-            console.log('[YT]', vault.name, 'shareApy:', derivedApy !== null ? derivedApy.toFixed(4) + '%' : 'null');
         }
 
         // Lending vaults: also fetch idle cash as available liquidity
@@ -942,13 +930,8 @@ async function fetchOffchainVaults() {
           raw: ''
         });
         fetched++;
-      } catch(e) {
-        if (/40 acres|tokemak|otto|alphagrowth|yovault|spark|moonwell/i.test(vault.name))
-          console.log('[YT]', vault.name, 'erc4626 EXCEPTION:', e?.message);
-      }
+      } catch { /* silently skip — vault stays out of today's data */ }
     }
-    if (!vfyOk && (!vault.erc4626) && /40 acres|tokemak|otto|alphagrowth|yovault|spark|moonwell/i.test(vault.name))
-      console.log('[YT]', vault.name, 'NO FETCH PATH — no vfy key and no erc4626 config');
   }
   return fetched;
 }
