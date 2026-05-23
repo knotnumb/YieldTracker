@@ -1,4 +1,12 @@
 {
-  "_note": "Paste your vaults.fyi API key between the quotes. Sign up free at https://vaults.fyi/api",
-  "vaultsFyiApiKey": ""
+  "_note": "DefiLlama filter settings + vaults.fyi API key for off-chain vaults (Revert, Tokemak).",
+  "vaultsFyiApiKey": "",
+  "defiLlama": {
+    "chains": ["Base", "Arbitrum", "Optimism", "Polygon", "Unichain"],
+    "minTvl": 500000,
+    "maxApy": 50,
+    "limit": 100,
+    "stablecoinOnly": true,
+    "excludeOutliers": true
+  }
 }
