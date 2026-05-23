@@ -1,6 +1,6 @@
 # YieldTracker V5 — Task Brief
 
-**Context:** Continuation from V4 chat session (2026-04-24). Repo: `github.com/knotnumb/YieldTracker` (private). Current version `v2026-05-14c`.
+**Context:** Continuation from V4 chat session (2026-04-24). Repo: `github.com/knotnumb/YieldTracker` (private). Current version `v2026-05-22a`.
 
 **Parser history (v2026-04-23f → v2026-05-14c):**
 - v2026-04-23f: Original parser, anchored on first `$` cell for TVL. Worked with old bookmarklet output.
@@ -109,6 +109,12 @@ async function loadConfig() {
 ```
 
 Call `loadConfig()` at the end of `pickFolder()` and `restoreFolderHandle()` success paths.
+
+### v2026-05-22a
+- Morpho API dropped support for several chains. Removed: Scroll, Ink, Corn, Fraxtal, BOB, old Katana.
+- Verified working chains via console forEach snippet.
+- Added defensive `?? null` on `row.apy` to prevent `.toFixed()` crash when API fails silently.
+- CLAUDE.md and BRIEF_v5.md updated to reflect.
 
 ### Code changes
 

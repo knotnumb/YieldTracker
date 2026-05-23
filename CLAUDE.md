@@ -4,7 +4,7 @@
 
 Local-first DeFi stablecoin yield tracker. Single-file vanilla JS app (`tracker.html`) that runs from `file://` in Brave/Chrome. Uses File System Access API to read/write a local folder containing CSV data. No server, no build step, no dependencies.
 
-Current version: `v2026-05-14c`
+Current version: `v2026-05-22a`
 
 ## Repo structure
 
@@ -119,3 +119,7 @@ No automated tests. Manual testing workflow:
 - Do not use `fetch()` for local file reads — use File System Access API
 - Do not commit `config.json` under any circumstances
 - Do not modify `master.csv` schema without explicit approval
+
+## Notes
+
+- Morpho API: Removed unsupported chain IDs (Scroll, Ink, Corn, Fraxtal, BOB, old Katana). Defensive `?? null` on `row.apy` prevents `.toFixed()` crash when API returns no data. If Fetch Protocol Data errors in future, test chain IDs individually in console.
