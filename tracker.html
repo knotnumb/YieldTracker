@@ -5,216 +5,385 @@
 <title>DeFi Yield Tracker</title>
 <style>
   :root {
-    --bg: #0e0e10;
-    --panel: #17171b;
-    --border: #2a2a30;
-    --text: #e4e4e7;
-    --muted: #8a8a95;
-    --accent: #3ddc97;
-    --accent-dim: #2a9d6f;
-    --warn: #f5a623;
-    --err: #e55c5c;
-    --info: #60a5fa;
+    --bg:          #060908;
+    --bg-deep:     #030504;
+    --panel:       #0A0E0A;
+    --panel-hi:    #0E1310;
+    --border:      #192C1D;
+    --border-hi:   #27402C;
+    --text:        #CCDACE;
+    --muted:       #4D6A54;
+    --muted-mid:   #6B8870;
+    --accent:      #00EF78;
+    --accent-dim:  #009E52;
+    --accent-glow: rgba(0,239,120,0.07);
+    --accent-lo:   rgba(0,239,120,0.13);
+    --warn:        #F5A024;
+    --warn-dim:    rgba(245,160,36,0.09);
+    --err:         #E54E4E;
+    --err-dim:     rgba(229,78,78,0.09);
+    --info:        #4DBAF5;
+    --info-dim:    rgba(77,186,245,0.09);
+    --font:        ui-monospace,'Cascadia Mono','Cascadia Code',Menlo,Consolas,'Courier New',monospace;
   }
-  * { box-sizing: border-box; }
+
+  /* Scanline texture — very subtle */
+  html::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 2px,
+      rgba(0,0,0,0.07) 2px,
+      rgba(0,0,0,0.07) 3px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
   body {
+    max-width: 1700px;
     margin: 0 auto;
-    padding: 24px;
+    padding: 0 32px 48px;
     background: var(--bg);
     color: var(--text);
-    font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    max-width: 1600px;
+    font-family: var(--font);
+    font-size: 13px;
+    line-height: 1.55;
   }
-  h1 { font-size: 20px; margin: 0 0 4px 0; color: var(--accent); }
-  .sub { color: var(--muted); margin-bottom: 20px; font-size: 12px; }
+
+  /* ── APP BAR ── */
+  .app-bar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 22px 0 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+  }
+  .app-name {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .app-meta {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+  .signal-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding-bottom: 2px;
+  }
+  .signal-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    box-shadow: 0 0 4px var(--accent-dim);
+    animation: blink 2.4s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  /* ── PANELS ── */
   .panel {
+    position: relative;
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 16px;
-    margin-bottom: 16px;
+    padding: 18px 22px;
+    margin-bottom: 11px;
+    border-radius: 0;
   }
-  .panel h2 { font-size: 12px; margin: 0 0 12px 0; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  /* top-left corner bracket */
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px;
+    width: 16px; height: 16px;
+    border-top: 2px solid var(--accent-dim);
+    border-left: 2px solid var(--accent-dim);
+    pointer-events: none;
+  }
+  .panel h2 {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin: 0 0 14px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── FOLDER STATUS ── */
+  .folder-status { font-size: 12px; color: var(--muted-mid); margin-bottom: 10px; }
+  .folder-status.set { color: var(--accent); }
+
+  /* ── TEXTAREA ── */
   textarea {
     width: 100%;
-    min-height: 140px;
-    background: #0a0a0c;
+    min-height: 120px;
+    background: var(--bg-deep);
     color: var(--text);
     border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 10px;
-    font-family: inherit;
+    border-left: 3px solid var(--border-hi);
+    padding: 10px 12px;
+    font-family: var(--font);
     font-size: 11px;
     resize: vertical;
+    outline: none;
+    border-radius: 0;
+    transition: border-left-color 0.15s;
   }
-  button {
-    background: var(--accent);
-    color: #0a0a0c;
-    border: none;
-    padding: 9px 16px;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-right: 8px;
-    margin-top: 8px;
-  }
-  button:hover { background: var(--accent-dim); }
-  button.secondary {
-    background: transparent;
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-  button.secondary:hover { border-color: var(--accent); color: var(--accent); }
-  button:disabled { opacity: 0.35; cursor: not-allowed; }
-  .status {
-    font-size: 12px;
-    padding: 8px 12px;
-    border-radius: 4px;
-    margin-top: 10px;
-  }
-  .status.ok { background: rgba(61,220,151,0.1); color: var(--accent); border: 1px solid var(--accent-dim); }
-  .status.warn { background: rgba(245,166,35,0.1); color: var(--warn); border: 1px solid var(--warn); }
-  .status.err { background: rgba(229,92,92,0.1); color: var(--err); border: 1px solid var(--err); }
-  .status.info { background: rgba(96,165,250,0.1); color: var(--info); border: 1px solid var(--info); }
-  table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 500; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; position: sticky; top: 0; background: var(--panel); }
-  td.num { text-align: right; font-variant-numeric: tabular-nums; }
-  tr:hover td { background: rgba(61,220,151,0.04); }
-  .preview-wrap { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
-  .stat { background: #0a0a0c; border: 1px solid var(--border); border-radius: 4px; padding: 10px; }
-  .stat .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .stat .value { font-size: 18px; color: var(--accent); font-weight: 600; margin-top: 2px; }
-  .folder-status { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
-  .folder-status.set { color: var(--accent); }
-  .overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  textarea:focus { border-left-color: var(--accent-dim); }
+  textarea::placeholder { color: var(--muted); }
 
-  /* YieldSeeker panel styles */
-  .ys-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
+  /* ── BUTTONS ── */
+  button {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+    padding: 7px 15px;
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 0;
+    margin-right: 6px;
+    margin-top: 10px;
+    transition: background 0.1s, border-color 0.1s;
   }
+  button:hover { background: var(--accent-lo); border-color: var(--accent); }
+  button.secondary { color: var(--muted-mid); border-color: var(--border-hi); }
+  button.secondary:hover { color: var(--text); border-color: var(--muted-mid); background: transparent; }
+  button:disabled { opacity: 0.28; cursor: not-allowed; }
+  button:disabled:hover { background: transparent; border-color: inherit; color: inherit; }
+
+  /* ── STATUS MESSAGES ── */
+  .status {
+    font-size: 11px;
+    padding: 8px 12px;
+    margin-top: 10px;
+    border-left: 3px solid;
+    letter-spacing: 0.02em;
+  }
+  .status.ok   { background: var(--accent-glow); color: var(--accent); border-color: var(--accent-dim); }
+  .status.warn { background: var(--warn-dim);    color: var(--warn);   border-color: var(--warn); }
+  .status.err  { background: var(--err-dim);     color: var(--err);    border-color: var(--err); }
+  .status.info { background: var(--info-dim);    color: var(--info);   border-color: var(--info); }
+
+  /* ── PREVIEW ── */
+  .preview-wrap {
+    max-height: 420px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-hi) transparent;
+  }
+  .preview-wrap::-webkit-scrollbar { width: 4px; }
+  .preview-wrap::-webkit-scrollbar-thumb { background: var(--border-hi); }
+
+  /* ── STAT CARDS ── */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+  .stat {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--border-hi);
+    padding: 12px 14px;
+  }
+  .stat .label { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 5px; }
+  .stat .value { font-size: 22px; color: var(--accent); font-weight: 300; letter-spacing: -0.02em; line-height: 1.1; }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th {
+    text-align: left;
+    padding: 6px 8px;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border-bottom: 1px solid var(--border-hi);
+    position: sticky;
+    top: 0;
+    background: var(--panel);
+    white-space: nowrap;
+  }
+  td { padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted-mid); }
+  tr:hover td { background: var(--accent-glow); }
+
+  code {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    font-family: var(--font);
+    font-size: 11px;
+    color: var(--accent-dim);
+  }
+
+  /* ── OVERVIEW ── */
+  .overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+  /* ── YIELDSEEKER ── */
+  .ys-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .ys-fee-warning {
-    background: rgba(229,92,92,0.12);
+    background: var(--err-dim);
     border: 1px solid var(--err);
-    border-radius: 4px;
+    border-left: 4px solid var(--err);
     padding: 10px 14px;
     margin-bottom: 14px;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--err);
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: flex-start;
+    gap: 12px;
+    letter-spacing: 0.02em;
   }
-  .ys-fee-warning strong { font-size: 13px; }
+  .ys-fee-warning strong { font-size: 12px; letter-spacing: 0.04em; }
   .ys-card {
-    background: #0a0a0c;
+    background: var(--panel-hi);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 14px;
-    margin-bottom: 8px;
+    padding: 12px 16px;
+    margin-bottom: 6px;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto;
     gap: 10px;
     align-items: center;
+    transition: border-color 0.15s;
+    border-radius: 0;
   }
-  .ys-card.eligible { border-left: 3px solid var(--accent); }
+  .ys-card:hover { border-color: var(--border-hi); }
+  .ys-card.eligible   { border-left: 3px solid var(--accent); }
   .ys-card.ineligible { border-left: 3px solid var(--err); opacity: 0.6; }
-  .ys-card.no-data { border-left: 3px solid var(--muted); opacity: 0.5; }
+  .ys-card.no-data    { border-left: 3px solid var(--border-hi); opacity: 0.5; }
   .ys-card .ys-name { font-weight: 600; font-size: 12px; color: var(--text); }
-  .ys-card .ys-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
-  .ys-apy { font-size: 20px; font-weight: 700; color: var(--accent); }
+  .ys-card .ys-sub  { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .ys-apy { font-size: 22px; font-weight: 300; color: var(--accent); letter-spacing: -0.02em; line-height: 1; }
   .ys-apy.warn { color: var(--warn); }
-  .ys-apy.err { color: var(--err); }
+  .ys-apy.err  { color: var(--err); }
   .ys-badge {
     display: inline-block;
-    font-size: 10px;
+    font-size: 9px;
     padding: 2px 6px;
-    border-radius: 3px;
-    font-weight: 600;
-    margin-top: 4px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 3px;
+    border-radius: 0;
   }
-  .ys-badge.pass { background: rgba(61,220,151,0.15); color: var(--accent); }
-  .ys-badge.fail { background: rgba(229,92,92,0.15); color: var(--err); }
-  .ys-badge.warn { background: rgba(245,166,35,0.15); color: var(--warn); }
-  .ys-badge.info { background: rgba(96,165,250,0.15); color: var(--info); }
+  .ys-badge.pass { background: var(--accent-lo);  color: var(--accent); border: 1px solid var(--accent-dim); }
+  .ys-badge.fail { background: var(--err-dim);    color: var(--err);    border: 1px solid var(--err); }
+  .ys-badge.warn { background: var(--warn-dim);   color: var(--warn);   border: 1px solid var(--warn); }
+  .ys-badge.info { background: var(--info-dim);   color: var(--info);   border: 1px solid var(--info); }
   .ys-metric { font-size: 11px; }
-  .ys-metric .label { color: var(--muted); font-size: 10px; text-transform: uppercase; }
-  .ys-metric .val { color: var(--text); font-weight: 500; margin-top: 2px; }
-  .ys-metric .val.ok { color: var(--accent); }
+  .ys-metric .label { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; }
+  .ys-metric .val { color: var(--text); font-weight: 500; margin-top: 3px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .ys-metric .val.ok   { color: var(--accent); }
   .ys-metric .val.warn { color: var(--warn); }
-  .ys-metric .val.err { color: var(--err); }
+  .ys-metric .val.err  { color: var(--err); }
   .ys-reasons { font-size: 10px; color: var(--err); margin-top: 4px; }
-  .morpho-loading { color: var(--muted); font-size: 11px; font-style: italic; }
-  .ys-empty { color: var(--muted); font-size: 12px; padding: 20px; text-align: center; }
-  .ys-section-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 12px 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  .morpho-loading { color: var(--muted); font-size: 10px; font-style: italic; }
+  .ys-empty { color: var(--muted); font-size: 12px; padding: 24px; text-align: center; letter-spacing: 0.05em; }
+  .ys-section-label {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin: 14px 0 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
 </style>
 </head>
 <body>
 
-<h1>DeFi Yield Tracker</h1>
-<div class="sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-23a</div>
+<!-- APP BAR -->
+<div class="app-bar">
+  <div>
+    <div class="app-name">DeFi Yield Tracker</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-23x</div>
+  </div>
+  <div class="signal-badge">
+    <span class="signal-dot"></span>
+    Signal
+  </div>
+</div>
 
-<!-- ===== FOLDER ===== -->
+<!-- 01 FOLDER -->
 <div class="panel">
-  <h2>1. Folder</h2>
+  <h2>01 — Folder</h2>
   <div id="folderStatus" class="folder-status">No folder selected. Click below to pick your YieldTracking folder.</div>
   <button id="pickFolder">Pick Folder</button>
   <button id="reconnectFolder" class="secondary" style="display:none;">Reconnect</button>
   <button id="clearFolder" class="secondary">Forget Folder</button>
 </div>
 
-<!-- ===== PASTE ===== -->
+<!-- 02 FETCH -->
 <div class="panel">
-  <h2>2. Paste Scrape Data</h2>
-  <textarea id="input" placeholder="Paste DefiLlama scrape here (tab-separated rows from the bookmarklet)..."></textarea>
-  <button id="parse">Parse Data</button>
-  <button id="loadClipboard" class="secondary">Paste from Clipboard</button>
-  <button id="clearInput" class="secondary">Clear</button>
-  <div id="parseStatus"></div>
-  <div id="morphoFetchRow" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+  <h2>02 — Fetch Live Data</h2>
+  <div id="dlFilterSummary" style="font-size:11px; color:var(--muted); margin-bottom:12px;">Loading filter config…</div>
+  <div>
+    <button id="fetchDL">Fetch from DefiLlama</button>
+    <button id="clearInput" class="secondary">Clear Data</button>
+  </div>
+  <div id="fetchStatus"></div>
+  <div id="morphoFetchRow" style="display:none; margin-top:14px; padding-top:12px; border-top:1px solid var(--border);">
     <button id="fetchMorpho">Fetch Protocol Data</button>
-    <span style="font-size:11px; color:var(--muted); margin-left:8px;">Enriches Morpho vaults with live liquidity, supply cap & collateral data before saving.</span>
+    <span style="font-size:11px; color:var(--muted); margin-left:8px;">Enriches Morpho vaults with live liquidity, supply cap &amp; collateral data before saving.</span>
     <div id="morphoStatus"></div>
   </div>
 </div>
 
-<!-- ===== PREVIEW ===== -->
+<!-- 03 PREVIEW -->
 <div class="panel" id="previewPanel" style="display:none;">
-  <h2>3. Preview</h2>
+  <h2>03 — Preview</h2>
   <div class="stats" id="stats"></div>
-  <div id="sortWarning" style="display:none; margin-bottom:12px;"></div>
   <div class="preview-wrap">
     <table id="preview"></table>
   </div>
 </div>
 
-<!-- ===== SAVE ===== -->
+<!-- 04 SAVE -->
 <div class="panel" id="savePanel" style="display:none;">
-  <h2>4. Save</h2>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">
-    Will save to: <code id="saveTarget"></code>
+  <h2>04 — Save</h2>
+  <div style="font-size:11px; color:var(--muted); margin-bottom:10px;">
+    Target: <code id="saveTarget"></code>
   </div>
   <button id="save">Save Snapshot + Append to Master</button>
   <button id="download" class="secondary">Download Only</button>
   <div id="saveStatus"></div>
 </div>
 
-<!-- ===== YIELDSEEKER ===== -->
+<!-- 05 YIELDSEEKER -->
 <div class="panel">
   <div class="ys-header">
-    <h2 style="margin:0;">⚡ YieldSeeker — Eligible Vaults</h2>
+    <h2 style="margin:0; border:none; padding:0;">05 — YieldSeeker · Eligible Vaults</h2>
   </div>
 
   <div class="ys-fee-warning">
-    <span style="font-size:18px;">🚨</span>
+    <span style="font-size:16px; flex-shrink:0; margin-top:1px;">⚠</span>
     <div>
       <strong>COMPULSORY MANUAL CHECK BEFORE ANY ENTRY</strong><br>
       Verify withdrawal fee ≤ 0.005% on the protocol's own app. This cannot be automated.
@@ -222,14 +391,14 @@
   </div>
 
   <div id="ysContent">
-    <div class="ys-empty">Parse today's scrape data above to populate YieldSeeker, or click Refresh Morpho Data for live vault status.</div>
+    <div class="ys-empty">Parse today's scrape data above to populate YieldSeeker, or click Fetch Protocol Data for live vault status.</div>
   </div>
 </div>
 
-<!-- ===== OVERVIEW ===== -->
+<!-- 06 OVERVIEW -->
 <div class="panel">
-  <h2>Data Overview</h2>
-  <div id="overview">No folder selected yet.</div>
+  <h2>06 — Data Overview</h2>
+  <div id="overview" style="color:var(--muted); font-size:12px;">No folder selected yet.</div>
 </div>
 
 <script>
@@ -250,20 +419,20 @@ const YS_VAULTS = [
   {
     name: '40 Acres USDC Vault',
     match: { pool: /40 acres/i, project: /harvest/i },
-    maxAlloc: 0.5, // 50% of portfolio
     morpho: null,
-    type: 'aggregator'
+    type: 'aggregator',
+    blockedReason: 'No exit liquidity — funds cannot be withdrawn'
   },
   {
     name: 'Steakhouse High Yield USDC v1.1',
-    match: { project: /morpho/i, pool: /steakusdc/i },
-    morpho: { address: '0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB', chainId: 1 },
+    match: { project: /morpho/i, pool: /bbqusdc/i },   // renamed on-chain from steakUSDC → bbqUSDC
+    morpho: { address: '0xBEEFA7B88064FeEF0cEe02AAeBBd95D30df3878F', chainId: 8453 },
     type: 'lending'
   },
   {
     name: 'Steakhouse Prime USDC',
-    match: { project: /morpho/i, pool: /steakusdcp/i },
-    morpho: { address: '0xbeef047a543e45807105e51a8bbefcc5950fcfba', chainId: 8453 },
+    match: { project: /morpho/i, pool: /^steakusdc$/i }, // Morpho API symbol: steakUSDC
+    morpho: { address: '0xBEEFE94c8aD530842bfE7d8B397938fFc1cb83b2', chainId: 8453 },
     type: 'lending'
   },
   {
@@ -292,7 +461,19 @@ const YS_VAULTS = [
   },
   {
     name: 'Tokemak baseUSD',
-    match: { project: /tokemak/i, chain: /base/i },
+    match: { project: /tokemak/i, pool: /baseusd/i },
+    morpho: null,
+    type: 'aggregator'
+  },
+  {
+    name: 'Otto Earns ottoUSD',
+    match: { project: /tokemak/i, pool: /ottousd/i },
+    morpho: null,
+    type: 'aggregator'
+  },
+  {
+    name: 'AlphaGrowth USDC',
+    match: { project: /alphagrowth/i },
     morpho: null,
     type: 'lending'
   },
@@ -305,10 +486,65 @@ const YS_VAULTS = [
   },
   {
     name: 'Yearn OG USDC',
-    match: { project: /morpho/i, pool: /re7usdc|yearn.*og|og.*usdc/i },
+    match: { project: /morpho/i, pool: /ymvog.?usdc|re7usdc/i }, // Morpho symbol: ymvOG-USDC
     morpho: { address: '0xef417a2512C5a41f69AE4e021648b69a7CdE5D03', chainId: 8453 },
     type: 'lending'
-  }
+  },
+  {
+    name: 'UltraYield USDC',
+    match: { project: /morpho/i, pool: /edgeusdc|ultra.*usdc/i }, // Morpho symbol: edgeUSDC
+    morpho: { address: '0x5435BC53f2C61298167cdB11Cdf0Db2BFa259ca0', chainId: 8453 },
+    type: 'lending'
+  },
+  {
+    name: 'Moonwell Ecosystem USDC Vault',
+    match: { project: /morpho/i, pool: /meusdc|mwusdc/i, chain: /base/i }, // Morpho symbol: meUSDC
+    morpho: { address: '0xE1bA476304255353aEF290e6474A417D06e7b773', chainId: 8453 },
+    type: 'lending'
+  },
+  {
+    name: 'Clearstar USDC Reactor',
+    match: { project: /morpho/i, pool: /^csusdc$/i }, // Morpho symbol: CSUSDC
+    morpho: { address: '0x1D3b1Cd0a0f242d598834b3F2d126dC6bd774657', chainId: 8453 },
+    type: 'lending'
+  },
+  {
+    name: 'Clearstar Boring USDC',
+    match: { project: /morpho/i, pool: /^csborusdc$/i }, // Morpho symbol: CSBORUSDC
+    morpho: { address: '0x43e623Ff7D14d5b105F7bE9c488F36dbF11D1F46', chainId: 8453 },
+    type: 'lending'
+  },
+  {
+    name: 'Yield Clearstar USDC',
+    match: { project: /morpho/i, pool: /^ycsusdc$/i }, // Morpho symbol: YCSUSDC ✓
+    morpho: { address: '0xE74c499fA461AF1844fCa84204490877787cED56', chainId: 8453 },
+    type: 'lending'
+  },
+  {
+    name: 'Gauntlet USDC Core',
+    match: { project: /morpho/i, pool: /^gtusdcc$/i, chain: /base/i }, // Morpho symbol: gtUSDCc ✓
+    morpho: { address: '0xc0c5689e6f4D256E861F65465b691aeEcC0dEb12', chainId: 8453 },
+    type: 'lending'
+  },
+  {
+    name: 'Gauntlet USDC Prime',
+    match: { project: /morpho/i, pool: /^gtusdcp$/i, chain: /base/i }, // Morpho symbol: gtUSDCp ✓
+    morpho: { address: '0xeE8F4eC5672F09119b96Ab6fB59C27E1b7e44b61', chainId: 8453 },
+    type: 'lending'
+  },
+  {
+    name: 'Fluid USD Coin',
+    match: { project: /fluid/i, pool: /^usdc$/i, chain: /base/i },
+    morpho: null,
+    type: 'lending'
+  },
+  {
+    name: 'Avantis USDC Vault',
+    match: { project: /avantis/i, chain: /base/i },
+    morpho: null,
+    type: 'lending',
+    blockedReason: 'Withdrawal fee > 0.005% — manually verified too high'
+  },
 ];
 
 function matchVault(row, vault) {
@@ -319,11 +555,423 @@ function matchVault(row, vault) {
   return true;
 }
 
-// ============ Off-chain vaults (vaults.fyi API) ============
-// Revert Lend and Tokemak are not on DefiLlama.
-// Auth: x-api-key header. No PRO required for detailed-vaults endpoints.
+// ============ DefiLlama API ============
 
 let vaultsFyiApiKey = '';
+
+// Vaults not listed on DefiLlama — fetched via vaults.fyi if API key present.
+// Silently skipped (no error shown) if the key is missing or vault not indexed.
+// liquidityRpc: if present, calls token.balanceOf(vaultAddress) on-chain to get
+// available withdrawal liquidity (applicable to direct lending pools like Revert).
+const OFFCHAIN_VAULTS = [
+  {
+    name: 'Revert Lend Base USDC',
+    address: '0x36AEAe0E411a1E28372e0d66f02E57744EbE7599',
+    network: 'base', chain: 'Base', project: 'Revert Lend', pool: 'USDC',
+    matchRe: { project: /revert/i, chain: /base/i },
+    liquidityRpc: {
+      rpc: 'https://base.drpc.org',
+      token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
+      decimals: 6
+    }
+  },
+  {
+    name: 'Tokemak baseUSD',
+    address: '0x9c6864105AEC23388C89600046213a44C384c831',
+    network: 'base', chain: 'Base', project: 'Tokemak', pool: 'baseUSD',
+    matchRe: { project: /tokemak/i, pool: /baseusd/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true }
+    // no liquidityRpc — aggregator deploys to underlying protocols
+  },
+  {
+    name: 'Otto Earns ottoUSD',
+    address: '0xc8Fdf193f4837BD2c181658488953afC9c044e1F',
+    network: 'base', chain: 'Base', project: 'Tokemak', pool: 'ottoUSD',
+    matchRe: { project: /tokemak/i, pool: /ottousd/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
+    // no liquidityRpc — aggregator
+  },
+  {
+    name: '40 Acres USDC Vault',
+    address: '0xB99B6dF96d4d5448cC0a5B3e0ef7896df9507Cf5',
+    network: 'base', chain: 'Base', project: 'Harvest Finance', pool: '40 Acres',
+    matchRe: { pool: /40 acres/i, project: /harvest/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true }
+    // aggregator — no liquidityRpc; blocked in YS (no exit liquidity)
+  },
+  {
+    name: 'AlphaGrowth USDC Base Vault',
+    address: '0x4C1aeda9B43EfcF1da1d1755b18802aAbe90f61E',
+    network: 'base', chain: 'Base', project: 'AlphaGrowth', pool: 'USDC',
+    matchRe: { project: /alphagrowth/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true },
+    liquidityRpc: { rpc: 'https://base.drpc.org', token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 }
+  },
+  {
+    name: 'yoVaultUSD',
+    address: '0x0000000f2eB9f69274678c76222B35eEc7588a65',
+    network: 'base', chain: 'Base', project: 'Yo', pool: 'yoVaultUSD',
+    matchRe: { pool: /yovault/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true }
+    // no liquidityRpc — aggregator
+  },
+  // Morpho vaults — pool names match actual on-chain ERC20 symbols (verified via Morpho API)
+  {
+    name: 'Steakhouse High Yield USDC v1.1',
+    address: '0xBEEFA7B88064FeEF0cEe02AAeBBd95D30df3878F',
+    network: 'base', chain: 'Base', project: 'Morpho', pool: 'bbqUSDC',
+    matchRe: { project: /morpho/i, pool: /bbqusdc/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
+  },
+  {
+    name: 'Steakhouse Prime USDC',
+    address: '0xBEEFE94c8aD530842bfE7d8B397938fFc1cb83b2',
+    network: 'base', chain: 'Base', project: 'Morpho', pool: 'steakUSDC',
+    matchRe: { project: /morpho/i, pool: /^steakusdc$/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
+  },
+  {
+    name: 'Spark USDC Vault',
+    address: '0x7BfA7C4f149E7415b73bdeDfe609237e29CBF34A',
+    network: 'base', chain: 'Base', project: 'Morpho', pool: 'sparkUSDC',
+    matchRe: { project: /morpho/i, pool: /sparkusdc/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
+  },
+  {
+    name: 'Yearn OG USDC',
+    address: '0xef417a2512C5a41f69AE4e021648b69a7CdE5D03',
+    network: 'base', chain: 'Base', project: 'Morpho', pool: 'ymvOG-USDC',
+    matchRe: { project: /morpho/i, pool: /ymvog.?usdc/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
+  },
+  {
+    name: 'UltraYield USDC',
+    address: '0x5435BC53f2C61298167cdB11Cdf0Db2BFa259ca0',
+    network: 'base', chain: 'Base', project: 'Morpho', pool: 'edgeUSDC',
+    matchRe: { project: /morpho/i, pool: /edgeusdc/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
+  },
+  {
+    name: 'Gauntlet USDC Core',
+    address: '0xc0c5689e6f4D256E861F65465b691aeEcC0dEb12',
+    network: 'base', chain: 'Base', project: 'Morpho', pool: 'gtUSDCc',
+    matchRe: { project: /morpho/i, pool: /^gtusdcc$/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
+  },
+  {
+    name: 'Gauntlet USDC Prime',
+    address: '0xeE8F4eC5672F09119b96Ab6fB59C27E1b7e44b61',
+    network: 'base', chain: 'Base', project: 'Morpho', pool: 'gtUSDCp',
+    matchRe: { project: /morpho/i, pool: /^gtusdcp$/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
+  },
+  {
+    name: 'Clearstar USDC Reactor',
+    address: '0x1D3b1Cd0a0f242d598834b3F2d126dC6bd774657',
+    network: 'base', chain: 'Base', project: 'Morpho', pool: 'CSUSDC',
+    matchRe: { project: /morpho/i, pool: /^csusdc$/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
+  },
+  {
+    name: 'Clearstar Boring USDC',
+    address: '0x43e623Ff7D14d5b105F7bE9c488F36dbF11D1F46',
+    network: 'base', chain: 'Base', project: 'Morpho', pool: 'CSBORUSDC',
+    matchRe: { project: /morpho/i, pool: /^csborusdc$/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
+  },
+  {
+    name: 'Yield Clearstar USDC',
+    address: '0xE74c499fA461AF1844fCa84204490877787cED56',
+    network: 'base', chain: 'Base', project: 'Morpho', pool: 'YCSUSDC',
+    matchRe: { project: /morpho/i, pool: /^ycsusdc$/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
+  },
+];
+
+// Free Base RPC endpoints — tried in order on failure.
+// mainnet.base.org is last: it 429s fastest under sequential load.
+// llamarpc excluded: SSL 525 errors.
+const BASE_RPC_ENDPOINTS = [
+  'https://base.drpc.org',
+  'https://base-rpc.publicnode.com',
+  'https://rpc.ankr.com/base',
+  'https://mainnet.base.org',
+];
+
+// Low-level eth_call with multi-endpoint fallback + one retry pass.
+// Contract reverts ("execution reverted") bail immediately — all endpoints agree.
+// Rate-limit / server errors continue to the next endpoint.
+async function rpcCall(rpc, to, data, blockTag = 'latest') {
+  const payload = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call',
+    params: [{ from: '0x0000000000000000000000000000000000000001', to, data }, blockTag] });
+  const endpoints = [rpc, ...BASE_RPC_ENDPOINTS.filter(e => e !== rpc)];
+
+  for (let pass = 0; pass < 2; pass++) {
+    if (pass === 1) await new Promise(r => setTimeout(r, 600));
+    for (const endpoint of endpoints) {
+      try {
+        const resp = await fetch(endpoint, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload
+        });
+        if (!resp.ok) continue;
+        const json = await resp.json();
+        if (json.error) {
+          const msg = (json.error.message ?? '').toLowerCase();
+          if (msg.includes('execution reverted') || msg.includes('revert')) return null;
+          continue; // rate-limit or server error — try next endpoint
+        }
+        if (!json.result || json.result === '0x') return null;
+        return json.result;
+      } catch { /* network error — try next endpoint */ }
+    }
+  }
+  return null;
+}
+
+// Derive annualised APY from ERC4626 share price growth over ~24h.
+// Calls convertToAssets(1e18) at current block and ~43200 blocks ago (~24h on Base).
+// Returns APY % or null if either call fails / vault too young.
+async function fetchSharePriceApy(address, rpc) {
+  // Get current block number
+  const bnPayload = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [] });
+  let currentBlock = null;
+  const endpoints = [rpc, ...BASE_RPC_ENDPOINTS.filter(e => e !== rpc)];
+  for (const ep of endpoints) {
+    try {
+      const r = await fetch(ep, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bnPayload });
+      if (!r.ok) continue;
+      const j = await r.json();
+      if (j.result) { currentBlock = parseInt(j.result, 16); break; }
+    } catch {}
+  }
+  if (!currentBlock) return null;
+
+  // convertToAssets(uint256) selector 0x07a2d13a, arg = 1e18
+  const callData = '0x07a2d13a0000000000000000000000000000000000000000000000000de0b6b3a7640000';
+  const blockNow  = '0x' + currentBlock.toString(16);
+  const blockPast = '0x' + (currentBlock - 43200).toString(16);
+
+  const [r1, r2] = await Promise.allSettled([
+    rpcCall(rpc, address, callData, blockNow),
+    rpcCall(rpc, address, callData, blockPast)
+  ]);
+  const p1 = (r1.status === 'fulfilled' && r1.value) ? BigInt(r1.value) : null;
+  const p2 = (r2.status === 'fulfilled' && r2.value) ? BigInt(r2.value) : null;
+  if (!p1 || !p2 || p2 === 0n) return null;
+
+  const dailyReturn = Number(p1 - p2) / Number(p2);
+  if (dailyReturn <= 0) return null;
+  return ((1 + dailyReturn) ** 365 - 1) * 100;
+}
+
+// ERC20 balanceOf(holder) → token amount in human units (divided by 10^decimals).
+async function fetchTokenBalance(rpc, tokenAddress, holderAddress, decimals) {
+  const data = '0x70a08231' + holderAddress.slice(2).toLowerCase().padStart(64, '0');
+  const hex = await rpcCall(rpc, tokenAddress, data);
+  return hex === null ? null : parseInt(hex, 16) / Math.pow(10, decimals);
+}
+
+// Aave V3 Base USDC — APY, liquidity and borrow utilization via on-chain reads.
+// APY: Pool.getReserveData(USDC) → currentLiquidityRate (slot 2, RAY = 1e27)
+// available = USDC.balanceOf(aUSDC)  →  cash available for withdrawal
+// utilization = 1 - available / aUSDC.totalSupply()
+const AAVE_BASE_RPC   = 'https://base.drpc.org';
+const AAVE_BASE_USDC  = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+const AAVE_BASE_aUSDC = '0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB';
+const AAVE_BASE_POOL  = '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5';
+
+async function fetchAaveLiquidity() {
+  try {
+    const balData     = '0x70a08231' + AAVE_BASE_aUSDC.slice(2).padStart(64, '0'); // balanceOf(aUSDC)
+    const supData     = '0x18160ddd';                                                // totalSupply()
+    // getReserveData(address) — currentLiquidityRate is ABI slot 2 (bytes 64-95)
+    const reserveData = '0x35ea6a75' + '000000000000000000000000' + AAVE_BASE_USDC.slice(2).toLowerCase();
+    const [balHex, supHex, reserveHex] = await Promise.all([
+      rpcCall(AAVE_BASE_RPC, AAVE_BASE_USDC, balData),
+      rpcCall(AAVE_BASE_RPC, AAVE_BASE_aUSDC, supData),
+      rpcCall(AAVE_BASE_RPC, AAVE_BASE_POOL, reserveData)
+    ]);
+
+    // APY: currentLiquidityRate at slot 2 → chars 130–193 of the hex result
+    let apy = null;
+    if (reserveHex && reserveHex.length >= 194) {
+      const rateRay = parseInt(reserveHex.slice(130, 194), 16) / 1e27; // annual linear rate
+      apy = parseFloat(((Math.pow(1 + rateRay / 31536000, 31536000) - 1) * 100).toFixed(4));
+    }
+
+    if (!balHex || !supHex) return;
+    const available   = parseInt(balHex, 16) / 1e6;
+    const totalSupply = parseInt(supHex, 16) / 1e6;
+    if (totalSupply <= 0) return;
+    const util = parseFloat(((1 - available / totalSupply) * 100).toFixed(2));
+
+    let row = parsedRows.find(r =>
+      /aave/i.test(r.project) && /usdc/i.test(r.pool) && /base/i.test(r.chain)
+    );
+    if (row) {
+      row.avail_liquidity = available;
+      row.supply_cap_util = util;
+      if (apy !== null) { row.apy = apy; row.base_apy = apy; }
+    } else {
+      const tvlDisplay = totalSupply >= 1e6 ? `$${(totalSupply/1e6).toFixed(2)}m`
+        : totalSupply >= 1e3 ? `$${(totalSupply/1e3).toFixed(1)}k` : `$${totalSupply.toFixed(0)}`;
+      parsedRows.push({
+        pool: 'USDC', project: 'aave v3', chain: 'Base',
+        tvl_display: tvlDisplay, tvl: totalSupply,
+        apy, base_apy: apy, reward_apy: null,
+        base_apy_7d: null, il_7d: null,
+        avg_30d: null, inception_apy: null, top_10_pct: null,
+        total_pool: totalSupply, total_borrowed: null,
+        avail_liquidity: available, supply_cap_util: util, collateral_exposure: null,
+        raw: ''
+      });
+    }
+  } catch { /* silently fail — DefiLlama data still intact */ }
+}
+
+async function fetchOffchainVaults() {
+  const vfyBase = 'https://api.vaults.fyi/v2/detailed-vaults';
+  const vfyHeaders = { 'x-api-key': vaultsFyiApiKey };
+  let fetched = 0;
+
+  for (const vault of OFFCHAIN_VAULTS) {
+    // Skip if DefiLlama already returned data for this vault
+    const alreadyPresent = parsedRows.find(r =>
+      (!vault.matchRe.project || vault.matchRe.project.test(r.project)) &&
+      (!vault.matchRe.pool    || vault.matchRe.pool.test(r.pool)) &&
+      (!vault.matchRe.chain   || vault.matchRe.chain.test(r.chain))
+    );
+    if (alreadyPresent) {
+      if (/40 acres|tokemak|otto/i.test(vault.name))
+        console.log('[YT]', vault.name, 'alreadyPresent in DL rows — skipping fetch');
+      fetched++; continue;
+    }
+
+    // ── Attempt 1: vaults.fyi (APY + TVL) ──────────────────────────────
+    let vfyOk = false;
+    if (vaultsFyiApiKey) {
+      try {
+        const [apyRes, vaultRes] = await Promise.allSettled([
+          fetch(`${vfyBase}/${vault.network}/${vault.address}/apy`, { headers: vfyHeaders }),
+          fetch(`${vfyBase}/${vault.network}/${vault.address}`, { headers: vfyHeaders })
+        ]);
+        if (/40 acres|tokemak|otto|alphagrowth|yovault|spark|moonwell/i.test(vault.name))
+          console.log('[YT]', vault.name, 'vfy:', apyRes.status, apyRes.value?.status ?? apyRes.reason?.message ?? String(apyRes.reason));
+        if (apyRes.status === 'fulfilled' && apyRes.value.ok) {
+          const apyData = await apyRes.value.json();
+          if (/40 acres|tokemak|otto|alphagrowth|yovault/i.test(vault.name))
+            console.log('[YT]', vault.name, 'vfy APY data:', JSON.stringify(apyData).slice(0, 200));
+          let tvl = 0;
+          if (vaultRes.status === 'fulfilled' && vaultRes.value.ok) {
+            const vd = await vaultRes.value.json();
+            tvl = parseFloat(vd?.tvl?.usd ?? vd?.totalAssets?.usd ?? 0);
+          }
+          // vaults.fyi sometimes omits TVL — fall back to on-chain totalAssets()
+          if (tvl === 0 && vault.erc4626) {
+            const hex = await rpcCall(vault.erc4626.rpc, vault.address, '0x01e1d114').catch(() => null);
+            if (hex) tvl = parseInt(hex, 16) / Math.pow(10, vault.erc4626.decimals);
+          }
+          const apy1d    = (apyData['1day']?.total  ?? 0) * 100;
+          const base1d   = (apyData['1day']?.base   ?? 0) * 100;
+          const reward1d = (apyData['1day']?.reward ?? 0) * 100;
+          const avg30d   = (apyData['30day']?.total ?? 0) * 100;
+          const tvlDisplay = tvl >= 1e6 ? `$${(tvl/1e6).toFixed(2)}m`
+            : tvl >= 1e3 ? `$${(tvl/1e3).toFixed(1)}k` : `$${tvl.toFixed(0)}`;
+
+          let avail_liquidity = null;
+          if (vault.liquidityRpc) {
+            avail_liquidity = await fetchTokenBalance(
+              vault.liquidityRpc.rpc, vault.liquidityRpc.token,
+              vault.address, vault.liquidityRpc.decimals
+            ).catch(() => null);
+          }
+
+          parsedRows.push({
+            pool: vault.pool, project: vault.project, chain: vault.chain,
+            tvl_display: tvlDisplay, tvl,
+            apy: apy1d, base_apy: base1d, reward_apy: reward1d || null,
+            base_apy_7d: null, il_7d: null,
+            avg_30d: avg30d, inception_apy: null, top_10_pct: null,
+            total_pool: tvl, total_borrowed: null,
+            avail_liquidity, supply_cap_util: null, collateral_exposure: null,
+            raw: ''
+          });
+          fetched++;
+          vfyOk = true;
+        }
+      } catch { /* CORS or not indexed — fall through to ERC4626 */ }
+    }
+
+    // ── Attempt 2: ERC4626 on-chain fallback (TVL + optional share-price APY) ──
+    if (!vfyOk && vault.erc4626) {
+      try {
+        const { rpc, decimals } = vault.erc4626;
+        const assetsHex = await rpcCall(rpc, vault.address, '0x01e1d114'); // totalAssets()
+        if (/40 acres|tokemak|otto|alphagrowth|yovault|spark|moonwell/i.test(vault.name))
+          console.log('[YT]', vault.name, 'erc4626:', assetsHex ? 'OK hex=' + assetsHex.slice(0,18) : 'NULL');
+        if (!assetsHex) continue;
+        const tvl = parseInt(assetsHex, 16) / Math.pow(10, decimals);
+        const tvlDisplay = tvl >= 1e6 ? `$${(tvl/1e6).toFixed(2)}m`
+          : tvl >= 1e3 ? `$${(tvl/1e3).toFixed(1)}k` : `$${tvl.toFixed(0)}`;
+
+        // Optional: derive APY from share price growth over ~24h (convertToAssets)
+        let derivedApy = null;
+        if (vault.erc4626.shareApy) {
+          derivedApy = await fetchSharePriceApy(vault.address, rpc).catch(() => null);
+          if (/40 acres|tokemak|alphagrowth|yovault/i.test(vault.name))
+            console.log('[YT]', vault.name, 'shareApy:', derivedApy !== null ? derivedApy.toFixed(4) + '%' : 'null');
+        }
+
+        // Lending vaults: also fetch idle cash as available liquidity
+        let avail_liquidity = null;
+        if (vault.liquidityRpc) {
+          avail_liquidity = await fetchTokenBalance(
+            vault.liquidityRpc.rpc, vault.liquidityRpc.token,
+            vault.address, vault.liquidityRpc.decimals
+          ).catch(() => null);
+        }
+
+        parsedRows.push({
+          pool: vault.pool, project: vault.project, chain: vault.chain,
+          tvl_display: tvlDisplay, tvl,
+          apy: derivedApy, base_apy: derivedApy, reward_apy: null,
+          base_apy_7d: null, il_7d: null,
+          avg_30d: null, inception_apy: null, top_10_pct: null,
+          total_pool: tvl, total_borrowed: null,
+          avail_liquidity, supply_cap_util: null, collateral_exposure: null,
+          raw: ''
+        });
+        fetched++;
+      } catch(e) {
+        if (/40 acres|tokemak|otto|alphagrowth|yovault|spark|moonwell/i.test(vault.name))
+          console.log('[YT]', vault.name, 'erc4626 EXCEPTION:', e?.message);
+      }
+    }
+    if (!vfyOk && (!vault.erc4626) && /40 acres|tokemak|otto|alphagrowth|yovault|spark|moonwell/i.test(vault.name))
+      console.log('[YT]', vault.name, 'NO FETCH PATH — no vfy key and no erc4626 config');
+  }
+  return fetched;
+}
+
+let defiLlamaConfig = {
+  chains: ['Base', 'Arbitrum', 'Optimism', 'Polygon', 'Unichain'],
+  minTvl: 500000, maxApy: 50, limit: 100,
+  stablecoinOnly: true, excludeOutliers: true
+};
+
+function updateFilterSummary() {
+  const cfg = defiLlamaConfig;
+  const el = $('dlFilterSummary');
+  if (!el) return;
+  const parts = [];
+  if (cfg.stablecoinOnly) parts.push('Stablecoins only');
+  parts.push(`Chains: ${cfg.chains.join(', ')}`);
+  parts.push(`TVL ≥ $${cfg.minTvl >= 1e6 ? (cfg.minTvl/1e6).toFixed(1)+'m' : (cfg.minTvl/1e3).toFixed(0)+'k'}`);
+  parts.push(`APY ≤ ${cfg.maxApy}%`);
+  if (cfg.excludeOutliers) parts.push('Outliers excluded');
+  parts.push(`Top ${cfg.limit}`);
+  el.textContent = parts.join(' · ');
+}
 
 async function loadConfig() {
   if (!folderHandle) return;
@@ -333,123 +981,91 @@ async function loadConfig() {
     const text = await file.text();
     if (!text.trim()) {
       const template = {
-        _note: 'Paste your vaults.fyi API key between the quotes. Sign up free at https://vaults.fyi/api',
-        vaultsFyiApiKey: ''
+        _note: 'DefiLlama filter settings + vaults.fyi API key for off-chain vaults (Revert, Tokemak).',
+        vaultsFyiApiKey: '',
+        defiLlama: {
+          chains: ['Base', 'Arbitrum', 'Optimism', 'Polygon', 'Unichain'],
+          minTvl: 500000, maxApy: 50, limit: 100,
+          stablecoinOnly: true, excludeOutliers: true
+        }
       };
       await writeFile(folderHandle, 'config.json', JSON.stringify(template, null, 2));
-      vaultsFyiApiKey = '';
-      setStatus('morphoStatus', 'Created config.json — paste your vaults.fyi API key and click Reconnect.', 'warn');
+      updateFilterSummary();
       return;
     }
     const parsed = JSON.parse(text);
-    vaultsFyiApiKey = parsed.vaultsFyiApiKey || '';
-  } catch (e) {
-    setStatus('morphoStatus', `config.json read failed: ${e.message}`, 'warn');
-    vaultsFyiApiKey = '';
-  }
-}
-
-const OFFCHAIN_VAULTS = [
-  {
-    name: 'Revert Lend Base USDC',
-    address: '0x36AEAe0E411a1E28372e0d66f02E57744EbE7599',
-    network: 'base',
-    chain: 'Base', project: 'Revert Lend', pool: 'USDC',
-    matchProject: 'Revert Lend',
-  },
-  {
-    name: 'Tokemak baseUSD',
-    address: '0x9c6864105AEC23388C89600046213a44C384c831',
-    network: 'base',
-    chain: 'Base', project: 'Tokemak', pool: 'baseUSD',
-    matchProject: 'Tokemak',
-  },
-];
-
-const VAULTS_FYI_BASE = 'https://api.vaults.fyi/v2/detailed-vaults';
-
-async function vaultsFyiGet(path) {
-  const resp = await fetch(`${VAULTS_FYI_BASE}${path}`, {
-    headers: { 'x-api-key': vaultsFyiApiKey }
-  });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  return resp.json();
-}
-
-async function fetchVaultsFyi(vault) {
-  try {
-    if (!vaultsFyiApiKey) throw new Error('No API key configured — add vaultsFyiApiKey to config.json and click Reconnect');
-    const [apyData, vaultData] = await Promise.all([
-      vaultsFyiGet(`/${vault.network}/${vault.address}/apy`),
-      vaultsFyiGet(`/${vault.network}/${vault.address}`),
-    ]);
-
-    // APY values are decimals (0.07 = 7%) — multiply by 100
-    const apy1d    = (apyData['1day']?.total  ?? 0) * 100;
-    const base1d   = (apyData['1day']?.base   ?? 0) * 100;
-    const reward1d = (apyData['1day']?.reward ?? 0) * 100;
-    const apy7d    = (apyData['7day']?.total  ?? 0) * 100;
-    const apy30d   = (apyData['30day']?.total ?? 0) * 100;
-
-    const tvl = parseFloat(vaultData?.tvl?.usd ?? vaultData?.totalAssets?.usd ?? 0);
-
-    return {
-      ok: true,
-      apy: apy1d,
-      base_apy: base1d,
-      reward_apy: reward1d,
-      avg_7d: apy7d,
-      avg_30d: apy30d,
-      tvl,
-    };
-  } catch (e) {
-    return { ok: false, error: e.message };
-  }
-}
-
-async function fetchAndEnrichOffchain() {
-  let enriched = 0;
-  const errors = [];
-
-  for (const vault of OFFCHAIN_VAULTS) {
-    const result = await fetchVaultsFyi(vault);
-    if (!result.ok) { errors.push(`${vault.name}: ${result.error}`); continue; }
-
-    let row = parsedRows.find(r =>
-      r.project.toLowerCase().includes(vault.matchProject.toLowerCase()) &&
-      r.chain.toLowerCase() === vault.chain.toLowerCase()
-    );
-
-    const tvlDisplay = result.tvl >= 1e6
-      ? `$${(result.tvl/1e6).toFixed(2)}m`
-      : `$${Math.round(result.tvl).toLocaleString()}`;
-
-    if (!row) {
-      row = {
-        pool: vault.pool, project: vault.project, chain: vault.chain,
-        tvl_display: tvlDisplay, tvl: result.tvl,
-        apy: result.apy, base_apy: result.base_apy, reward_apy: result.reward_apy,
-        base_apy_7d: result.avg_7d, il_7d: null,
-        avg_30d: result.avg_30d, inception_apy: null, top_10_pct: null,
-        total_pool: result.tvl, total_borrowed: null,
-        avail_liquidity: null, supply_cap_util: null,
-        collateral_exposure: null, synthetic: true, raw: ''
-      };
-      parsedRows.push(row);
-    } else {
-      row.tvl = result.tvl;
-      row.tvl_display = tvlDisplay;
-      row.apy = result.apy;
-      row.base_apy = result.base_apy;
-      row.reward_apy = result.reward_apy;
-      row.base_apy_7d = result.avg_7d;
-      row.avg_30d = result.avg_30d;
-      row.total_pool = result.tvl;
+    if (parsed.defiLlama) {
+      defiLlamaConfig = { ...defiLlamaConfig, ...parsed.defiLlama };
     }
-    enriched++;
+    vaultsFyiApiKey = parsed.vaultsFyiApiKey || '';
+    updateFilterSummary();
+  } catch (e) {
+    console.warn('config.json read failed:', e.message);
+    updateFilterSummary();
   }
+}
 
-  return { enriched, errors };
+async function fetchDefiLlama() {
+  const btn = $('fetchDL');
+  btn.disabled = true; btn.textContent = 'Fetching…';
+  setStatus('fetchStatus', 'Querying DefiLlama yields API…', 'info');
+  try {
+    const resp = await fetch('https://yields.llama.fi/pools');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+    const pools = json.data ?? [];
+    const cfg = defiLlamaConfig;
+    const chainSet = new Set(cfg.chains.map(c => c.toLowerCase()));
+    const filtered = pools.filter(p => {
+      if (cfg.stablecoinOnly && !p.stablecoin) return false;
+      if (chainSet.size && !chainSet.has((p.chain||'').toLowerCase())) return false;
+      if ((p.tvlUsd ?? 0) < cfg.minTvl) return false;
+      if (cfg.excludeOutliers && p.outlier) return false;
+      if (p.apy === null || p.apy === undefined || p.apy > cfg.maxApy) return false;
+      return true;
+    });
+    filtered.sort((a, b) => b.apy - a.apy);
+    const top = filtered.slice(0, cfg.limit);
+    parsedRows = top.map(p => {
+      const tvl = p.tvlUsd ?? 0;
+      const tvlDisplay = tvl >= 1e9 ? `$${(tvl/1e9).toFixed(2)}b`
+        : tvl >= 1e6 ? `$${(tvl/1e6).toFixed(2)}m`
+        : tvl >= 1e3 ? `$${(tvl/1e3).toFixed(1)}k`
+        : `$${tvl.toFixed(0)}`;
+      return {
+        pool: p.symbol ?? '',
+        project: (p.project ?? '').replace(/-/g, ' '),
+        chain: p.chain ?? '',
+        tvl_display: tvlDisplay, tvl,
+        apy: p.apy ?? null,
+        base_apy: p.apyBase ?? p.apy ?? null,
+        reward_apy: p.apyReward ?? null,
+        base_apy_7d: p.apyBase7d ?? null,
+        il_7d: p.il7d ?? null,
+        avg_30d: p.apyMean30d ?? null,
+        inception_apy: null, top_10_pct: null,
+        total_pool: tvl,
+        total_borrowed: p.totalBorrowUsd ?? null,
+        avail_liquidity: null, supply_cap_util: null, collateral_exposure: null,
+        raw: ''
+      };
+    });
+    morphoFetched = false;
+    const dlCount = parsedRows.length;
+    const [offchainFetched] = await Promise.all([
+      fetchOffchainVaults(),
+      fetchAaveLiquidity()
+    ]);
+    const offchainNote = offchainFetched > 0 ? ` · +${offchainFetched} off-chain` : vaultsFyiApiKey ? '' : ' · Add vaultsFyiApiKey to config.json for Revert/Tokemak';
+    setStatus('fetchStatus', `✓ ${parsedRows.length} pools · ${dlCount} DefiLlama · ${filtered.length} matched · ${pools.length} total${offchainNote}`, 'ok');
+    $('morphoFetchRow').style.display = 'block';
+    $('morphoStatus').innerHTML = '';
+    renderPreview(parsedRows);
+  } catch(e) {
+    setStatus('fetchStatus', `Error: ${e.message}`, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Fetch from DefiLlama';
+  }
 }
 
 // ============ Morpho API ============
@@ -462,15 +1078,6 @@ async function fetchAndEnrichMorpho() {
   btn.textContent = 'Fetching…';
   setStatus('morphoStatus', 'Querying Morpho API…', 'info');
   morphoFetched = false;
-
-  // Find all Morpho V1 rows in parsed data
-  const morphoRows = parsedRows.filter(r => /morpho/i.test(r.project));
-  if (morphoRows.length === 0) {
-    setStatus('morphoStatus', 'No Morpho V1 vaults found in parsed data.', 'warn');
-    btn.disabled = false;
-    btn.textContent = 'Fetch Protocol Data';
-    return;
-  }
 
   // Single query — all vaults on supported chains
   // Supported chain IDs (verified 2026-05-22):
@@ -485,6 +1092,7 @@ async function fetchAndEnrichMorpho() {
         address
         symbol
         state {
+          netApy
           totalAssetsUsd
           allocation {
             supplyAssets
@@ -517,11 +1125,11 @@ async function fetchAndEnrichMorpho() {
     return;
   }
 
-  // Build lookup: symbol (lowercase) → vault data
-  const morphoBySymbol = {};
+  // Build lookup by address only — symbols are NOT unique across the API response
+  // (multiple vaults share symbols like "sparkUSDC" with different netApy values).
+  const morphoByAddress = {};
   vaultItems.forEach(v => {
-    const key = (v.symbol || '').toLowerCase().trim();
-    if (key) morphoBySymbol[key] = v;
+    if (v.address) morphoByAddress[v.address.toLowerCase()] = v;
   });
 
   let enrichedCount = 0;
@@ -530,10 +1138,11 @@ async function fetchAndEnrichMorpho() {
   parsedRows.forEach(r => {
     if (!/morpho/i.test(r.project)) return;
 
-    // Match pool name against Morpho symbol
-    const poolSymbol = r.pool.split('/')[0].trim().toLowerCase();
-    const vault = morphoBySymbol[poolSymbol];
+    // Resolve to a specific vault via YS_VAULT's contract address (symbol is ambiguous)
+    const ysVault = YS_VAULTS.find(v => v.morpho?.address && matchVault(r, v));
+    if (!ysVault) return; // not a tracked vault — skip
 
+    const vault = morphoByAddress[ysVault.morpho.address.toLowerCase()];
     if (!vault) {
       if (!notFound.includes(r.pool)) notFound.push(r.pool);
       return;
@@ -576,36 +1185,77 @@ async function fetchAndEnrichMorpho() {
     const util = totalCap > 0 ? parseFloat(((totalSupplied / totalCap) * 100).toFixed(2)) : null;
 
     r.total_pool = totalUsd;
-    // If availLiquidity is 0 and totalCap is also 0, all markets had uncapped supply — null it
     r.avail_liquidity = (availLiquidity === 0 && totalCap === 0) ? null : parseFloat(availLiquidity.toFixed(2));
     r.supply_cap_util = util;
     r.collateral_exposure = Object.keys(exposure).length ? JSON.stringify(exposure) : null;
+    if (vault.state?.netApy != null) {
+      const netApy = parseFloat((vault.state.netApy * 100).toFixed(4));
+      r.apy = netApy;
+      r.base_apy = netApy;
+    }
 
     morphoData[vault.address.toLowerCase()] = vault;
     enrichedCount++;
   });
 
-  morphoFetched = enrichedCount > 0;
+  // Inject YS_VAULT Morpho vaults that DefiLlama didn't return
+  let injectedCount = 0;
+  for (const ysVault of YS_VAULTS) {
+    if (!ysVault.morpho?.address) continue;
+    const alreadyInRows = parsedRows.find(r => matchVault(r, ysVault));
+    if (alreadyInRows) continue;
+    const v = morphoByAddress[ysVault.morpho.address.toLowerCase()];
+    if (!v) continue;
+    const tvl = v.state?.totalAssetsUsd ?? 0;
+    const apy = v.state?.netApy != null ? parseFloat((v.state.netApy * 100).toFixed(4)) : null;
+    const tvlDisplay = tvl >= 1e9 ? `$${(tvl/1e9).toFixed(2)}b`
+      : tvl >= 1e6 ? `$${(tvl/1e6).toFixed(2)}m`
+      : tvl >= 1e3 ? `$${(tvl/1e3).toFixed(1)}k` : `$${tvl.toFixed(0)}`;
+    // Build a pool name that matches the YS_VAULT's match.pool pattern
+    const poolName = v.symbol || ysVault.name;
+    // Derive liquidity/util from allocation (same calc as enrichment loop above)
+    const alloc = v.state?.allocation ?? [];
+    let availLiquidity = 0, totalCap = 0, totalSupplied = 0;
+    const exposure = {};
+    alloc.forEach(a => {
+      const capUsd = parseFloat(a.supplyCapUsd ?? 0);
+      const supUsd = parseFloat(a.supplyAssetsUsd ?? 0);
+      const cap = parseFloat(a.supplyCap ?? 0);
+      const sup = parseFloat(a.supplyAssets ?? 0);
+      if (capUsd < 500e6) availLiquidity += Math.max(0, capUsd - supUsd);
+      if (cap < 1e27) { totalCap += cap; totalSupplied += sup; }
+      const sym = a.market?.collateralAsset?.symbol ?? 'Unknown';
+      const pct = tvl > 0 ? (supUsd / tvl) * 100 : 0;
+      if (pct > 0) exposure[sym] = parseFloat(((exposure[sym] ?? 0) + pct).toFixed(2));
+    });
+    const util = totalCap > 0 ? parseFloat(((totalSupplied / totalCap) * 100).toFixed(2)) : null;
+    const avail = (availLiquidity === 0 && totalCap === 0) ? null : parseFloat(availLiquidity.toFixed(2));
+    parsedRows.push({
+      pool: poolName, project: 'morpho', chain: 'Base',
+      tvl_display: tvlDisplay, tvl,
+      apy, base_apy: apy, reward_apy: null,
+      base_apy_7d: null, il_7d: null,
+      avg_30d: null, inception_apy: null, top_10_pct: null,
+      total_pool: tvl, total_borrowed: null,
+      avail_liquidity: avail, supply_cap_util: util,
+      collateral_exposure: Object.keys(exposure).length ? JSON.stringify(exposure) : null,
+      raw: ''
+    });
+    morphoData[v.address.toLowerCase()] = v;
+    injectedCount++;
+    enrichedCount++;
+  }
 
-  // Fetch off-chain vaults (Revert, Tokemak) via vaults.fyi proxy
-  setStatus('morphoStatus', `Morpho: ${enrichedCount} enriched. Fetching off-chain vaults…`, 'info');
-  const offchainResult = await fetchAndEnrichOffchain();
+  morphoFetched = enrichedCount > 0;
 
   btn.disabled = false;
   btn.textContent = 'Fetch Protocol Data';
 
-  let msg = `✓ Morpho: ${enrichedCount} vault${enrichedCount !== 1 ? 's' : ''} enriched.`;
-  let type = (morphoFetched || offchainResult.enriched > 0) ? 'ok' : 'err';
+  let msg = `✓ Morpho: ${enrichedCount} vault${enrichedCount !== 1 ? 's' : ''} enriched${injectedCount > 0 ? ` · ${injectedCount} injected` : ''}.`;
+  let type = morphoFetched ? 'ok' : 'err';
   if (notFound.length > 0) {
     msg += ` Unmatched: ${notFound.slice(0,5).join(', ')}${notFound.length > 5 ? ` +${notFound.length - 5} more` : ''}.`;
     if (enrichedCount > 0) type = 'warn';
-  }
-  if (offchainResult.enriched > 0) {
-    msg += ` ✓ Off-chain: ${offchainResult.enriched} vault${offchainResult.enriched !== 1 ? 's' : ''} fetched (Revert/Tokemak).`;
-  }
-  if (offchainResult.errors.length > 0) {
-    msg += ` Off-chain errors: ${offchainResult.errors.join('; ')}.`;
-    type = 'warn';
   }
   setStatus('morphoStatus', msg, type);
 
@@ -631,37 +1281,43 @@ function evaluateVault(vault, row) {
   const failures = [];
   const warnings = [];
 
+  // 0. Permanent manual block
+  if (vault.blockedReason) {
+    failures.push(vault.blockedReason);
+    return { failures, warnings, liquidityUsd: null, utilisationPct: null };
+  }
+
   // 1. TVL check (from scrape)
   if (row && row.tvl < MIN_TVL) {
     failures.push(`TVL ${fmtUsd(row.tvl)} < $500k minimum`);
   }
 
-  // 2. APY gate for yoVaultUSD
-  if (vault.minApy && row && row.apy < vault.minApy) {
-    failures.push(`APY ${row.apy?.toFixed(2)}% < ${vault.minApy}% minimum for this vault`);
+  // 2. APY gate for yoVaultUSD (null APY = no data yet, don't fail on missing)
+  if (vault.minApy && row && row.apy !== null && row.apy < vault.minApy) {
+    failures.push(`APY ${row.apy.toFixed(2)}% < ${vault.minApy}% minimum for this vault`);
   }
 
-  // 3. Liquidity check
+  // 3. Liquidity + utilisation — not applicable for aggregators (funds are deployed
+  //    to underlying protocols; no single contract holds withdrawable liquidity)
   const morphoM = getMorphoMetrics(vault);
   let liquidityUsd = null;
   let utilisationPct = null;
 
-  if (morphoM) {
-    liquidityUsd = morphoM.liquidityUsd;
-    utilisationPct = morphoM.utilisation;
-  } else if (row && row.avail_liquidity) {
-    liquidityUsd = row.avail_liquidity;
-  }
+  if (vault.type !== 'aggregator') {
+    if (morphoM) {
+      liquidityUsd = morphoM.liquidityUsd;
+      utilisationPct = morphoM.utilisation;
+    } else if (row && row.avail_liquidity) {
+      liquidityUsd = row.avail_liquidity;
+    }
 
-  if (liquidityUsd !== null) {
-    if (liquidityUsd < MIN_LIQUIDITY) {
+    if (liquidityUsd !== null && liquidityUsd < MIN_LIQUIDITY) {
       failures.push(`Available liquidity ${fmtUsd(liquidityUsd)} < ${fmtUsd(MIN_LIQUIDITY)} required`);
     }
-  }
 
-  // 4. Utilisation ≥ 95% (supply cap full)
-  if (utilisationPct !== null && utilisationPct >= MAX_UTIL) {
-    failures.push(`Supply cap utilisation ${(utilisationPct*100).toFixed(1)}% ≥ 95% — vault near full`);
+    if (utilisationPct !== null && utilisationPct >= MAX_UTIL) {
+      failures.push(`Supply cap utilisation ${(utilisationPct * 100).toFixed(1)}% ≥ 95% — vault near full`);
+    }
   }
 
   // 5. Max allocation warning (40 Acres)
@@ -904,141 +1560,6 @@ function updateFolderStatus() {
   }
 }
 
-// ============ Parsing ============
-
-function cleanCell(s) {
-  return s.replace(/^Bookmark\s*/i, '')
-          .replace(/open in new tab\s*/gi, '')
-          .replace(/^Hidden\s*$/i, '')
-          .trim();
-}
-
-function parseTVL(s) {
-  if (!s) return 0;
-  const m = s.match(/\$?([\d,.]+)\s*([mkb]?)/i);
-  if (!m) return 0;
-  const n = parseFloat(m[1].replace(/,/g, ''));
-  const mult = { k: 1e3, m: 1e6, b: 1e9 }[(m[2]||'').toLowerCase()] || 1;
-  return n * mult;
-}
-
-function parsePercent(s) {
-  if (!s || s === '—' || s === '-') return null;
-  const m = s.match(/(-?[\d.]+)/);
-  return m ? parseFloat(m[1]) : null;
-}
-
-function parseScrape(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  const rows = [];
-  const pctRe = /^<?[\s]*[\d.]+%$/;
-  const dolRe = /^\$[\d.,]+[mkb]?$/i;
-  for (const line of lines) {
-    const raw = line.split('\t');
-    const chain = raw.pop().trim();
-    const colCount = raw.length;
-
-    let poolName, project, apy, tvlDisplay;
-    let base_apy = null, reward_apy = null, base_apy_7d = null;
-    let il_7d = null, avg_30d = null, inception_apy = null, top_10_pct = null;
-    let total_pool = null, total_borrowed = null, avail_liquidity = null;
-
-    if (colCount === 13) {
-      // --- V2 BOOKMARKLET: 13 explicit columns by child index ---
-      // pool, project, $TVL, APY%, base%, reward%, 7d%, il%, 30d%, inception%, supplied, borrowed, available
-      poolName = raw[0].trim();
-      project  = raw[1].trim();
-      tvlDisplay = raw[2].trim();
-      apy         = parsePercent(raw[3]);
-      base_apy    = parsePercent(raw[4]);
-      reward_apy  = parsePercent(raw[5]);
-      base_apy_7d = parsePercent(raw[6]);
-      il_7d       = parsePercent(raw[7]);
-      avg_30d     = parsePercent(raw[8]);
-      inception_apy = parsePercent(raw[9]);
-      total_pool    = parseTVL(raw[10]) || null;
-      total_borrowed = parseTVL(raw[11]) || null;
-      avail_liquidity = parseTVL(raw[12]) || null;
-
-    } else if (colCount > 15) {
-      // --- DOM PASTE: spacer tabs, APY before TVL in DOM innerText ---
-      const cells = raw.map(cleanCell).filter(c => c && c !== '🪂');
-      if (cells.length < 4) continue;
-
-      const apyIdx = cells.findIndex(c => pctRe.test(c));
-      const tvlIdx = cells.findIndex(c => dolRe.test(c));
-      if (apyIdx < 1 || tvlIdx < 0) continue;
-
-      project = cells[apyIdx - 1];
-      poolName = apyIdx > 1 ? cells.slice(0, apyIdx - 1).join(' / ') : cells[0];
-      apy = parsePercent(cells[apyIdx]);
-      tvlDisplay = cells[tvlIdx];
-
-      // Raw tab offsets after TVL: base@3, reward@6, 7d@8, 30d@8-10
-      const tvlRaw = raw.findIndex(c => dolRe.test(c.trim()));
-      const after = raw.slice(tvlRaw + 1);
-      const pctAt = i => (i < after.length ? parsePercent(after[i]) : null);
-
-      base_apy    = pctAt(3);
-      reward_apy  = pctAt(6);
-      base_apy_7d = pctAt(8) !== null && pctAt(10) !== null ? pctAt(8) : null;
-      avg_30d     = pctAt(10) ?? pctAt(9) ?? pctAt(8);
-
-      // Liquidity: 3 consecutive $ values in cleaned cells after TVL
-      const rest = cells.slice(tvlIdx + 1);
-      const dollarIdxs = [];
-      rest.forEach((c, i) => { if (dolRe.test(c)) dollarIdxs.push(i); });
-      if (dollarIdxs.length >= 3) {
-        const last3 = dollarIdxs.slice(-3);
-        if (last3[2] - last3[0] <= 4) {
-          total_pool = parseTVL(rest[last3[0]]);
-          total_borrowed = parseTVL(rest[last3[1]]);
-          avail_liquidity = parseTVL(rest[last3[2]]);
-        }
-      }
-
-    } else {
-      // --- OLD BOOKMARKLET: clean tabs, TVL before APY, | subtitles ---
-      // pool[|sub] \t project \t $TVL \t APY \t base \t reward \t 7d \t il \t 30d ...
-      const tvlIdx = raw.findIndex(c => dolRe.test(c.trim()));
-      if (tvlIdx < 1) continue;
-
-      const poolParts = raw.slice(0, tvlIdx - 1).map(c => c.trim()).filter(Boolean);
-      poolName = poolParts.length ? poolParts.join(' / ') : raw[0].trim();
-      project = raw[tvlIdx - 1].trim();
-      tvlDisplay = raw[tvlIdx].trim();
-
-      // Positional offsets after TVL: [0]=APY [1]=base [2]=reward [3]=7d [4]=il [5]=30d
-      const after = raw.slice(tvlIdx + 1);
-      const pctAt = i => (i < after.length ? parsePercent(after[i]) : null);
-
-      apy         = pctAt(0);
-      base_apy    = pctAt(1);
-      reward_apy  = pctAt(2);
-      base_apy_7d = pctAt(3);
-      avg_30d     = pctAt(5) ?? pctAt(4);
-
-      // Liquidity: $ values in the tail
-      const dolVals = after.filter(c => dolRe.test(c.trim()));
-      if (dolVals.length >= 3) {
-        total_pool = parseTVL(dolVals[dolVals.length - 3]);
-        total_borrowed = parseTVL(dolVals[dolVals.length - 2]);
-        avail_liquidity = parseTVL(dolVals[dolVals.length - 1]);
-      }
-    }
-
-    rows.push({
-      pool: poolName, project, chain,
-      tvl_display: tvlDisplay, tvl: parseTVL(tvlDisplay),
-      apy, base_apy: base_apy ?? apy, reward_apy, base_apy_7d, il_7d, avg_30d,
-      inception_apy, top_10_pct,
-      total_pool, total_borrowed, avail_liquidity,
-      raw: line
-    });
-  }
-  return rows;
-}
-
 // ============ Preview ============
 
 function escapeHtml(s) {
@@ -1101,38 +1622,11 @@ function renderPreview(rows) {
     <div class="stat"><div class="label">Total TVL</div><div class="value">$${(totalTvl/1e6).toFixed(1)}m</div></div>
   `;
 
-  const sortWarning = checkSortOrder(rows);
-  const sortWarnEl = $('sortWarning');
-  if (sortWarning) {
-    sortWarnEl.innerHTML = `<div class="status warn">⚠ ${sortWarning}</div>`;
-    sortWarnEl.style.display = 'block';
-  } else {
-    sortWarnEl.style.display = 'none';
-  }
-
   $('previewPanel').style.display = 'block';
   $('savePanel').style.display = 'block';
 
   // Refresh YS panel with new data
   renderYS();
-}
-
-function checkSortOrder(rows) {
-  const apys = rows.map(r => r.apy).filter(v => v !== null);
-  if (apys.length < 2) return null;
-  const topApy = Math.max(...apys);
-  const firstRowApy = rows[0]?.apy;
-  if (firstRowApy !== null && firstRowApy < topApy - 0.01) {
-    return `Data NOT sorted by APY descending. Top row shows ${firstRowApy.toFixed(2)}% but max is ${topApy.toFixed(2)}%. Go back to DefiLlama, sort by APY, re-run bookmarklet.`;
-  }
-  let inversions = 0;
-  for (let i = 1; i < apys.length; i++) {
-    if (apys[i] > apys[i-1] + 0.01) inversions++;
-  }
-  if (inversions / apys.length > 0.15) {
-    return `Data doesn't appear sorted by APY. ${inversions}/${apys.length} rows break descending order.`;
-  }
-  return null;
 }
 
 // ============ CSV ============
@@ -1202,19 +1696,13 @@ async function save() {
 
   // Warn if Morpho data not fetched
   if (!morphoFetched) {
-    const proceed = confirm('No protocol data has been fetched.\n\nMorpho vaults will be saved without liquidity/collateral data. Revert and Tokemak rows will not be included.\n\nSave anyway?');
+    const proceed = confirm('No protocol data has been fetched.\n\nMorpho vaults will be saved without liquidity/collateral data.\n\nSave anyway?');
     if (!proceed) {
       setStatus('saveStatus', 'Save cancelled — click "Fetch Protocol Data" then save.', 'warn');
       return;
     }
   }
 
-  const sortWarning = checkSortOrder(parsedRows);
-  if (sortWarning) {
-    if (!confirm(`SORT WARNING:\n\n${sortWarning}\n\nSave anyway?`)) {
-      setStatus('saveStatus', 'Save cancelled.', 'warn'); return;
-    }
-  }
   const hasPermission = await requestPermissionWithActivation(folderHandle, true);
   if (!hasPermission) { setStatus('saveStatus', 'Folder permission denied.', 'err'); return; }
   try {
@@ -1224,10 +1712,7 @@ async function save() {
     const masterHeader = MASTER_COLS.join(',');
     const masterDataOnly = rowsToCSV(parsedRows, true, date).split('\n').slice(1).join('\n');
     await appendToFile(folderHandle, 'master.csv', masterDataOnly, masterHeader);
-    const offchainCount = parsedRows.filter(r => r.synthetic).length;
-    const morphoNote = morphoFetched
-      ? ` (Morpho enriched${offchainCount > 0 ? `, ${offchainCount} off-chain vaults` : ''})`
-      : ' (no protocol data)';
+    const morphoNote = morphoFetched ? ' (Morpho enriched)' : ' (no protocol data)';
     setStatus('saveStatus', `✓ Saved ${parsedRows.length} rows to snapshots/${date}.csv · Appended to master.csv${morphoNote}`, 'ok');
     await refreshOverview();
   } catch (e) {
@@ -1284,35 +1769,13 @@ $('pickFolder').onclick = pickFolder;
 $('reconnectFolder').onclick = tryReconnect;
 $('clearFolder').onclick = clearFolder;
 
-$('parse').onclick = () => {
-  const text = $('input').value;
-  if (!text.trim()) { setStatus('parseStatus', 'Paste data first.', 'warn'); return; }
-  parsedRows = parseScrape(text);
-  if (!parsedRows.length) { setStatus('parseStatus', 'Could not parse any rows.', 'err'); return; }
-  morphoFetched = false;
-  setStatus('parseStatus', `Parsed ${parsedRows.length} rows.`, 'ok');
-  $('morphoFetchRow').style.display = 'block';
-  $('morphoStatus').innerHTML = '';
-  renderPreview(parsedRows);
-};
-
+$('fetchDL').onclick = fetchDefiLlama;
 $('fetchMorpho').onclick = fetchAndEnrichMorpho;
 
-$('loadClipboard').onclick = async () => {
-  try {
-    const text = await navigator.clipboard.readText();
-    $('input').value = text;
-    setStatus('parseStatus', 'Loaded from clipboard. Click "Parse Data".', 'ok');
-  } catch {
-    setStatus('parseStatus', 'Clipboard blocked. Right-click → Paste in box above, or Ctrl+V.', 'warn');
-  }
-};
-
 $('clearInput').onclick = () => {
-  $('input').value = '';
   $('previewPanel').style.display = 'none';
   $('savePanel').style.display = 'none';
-  $('parseStatus').innerHTML = '';
+  $('fetchStatus').innerHTML = '';
   $('morphoFetchRow').style.display = 'none';
   $('morphoStatus').innerHTML = '';
   parsedRows = [];
@@ -1327,6 +1790,7 @@ $('download').onclick = downloadCSV;
 // ============ Init ============
 
 (async function init() {
+  updateFilterSummary(); // show defaults before folder loads
   if (!('showDirectoryPicker' in window)) {
     $('folderStatus').innerHTML = '<span style="color:var(--err);">⚠ This browser does not support File System Access. Use Brave, Chrome, or Edge.</span>';
     $('pickFolder').disabled = true;
@@ -1341,6 +1805,7 @@ $('download').onclick = downloadCSV;
         await folderHandle.getDirectoryHandle('snapshots', { create: true });
         updateFolderStatus();
         await refreshOverview();
+        await loadConfig();
       } catch {
         $('folderStatus').innerHTML = `<span style="color:var(--warn);">⚠ Saved folder "${saved.name}" — click <b>Reconnect</b>.</span>`;
         $('reconnectFolder').style.display = 'inline-block';
