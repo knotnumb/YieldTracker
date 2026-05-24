@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24m</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24n</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -335,7 +335,7 @@
 <div class="panel">
   <h2>01 — Folder</h2>
   <div id="folderStatus" class="folder-status">No folder selected.</div>
-  <div id="folderHint" style="font-size:11px; color:var(--muted); margin-bottom:10px;">In the picker, <b>open</b> Documents (or Dropbox/Drive) so you can see its contents, then click <b>Select Folder</b> — a <code>YieldTracker</code> subfolder will be created automatically.</div>
+  <div id="folderHint" style="font-size:11px; color:var(--muted); margin-bottom:10px;">The picker will open in Documents. Use the <b>New Folder</b> button to create a folder (e.g. <code>YieldTracker</code>), open it, then click <b>Select Folder</b>. Avoid selecting Downloads, Desktop, or Documents directly — browsers block those.</div>
   <button id="pickFolder">Pick Folder</button>
   <button id="reconnectFolder" class="secondary" style="display:none;">Reconnect</button>
   <button id="clearFolder" class="secondary">Forget Folder</button>
@@ -1520,12 +1520,7 @@ function setStatus(elId, msg, type='ok') {
 
 async function pickFolder() {
   try {
-    const picked = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'documents' });
-    // If the picked folder already contains YieldTracker data, use it as-is.
-    // Otherwise auto-create a YieldTracker subfolder so the user doesn't have
-    // to manually make one (also avoids the Downloads system-folder restriction).
-    const hasData = await picked.getFileHandle('master.csv').then(() => true).catch(() => false);
-    folderHandle = hasData ? picked : await picked.getDirectoryHandle('YieldTracker', { create: true });
+    folderHandle = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'documents' });
     await folderHandle.getDirectoryHandle('snapshots', { create: true });
     await saveFolderHandle(folderHandle);
     updateFolderStatus();
@@ -1533,13 +1528,7 @@ async function pickFolder() {
     await loadConfig();
   } catch (e) {
     if (e.name === 'AbortError') return;
-    // SecurityError = browser blocked the folder (system/protected directory).
-    // Show inline guidance rather than a bare alert.
-    if (e.name === 'SecurityError' || (e.message || '').toLowerCase().includes('system')) {
-      $('folderStatus').innerHTML = `<span style="color:var(--err);">⚠ That folder is protected by the browser. In the picker, <b>open</b> Documents (or Dropbox/Drive) so you can see its contents, then click <b>Select Folder</b> from inside it.</span>`;
-    } else {
-      $('folderStatus').innerHTML = `<span style="color:var(--err);">⚠ Could not open folder: ${e.message}</span>`;
-    }
+    $('folderStatus').innerHTML = `<span style="color:var(--err);">⚠ Could not open folder: ${e.message}</span>`;
   }
 }
 
