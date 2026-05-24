@@ -1,5 +1,7 @@
 # DeFi Yield Tracker
 
+[![Hits](https://hits.sh/github.com/knotnumb/YieldTracker.svg)](https://hits.sh/github.com/knotnumb/YieldTracker/)
+
 A local-first stablecoin yield monitoring tool. Pull live data from DefiLlama, enrich it with on-chain protocol data, and build a private time-series of the stablecoin yield market — all from a single HTML file with no server, no build step, and no API keys required.
 
 Built around the vault selection maintained by **[<img src="ys-logo.png" height="14" alt="YS" style="vertical-align:middle"> YieldSeeker](https://www.yieldseeker.xyz/)** — and easily adapted to track any set of protocols you care about.
