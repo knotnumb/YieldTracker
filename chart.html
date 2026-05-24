@@ -270,7 +270,7 @@
 
   <div class="filter-bar">
     <button id="f-all" class="active" onclick="setFilter('all')">All</button>
-    <button id="f-ys" class="sec" onclick="setFilter('ys')">⚡ YS Whitelist</button>
+    <button id="f-ys" class="sec" onclick="setFilter('ys')"><img src="assets/ys-logo.png" height="13" alt="" style="vertical-align:middle;margin-right:4px"> YS Whitelist</button>
     <div class="divider"></div>
     <button id="f-morpho" class="sec" onclick="setFilter('morpho')">Morpho</button>
     <button id="f-aave" class="sec" onclick="setFilter('aave')">Aave</button>
@@ -652,7 +652,7 @@ function renderVaultList() {
     const apy  = v.latestApy !== null ? v.latestApy.toFixed(2) + '%' : '—';
     const tvl  = v.latestTvl !== null ? fmtUsd(v.latestTvl) : '—';
     const badge = v.ys
-      ? (v.blocked ? `<span class="blocked-badge">⊘ Blocked</span>` : `<span class="ys-badge">⚡ YS</span>`)
+      ? (v.blocked ? `<span class="blocked-badge">⊘ Blocked</span>` : `<span class="ys-badge"><img src="assets/ys-logo.png" height="11" alt="" style="vertical-align:middle;margin-right:3px">YS</span>`)
       : '';
     return `<div class="vault-item ${sel ? 'selected' : ''}" onclick="toggleVault('${v.key.replace(/'/g,"\\'")}')">
       <div>
@@ -840,7 +840,7 @@ function drawChart() {
     const v = vaults.find(x => x.key === key);
     const col = COLORS[idx % COLORS.length];
     const badge = v.ys
-      ? (v.blocked ? `<span class="blocked-badge">⊘ Blocked</span>` : `<span class="ys-badge">⚡ YS</span>`)
+      ? (v.blocked ? `<span class="blocked-badge">⊘ Blocked</span>` : `<span class="ys-badge"><img src="assets/ys-logo.png" height="11" alt="" style="vertical-align:middle;margin-right:3px">YS</span>`)
       : '';
     return `<div class="leg-item" onmouseenter="highlightSeries(${idx})" onmouseleave="clearHighlight()">
       <div class="leg-swatch" style="background:${col}"></div>
