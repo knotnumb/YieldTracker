@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24n</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24o</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -335,10 +335,13 @@
 <div class="panel">
   <h2>01 — Folder</h2>
   <div id="folderStatus" class="folder-status">No folder selected.</div>
-  <div id="folderHint" style="font-size:11px; color:var(--muted); margin-bottom:10px;">The picker will open in Documents. Use the <b>New Folder</b> button to create a folder (e.g. <code>YieldTracker</code>), open it, then click <b>Select Folder</b>. Avoid selecting Downloads, Desktop, or Documents directly — browsers block those.</div>
   <button id="pickFolder">Pick Folder</button>
   <button id="reconnectFolder" class="secondary" style="display:none;">Reconnect</button>
   <button id="clearFolder" class="secondary">Forget Folder</button>
+  <div id="folderHint" style="margin-top:12px; padding:10px 12px; background:var(--panel-alt,#1e2530); border:1px solid var(--border); border-radius:6px; font-size:11px; line-height:1.6;">
+    ℹ️ <b>First time?</b> In the picker: click <b>New Folder</b>, name it <code>YieldTracker</code>, open it, then click <b>Select Folder</b>.<br>
+    <span style="color:var(--muted);">Selecting Downloads, Desktop, or Documents directly is blocked by the browser — you need to go one level in.</span>
+  </div>
 </div>
 
 <!-- 02 FETCH -->
