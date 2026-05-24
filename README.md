@@ -3,7 +3,6 @@
 **[→ Open in browser](https://knotnumb.github.io/YieldTracker/)** &nbsp;·&nbsp; Chrome or Brave required &nbsp;·&nbsp; no install needed
 
 [![Deploy to GitHub Pages](https://github.com/knotnumb/YieldTracker/actions/workflows/pages.yml/badge.svg)](https://github.com/knotnumb/YieldTracker/actions/workflows/pages.yml)
-[![Hits](https://hits.sh/github.com/knotnumb/YieldTracker.svg)](https://hits.sh/github.com/knotnumb/YieldTracker/)
 
 A local-first stablecoin yield monitoring tool. Pull live data from DefiLlama, enrich it with on-chain protocol data, and build a private time-series of the stablecoin yield market — all from a single HTML file with no server, no build step, and no API keys required.
 
@@ -280,6 +279,8 @@ File I/O uses the browser's [File System Access API](https://developer.mozilla.o
 To modify the tracker: edit `tracker.html` in any text editor. There is nothing to compile or build. Hard-reload the browser (Ctrl+Shift+R) after saving.
 
 ---
+
+[![Hits](https://hits.sh/github.com/knotnumb/YieldTracker.svg)](https://hits.sh/github.com/knotnumb/YieldTracker/)
 
 ## License
 
