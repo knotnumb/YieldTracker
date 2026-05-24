@@ -1,5 +1,10 @@
 # DeFi Yield Tracker
 
+**[→ Open in browser](https://knotnumb.github.io/YieldTracker/)** &nbsp;·&nbsp; Chrome or Brave required &nbsp;·&nbsp; no install needed
+
+[![Deploy to GitHub Pages](https://github.com/knotnumb/YieldTracker/actions/workflows/pages.yml/badge.svg)](https://github.com/knotnumb/YieldTracker/actions/workflows/pages.yml)
+[![Hits](https://hits.sh/github.com/knotnumb/YieldTracker.svg)](https://hits.sh/github.com/knotnumb/YieldTracker/)
+
 A local-first stablecoin yield monitoring tool. Pull live data from DefiLlama, enrich it with on-chain protocol data, and build a private time-series of the stablecoin yield market — all from a single HTML file with no server, no build step, and no API keys required.
 
 Built around the vault selection maintained by **[<img src="ys-logo.png" height="14" alt="YS" style="vertical-align:middle"> YieldSeeker](https://www.yieldseeker.xyz/)** — and easily adapted to track any set of protocols you care about.
@@ -64,12 +69,11 @@ That is all. No Node.js, no Python, no API keys.
 
 ## Quick start
 
-1. **Clone or download** this repository
-2. Open `tracker.html` in Chrome or Brave
-3. Click **Pick Folder** and choose a local folder where your data will be saved (can be inside a Dropbox/Drive folder for automatic sync)
-4. Click **Fetch from DefiLlama** — pulls filtered stablecoin yield data from the DefiLlama API
-5. Click **Fetch Protocol Data** — enriches results with Morpho API data and on-chain vault reads
-6. Click **Save Snapshot + Append to Master** — writes today's snapshot and appends to `master.csv`
+1. **[Open the app](https://knotnumb.github.io/YieldTracker/)** in Chrome or Brave — no download needed. Or clone/download the repo and open `tracker.html` directly if you prefer to run it locally.
+2. Click **Pick Folder** and choose a local folder where your data will be saved (can be inside a Dropbox/Drive folder for automatic sync)
+3. Click **Fetch from DefiLlama** — pulls filtered stablecoin yield data from the DefiLlama API
+4. Click **Fetch Protocol Data** — enriches results with Morpho API data and on-chain vault reads
+5. Click **Save Snapshot + Append to Master** — writes today's snapshot and appends to `master.csv`
 
 The included `master.csv` has ~35 days of historical data so the chart works immediately.
 
@@ -251,7 +255,7 @@ This tracker was built to support the YieldSeeker research workflow. The vault l
 ## Troubleshooting
 
 **Brave asks for folder permission every session**
-→ Expected for `file://` pages. Click **Reconnect** at the top of the tracker.
+→ Expected when running from `file://`. Not an issue when using the hosted version at GitHub Pages. Click **Reconnect** at the top of the tracker to re-grant access.
 
 **File system access blocked in Brave**
 → Go to `brave://settings/content/filesystem` and enable file system access.
@@ -276,8 +280,6 @@ File I/O uses the browser's [File System Access API](https://developer.mozilla.o
 To modify the tracker: edit `tracker.html` in any text editor. There is nothing to compile or build. Hard-reload the browser (Ctrl+Shift+R) after saving.
 
 ---
-
-[![Hits](https://hits.sh/github.com/knotnumb/YieldTracker.svg)](https://hits.sh/github.com/knotnumb/YieldTracker/)
 
 ## License
 
