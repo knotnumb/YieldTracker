@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24k</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24l</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -334,7 +334,7 @@
 <!-- 01 FOLDER -->
 <div class="panel">
   <h2>01 — Folder</h2>
-  <div id="folderStatus" class="folder-status">No folder selected. Click below to pick your YieldTracking folder.</div>
+  <div id="folderStatus" class="folder-status">No folder selected. Click <b>Pick Folder</b>, navigate <em>inside</em> Documents (or Dropbox/Drive), then click <b>Select Folder</b> — a YieldTracker subfolder will be created automatically.</div>
   <button id="pickFolder">Pick Folder</button>
   <button id="reconnectFolder" class="secondary" style="display:none;">Reconnect</button>
   <button id="clearFolder" class="secondary">Forget Folder</button>
@@ -1531,7 +1531,14 @@ async function pickFolder() {
     await refreshOverview();
     await loadConfig();
   } catch (e) {
-    if (e.name !== 'AbortError') alert('Could not open folder: ' + e.message);
+    if (e.name === 'AbortError') return;
+    // SecurityError = browser blocked the folder (system/protected directory).
+    // Show inline guidance rather than a bare alert.
+    if (e.name === 'SecurityError' || (e.message || '').toLowerCase().includes('system')) {
+      $('folderStatus').innerHTML = `<span style="color:var(--err);">⚠ That folder is protected by the browser. In the picker, <b>open</b> Documents (or Dropbox/Drive) so you can see its contents, then click <b>Select Folder</b> from inside it.</span>`;
+    } else {
+      $('folderStatus').innerHTML = `<span style="color:var(--err);">⚠ Could not open folder: ${e.message}</span>`;
+    }
   }
 }
 
