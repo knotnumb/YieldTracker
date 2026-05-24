@@ -2,7 +2,7 @@
 
 A local-first stablecoin yield monitoring tool. Pull live data from DefiLlama, enrich it with on-chain protocol data, and build a private time-series of the stablecoin yield market — all from a single HTML file with no server, no build step, and no API keys required.
 
-Built around the vault selection maintained by **[YieldSeeker](https://www.yieldseeker.xyz/)** — and easily adapted to track any set of protocols you care about.
+Built around the vault selection maintained by **[<img src="assets/ys-logo.png" height="14" alt="" style="vertical-align:middle"> YieldSeeker](https://www.yieldseeker.xyz/)** — and easily adapted to track any set of protocols you care about.
 
 ---
 
@@ -11,7 +11,7 @@ Built around the vault selection maintained by **[YieldSeeker](https://www.yield
 - Fetches filtered stablecoin yield data from the **DefiLlama API** on demand
 - Enriches **Morpho vaults** with live supply cap utilisation, available liquidity, and collateral breakdowns via the Morpho API
 - Reads **on-chain APY and liquidity** directly from ERC4626 vault contracts for protocols not listed on DefiLlama
-- Flags vaults against a configurable watchlist — pre-loaded with the **YieldSeeker** curated selection (marked ⚡ YS)
+- Flags vaults against a configurable watchlist — pre-loaded with the **YieldSeeker** curated selection (marked <img src="assets/ys-logo.png" height="13" alt="YS" style="vertical-align:middle"> YS)
 - Saves each daily fetch as an append-only CSV time-series you own and control
 - Includes a separate **historical chart viewer** (`chart.html`) for visualising APY trends across any vaults in your dataset
 
@@ -64,8 +64,6 @@ Default filters (adjustable in `config.json`):
 | Row limit | 100 |
 | Exclude outliers | Yes |
 
-> **Alternative — bookmarklet scrape:** `bookmarklet.txt` contains a script you can save as a browser bookmark. Running it on [DefiLlama Yields](https://defillama.com/yields) extracts all visible rows (useful if you want more chains or rows than the API filter allows). Paste the output into the text area and click **Parse Data** instead of using the Fetch button.
-
 ### 2 — Fetch Protocol Data
 
 Click **Fetch Protocol Data**. This runs three enrichment passes:
@@ -82,7 +80,7 @@ Click **Fetch Protocol Data**. This runs three enrichment passes:
 
 **Aave V3 Base** — queries on-chain for USDC supply APY and liquidity.
 
-### 3 — Check YieldSeeker panel
+### 3 — Check <img src="assets/ys-logo.png" height="16" alt="" style="vertical-align:middle"> YieldSeeker panel
 
 The **YieldSeeker** panel (section 05) automatically filters the enriched results against the pre-configured vault watchlist. Each eligible vault shows its APY, TVL, available liquidity, and supply cap status. Vaults flagged as operationally blocked (e.g. no exit liquidity) are shown with a ⊘ marker.
 
@@ -101,7 +99,7 @@ Click **Save Snapshot + Append to Master**. This:
 Open `chart.html` separately in the same browser. Click **Open master.csv** and navigate to your data folder.
 
 **Selecting vaults:**
-- Filter by protocol, chain, or YS whitelist status
+- Filter by protocol, chain, or <img src="assets/ys-logo.png" height="13" alt="YS" style="vertical-align:middle"> YS whitelist status
 - Set minimum APY and TVL thresholds
 - Search by name
 - Sort by APY, TVL, or days of history
@@ -205,9 +203,9 @@ Edit `config.json` in your data folder (created automatically on first run). The
 
 ---
 
-## About YieldSeeker
+## <img src="assets/ys-logo.png" height="20" alt="" style="vertical-align:middle"> About YieldSeeker
 
-[YieldSeeker](https://www.yieldseeker.xyz/) curates a selection of stablecoin yield vaults with a focus on capital safety, withdrawal liquidity, and sustainable APY. The ⚡ YS badge in this tracker marks vaults that meet the YieldSeeker criteria. The ⊘ Blocked badge marks vaults that are monitored but currently excluded due to operational concerns such as illiquid exit conditions.
+[YieldSeeker](https://www.yieldseeker.xyz/) curates a selection of stablecoin yield vaults with a focus on capital safety, withdrawal liquidity, and sustainable APY. The <img src="assets/ys-logo.png" height="13" alt="YS" style="vertical-align:middle"> YS badge in this tracker marks vaults that meet the YieldSeeker criteria. The ⊘ Blocked badge marks vaults that are monitored but currently excluded due to operational concerns such as illiquid exit conditions.
 
 This tracker was built to support the YieldSeeker research workflow. The vault list, enrichment logic, and YS panel reflect the criteria applied at [yieldseeker.xyz](https://www.yieldseeker.xyz/).
 
@@ -224,9 +222,6 @@ This tracker was built to support the YieldSeeker research workflow. The vault l
 
 ## Troubleshooting
 
-**Chain column empty after bookmarklet scrape**
-→ Open DevTools (F12) before running the bookmarklet. DefiLlama lazy-renders chain icons and DevTools forces the layout computation. Minimise the panel but keep it open.
-
 **Brave asks for folder permission every session**
 → Expected for `file://` pages. Click **Reconnect** at the top of the tracker.
 
@@ -238,9 +233,6 @@ This tracker was built to support the YieldSeeker research workflow. The vault l
 
 **Save fails with a file lock error**
 → `master.csv` is open in Excel or another application. Close it and try again. Do not open `master.csv` in Excel while the tracker is running.
-
-**Sort warning after parsing bookmarklet data**
-→ Click the APY column on DefiLlama to sort descending before running the bookmarklet.
 
 **Chart shows a gap in a vault's history**
 → DefiLlama changed project name casing in May 2026. The chart normalises keys to lowercase automatically. If you still see a gap, the vault may have been briefly renamed — check the vault list for a second entry with a slightly different name.
