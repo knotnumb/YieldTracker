@@ -1,231 +1,262 @@
 # DeFi Yield Tracker
 
-A local-first stablecoin yield tracker. Scrapes DefiLlama daily, enriches Morpho vault data via the Morpho API, and saves everything to a local CSV time-series you own and control.
+A local-first stablecoin yield monitoring tool. Pull live data from DefiLlama, enrich it with on-chain protocol data, and build a private time-series of the stablecoin yield market — all from a single HTML file with no server, no build step, and no API keys required.
+
+Built around the vault selection maintained by **[YieldSeeker](https://www.yieldseeker.xyz/)** — and easily adapted to track any set of protocols you care about.
 
 ---
 
-## What's in this folder
+## What it does
 
-| File | Purpose |
-|---|---|
-| `tracker.html` | The app — open this in Brave or Chrome |
-| `bookmarklet.txt` | The scrape script — set this up once as a browser bookmark |
-| `master.csv` | Your complete time-series data — append-only, never edit directly |
-| `snapshots/` | Daily raw CSV captures |
-| `README.pdf` | This documentation |
+- Fetches filtered stablecoin yield data from the **DefiLlama API** on demand
+- Enriches **Morpho vaults** with live supply cap utilisation, available liquidity, and collateral breakdowns via the Morpho API
+- Reads **on-chain APY and liquidity** directly from ERC4626 vault contracts for protocols not listed on DefiLlama
+- Flags vaults against a configurable watchlist — pre-loaded with the **YieldSeeker** curated selection (marked ⚡ YS)
+- Saves each daily fetch as an append-only CSV time-series you own and control
+- Includes a separate **historical chart viewer** (`chart.html`) for visualising APY trends across any vaults in your dataset
+
+---
+
+## Why local-first?
+
+- **No account, no subscription, no cloud** — your data lives in a folder you pick
+- Sync to Dropbox, Google Drive, or OneDrive if you want backup and multi-device access
+- The HTML files run directly from `file://` — nothing to install or deploy
 
 ---
 
 ## Requirements
 
-- **Browser:** Brave or Chrome (requires File System Access API — Firefox will not work)
-- **Syncing (optional):** Dropbox, Google Drive, or any folder-sync service keeps your data backed up and available across machines
-- **vaults.fyi API key (required for off-chain vaults):** Revert Lend and Tokemak are not listed on DefiLlama. Their APY, TVL, and liquidity data is fetched from the vaults.fyi API. Sign up for a free key at `vaults.fyi/api` and add it to the tracker config (see One-time setup Step 6).
+- **Browser:** Chrome or Brave (requires the File System Access API — Firefox does not support it)
+- **Brave users:** enable file system access once at `brave://settings/content/filesystem`
+
+That is all. No Node.js, no Python, no API keys.
 
 ---
 
-## One-time setup
+## Quick start
 
-### Step 1 — Enable file system access in Brave
+1. **Clone or download** this repository
+2. Open `tracker.html` in Chrome or Brave
+3. Click **Pick Folder** and choose a local folder where your data will be saved (can be inside a Dropbox/Drive folder for automatic sync)
+4. Click **Fetch from DefiLlama** — pulls filtered stablecoin yield data from the DefiLlama API
+5. Click **Fetch Protocol Data** — enriches results with Morpho API data and on-chain vault reads
+6. Click **Save Snapshot + Append to Master** — writes today's snapshot and appends to `master.csv`
 
-Brave blocks file system access for local files by default. Enable it once:
-
-1. Go to `brave://settings/content/filesystem`
-2. Ensure **Sites can ask to access files and folders** is enabled
-
-> Chrome users: file system access is enabled by default — skip this step.
-
-### Step 2 — Open the tracker
-
-Open `tracker.html` in Brave or Chrome by dragging it into the browser or double-clicking from File Explorer.
-
-### Step 3 — Pick your folder
-
-Click **Pick Folder** and select this folder. Grant the read/write permission when prompted.
-
-> Brave requires re-granting permission each browser session. Click **Reconnect** at the top of the tracker when you return.
-
-### Step 4 — Set up the scrape bookmarklet
-
-1. Open `bookmarklet.txt` in any text editor
-2. Copy the entire contents (one long `javascript:...` line)
-3. Show the bookmarks bar in your browser (Ctrl+Shift+B)
-4. Right-click the bookmarks bar → **Add page**
-5. Name it something like `Scrape DefiLlama` and paste the copied text into the URL field
-6. Save
-
-### Step 5 — Bookmark the DefiLlama filter URL
-
-Bookmark this URL. It applies chain and column filters automatically. Adjust the chain list to match your preferences:
-
-```
-https://defillama.com/yields?token=ALL_USD_STABLES&attribute=stablecoins&attribute=no_il&attribute=audited&attribute=no_outlier&minTvl=500000&show7dBaseApy=true&show7dIL=true&showInceptionApy=true&showTotalSupplied=true&showTotalBorrowed=true&showAvailable=true&chain=Base&chain=Solana&chain=Hyperliquid+L1&chain=Arbitrum&chain=Monad&chain=Katana&chain=OP+Mainnet&chain=Unichain
-```
-
-Filters applied: All USD Stablecoins, Audited, No IL, No Outliers, Min TVL $500k. Extra columns enabled: 7d Base APY, 7d IL, Inception APY, Total Supplied, Total Borrowed, Available Liquidity. Chains: Base, Solana, Hyperliquid L1, Arbitrum, Monad, Katana, OP Mainnet, Unichain.
-
-To change chains, add or remove `&chain=ChainName` parameters from the URL.
-
-### Step 6 — Add your vaults.fyi API key
-
-Revert Lend and Tokemak are not listed on DefiLlama. The tracker fetches their full data (APY, TVL, liquidity) from the vaults.fyi API, which requires a free API key.
-
-1. Go to `vaults.fyi/api` and sign up for a free account
-2. Copy your API key
-3. Open `tracker.html` in a text editor
-4. Find the line near the top of the script that reads `const VAULTS_FYI_API_KEY = '';`
-5. Paste your key between the quotes: `const VAULTS_FYI_API_KEY = 'your-key-here';`
-6. Save the file and hard-reload in Brave/Chrome (Ctrl+Shift+R)
-
-> Without an API key, Revert and Tokemak rows will still appear in the master but APY fields will be blank.
+The included `master.csv` has ~35 days of historical data so the chart works immediately.
 
 ---
 
 ## Daily workflow
 
-### 1. Open DefiLlama
+### 1 — Fetch from DefiLlama
 
-Open your saved DefiLlama bookmark.
+Click **Fetch from DefiLlama**. The tracker calls the DefiLlama yields API with your configured filters and populates the preview table.
 
-### 2. Sort by APY
+Default filters (adjustable in `config.json`):
 
-Click the **APY column header** to sort descending. Do this every session — the sort is not saved in the URL.
+| Filter | Default |
+|---|---|
+| Asset type | Stablecoins only |
+| Chains | Base, Arbitrum, Optimism, Polygon, Unichain |
+| Min TVL | $500k |
+| Max APY | 50% |
+| Row limit | 100 |
+| Exclude outliers | Yes |
 
-### 3. Open DevTools — CRITICAL STEP
+> **Alternative — bookmarklet scrape:** `bookmarklet.txt` contains a script you can save as a browser bookmark. Running it on [DefiLlama Yields](https://defillama.com/yields) extracts all visible rows (useful if you want more chains or rows than the API filter allows). Paste the output into the text area and click **Parse Data** instead of using the Fetch button.
 
-Press **F12** to open the browser DevTools panel before running the bookmarklet.
+### 2 — Fetch Protocol Data
 
-> DefiLlama lazy-renders chain icons. Without DevTools open, the icons never fully render and all chain fields come back empty. Keeping DevTools open during the scrape forces the layout computation that triggers rendering. Minimise the panel if you like — just don't close it.
+Click **Fetch Protocol Data**. This runs three enrichment passes:
 
-### 4. Run the bookmarklet
+**Morpho vaults** — queries the Morpho API for any Morpho vaults in your results and adds:
+- Available liquidity (remaining withdrawal/deposit capacity)
+- Supply cap utilisation %
+- Collateral exposure breakdown
 
-Click your **Scrape DefiLlama** bookmark. The page scrolls and extracts rows automatically. An alert confirms the row and chain count.
+**Off-chain vaults** — for vaults not indexed by DefiLlama (or where on-chain data is more reliable), the tracker reads directly from the contract:
+- **ERC4626 share-price APY** — compares `convertToAssets()` at current block vs ~24 hours ago and annualises the growth rate
+- **Euler interest-rate APY** — reads the live borrow rate, utilisation, and protocol fee directly from the Euler V2 vault contract
+- **Available liquidity** — reads the underlying token balance held by the vault
 
-Adjust the target row count in `bookmarklet.txt` to match the total rows shown on your filtered DefiLlama page.
+**Aave V3 Base** — queries on-chain for USDC supply APY and liquidity.
 
-### 5. Paste and parse
+### 3 — Check YieldSeeker panel
 
-Switch to the tracker tab. Right-click the text box and **Paste** (or click **Paste from Clipboard**). Then click **Parse Data**.
+The **YieldSeeker** panel (section 05) automatically filters the enriched results against the pre-configured vault watchlist. Each eligible vault shows its APY, TVL, available liquidity, and supply cap status. Vaults flagged as operationally blocked (e.g. no exit liquidity) are shown with a ⊘ marker.
 
-Verify the preview shows APY sorted descending and chain names populated.
+> YieldSeeker curates a selection of stablecoin yield vaults focused on capital safety and exit liquidity. Learn more at [yieldseeker.xyz](https://www.yieldseeker.xyz/).
 
-> Sort warning: the tracker warns if data is not sorted by APY descending. If you see this, go back to DefiLlama, re-sort, and re-scrape.
+### 4 — Save
 
-### 6. Fetch Protocol Data
-
-Click **Fetch Protocol Data**. This does two things:
-
-**Morpho vaults** — queries the Morpho API for any Morpho V1 vaults in your parsed rows and adds:
-- **Available liquidity** — remaining deposit/withdrawal capacity
-- **Supply cap utilisation** — how full the vault is as a % of its cap
-- **Collateral exposure** — breakdown of borrower collateral assets as % of vault
-
-**Off-chain vaults (Revert Lend, Tokemak)** — fetches full data from vaults.fyi including APY (1d/7d/30d), TVL, and available liquidity. These vaults are not on DefiLlama so they are injected as additional rows at the end of the parsed data. Requires a vaults.fyi API key (see One-time setup Step 6).
-
-Takes a few seconds. The status bar confirms how many vaults were enriched.
-
-> If any API is unavailable you can still save — the tracker will warn you and ask for confirmation first.
-
-### 7. Verify and save
-
-Check the preview — Cap Util%, Avail. Liq., and Collateral columns should be populated for Morpho rows.
-
-Click **Save Snapshot + Append to Master**. This writes a dated snapshot to `snapshots/YYYY-MM-DD.csv` and appends today's rows to `master.csv`. If using a sync service, files sync automatically after saving.
+Click **Save Snapshot + Append to Master**. This:
+- Writes `snapshots/YYYY-MM-DD.csv` — the raw day's data
+- Appends all rows to `master.csv` — the append-only time-series
 
 ---
 
-## YieldSeeker panel
+## Historical chart viewer
 
-Evaluates vaults against configurable rules and highlights eligible opportunities. Updates automatically after parsing and after Fetch Protocol Data.
+Open `chart.html` separately in the same browser. Click **Open master.csv** and navigate to your data folder.
 
-The panel comes pre-configured with example rules. To tailor it to your own needs, open `tracker.html` in a text editor and edit the `YS_VAULTS` array and rule constants near the top of the script section.
+**Selecting vaults:**
+- Filter by protocol, chain, or YS whitelist status
+- Set minimum APY and TVL thresholds
+- Search by name
+- Sort by APY, TVL, or days of history
+- Use **Top 5 / 10 / 15** buttons to auto-select the highest-ranking vaults from the current filter
+- Page through results (15 per page)
+
+**Charting:**
+- Up to 15 vaults simultaneously
+- Metrics: APY, Base APY, Reward APY, 30d Average, TVL, Available Liquidity, Supply Cap Util %
+- Date ranges: 7d, 14d, 30d, All
+- Hover over legend names to isolate a single series
+
+---
+
+## Customising your watchlist
+
+The pre-loaded watchlist tracks the YieldSeeker vault selection. To build your own:
+
+### Adding on-chain vaults (not on DefiLlama)
+
+Edit the `OFFCHAIN_VAULTS` array in `tracker.html`. Each entry needs:
+
+```javascript
+{
+  name: 'My Vault',
+  address: '0x...',                    // vault contract address
+  network: 'base',                     // network slug (for future use)
+  chain: 'Base',                       // display chain name
+  project: 'My Protocol',             // display project name
+  pool: 'USDC',                        // display pool name
+  matchRe: { project: /myprotocol/i }, // regex to detect if DL already has it
+  erc4626: {
+    rpc: 'https://base.drpc.org',
+    decimals: 6,
+    shareApy: true   // use share-price APY (most ERC4626 vaults)
+    // eulerApy: true  // use Euler V2 interest-rate model instead
+  },
+  liquidityRpc: {                      // optional: on-chain liquidity read
+    rpc: 'https://base.drpc.org',
+    token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // underlying token
+    decimals: 6
+  }
+}
+```
+
+### Adding watchlist rules
+
+Edit the `YS_VAULTS` array. Each rule is a set of regex conditions — a vault matches if all specified conditions match:
+
+```javascript
+{ pool: /mypool/i, project: /myprotocol/i, chain: /base/i }
+```
+
+Add `blocked: true` to mark a vault as ineligible (shown in the YS panel with a ⊘ warning rather than hidden).
+
+### Adjusting DefiLlama filters
+
+Edit `config.json` in your data folder (created automatically on first run). The file is excluded from git — your overrides are local only.
+
+```json
+{
+  "defiLlama": {
+    "chains": ["Base", "Arbitrum", "Optimism"],
+    "minTvl": 1000000,
+    "maxApy": 30,
+    "limit": 50,
+    "stablecoinOnly": true,
+    "excludeOutliers": true
+  }
+}
+```
 
 ---
 
 ## master.csv schema
 
-The master file has 20 columns:
+20 columns, append-only. Do not edit directly. If opening in Excel, choose **Don't Save** when closing.
 
 | Column | Description |
 |---|---|
-| date | YYYY-MM-DD |
-| rank | APY rank on that day |
-| pool | Pool name from DefiLlama |
-| project | Protocol name |
-| chain | Blockchain |
-| tvl | TVL display string |
-| tvl_raw | TVL as a number |
-| apy | Total APY % |
-| base_apy | Native/base APY % |
-| reward_apy | Incentive/reward APY % |
-| base_apy_7d | 7-day base APY % |
-| il_7d | 7-day impermanent loss % |
-| avg_30d | 30-day average APY % |
-| inception_apy | APY since inception % |
-| top_10_pct | Top 10% APY threshold |
-| total_pool | Total pool size USD |
-| total_borrowed | Total borrowed USD |
-| avail_liquidity | Available liquidity USD |
-| supply_cap_util | Supply cap utilisation % (Morpho vaults only) |
-| collateral_exposure | JSON collateral breakdown % (Morpho vaults only) |
-
-> Never edit master.csv directly. If opening in Excel, choose Don't Save on close so the source file stays untouched.
+| `date` | YYYY-MM-DD |
+| `rank` | APY rank on that day |
+| `pool` | Pool name |
+| `project` | Protocol name |
+| `chain` | Blockchain |
+| `tvl` | TVL display string |
+| `tvl_raw` | TVL as a number (USD) |
+| `apy` | Total APY % |
+| `base_apy` | Base/native APY % |
+| `reward_apy` | Incentive APY % |
+| `base_apy_7d` | 7-day base APY % |
+| `il_7d` | 7-day impermanent loss % |
+| `avg_30d` | 30-day average APY % |
+| `inception_apy` | APY since inception % |
+| `top_10_pct` | Top 10% APY threshold on that day |
+| `total_pool` | Total pool size (USD) |
+| `total_borrowed` | Total borrowed (USD) |
+| `avail_liquidity` | Available liquidity (USD) |
+| `supply_cap_util` | Supply cap utilisation % (Morpho vaults) |
+| `collateral_exposure` | JSON collateral breakdown (Morpho vaults) |
 
 ---
 
-## Morpho API — chains covered
+## About YieldSeeker
 
-Ethereum (chainId 1) is excluded. To add or remove chains, edit the `chainId_in` array in the `fetchAndEnrichMorpho` function inside `tracker.html`.
+[YieldSeeker](https://www.yieldseeker.xyz/) curates a selection of stablecoin yield vaults with a focus on capital safety, withdrawal liquidity, and sustainable APY. The ⚡ YS badge in this tracker marks vaults that meet the YieldSeeker criteria. The ⊘ Blocked badge marks vaults that are monitored but currently excluded due to operational concerns such as illiquid exit conditions.
 
-| Chain | Chain ID | Chain | Chain ID |
-|---|---|---|---|
-| Base | 8453 | Unichain | 130 |
-| Optimism | 10 | Ink | 57073 |
-| Arbitrum | 42161 | Corn | 21000000 |
-| Polygon | 137 | Katana | 747 |
-| Scroll | 534352 | Fraxtal | 252 |
-| Monad | 143 | Hyperliquid EVM | 999 |
+This tracker was built to support the YieldSeeker research workflow. The vault list, enrichment logic, and YS panel reflect the criteria applied at [yieldseeker.xyz](https://www.yieldseeker.xyz/).
 
 ---
 
-## Deploying a new tracker.html
+## Data and privacy
 
-1. Overwrite `tracker.html` in this folder with the new version
-2. Hard-reload in Brave or Chrome: **Ctrl+Shift+R**
-3. Confirm the version string under the title has updated
-
-> Pick Folder only changes where data is saved — it does not control which tracker.html is loaded. The address bar shows the actual file being run.
+- `master.csv` contains only public market data (APYs, TVLs, pool names scraped from DefiLlama and public APIs). No wallet addresses, no personal positions, no account data.
+- All data is stored locally in the folder you choose.
+- The tracker makes outbound API calls to DefiLlama, the Morpho API, and public blockchain RPC endpoints. No data is sent to any other service.
+- `config.json` is excluded from git (see `.gitignore`). It contains only DefiLlama filter settings — no secrets.
 
 ---
 
 ## Troubleshooting
 
-**Chain column is empty after scraping**
-→ F12 DevTools was not open. Reopen DevTools, scroll DefiLlama to the top, re-run the bookmarklet.
+**Chain column empty after bookmarklet scrape**
+→ Open DevTools (F12) before running the bookmarklet. DefiLlama lazy-renders chain icons and DevTools forces the layout computation. Minimise the panel but keep it open.
 
 **Brave asks for folder permission every session**
-→ Normal for `file://` pages. Click Reconnect at the top of the tracker.
+→ Expected for `file://` pages. Click **Reconnect** at the top of the tracker.
 
 **File system access blocked in Brave**
 → Go to `brave://settings/content/filesystem` and enable file system access.
 
-**Fetch Protocol Data returns 0 vaults enriched**
-→ Check your internet connection. The Morpho API is public and needs no authentication. Try again.
+**Fetch Protocol Data shows 0 Morpho vaults enriched**
+→ Check your internet connection. The Morpho API is public and requires no authentication.
 
-**Off-chain vaults (Revert/Tokemak) show blank APY**
-→ A vaults.fyi API key is required. See One-time setup Step 6.
+**Save fails with a file lock error**
+→ `master.csv` is open in Excel or another application. Close it and try again. Do not open `master.csv` in Excel while the tracker is running.
 
-**Save fails with "state cached" error**
-→ master.csv is open in Excel or another application. Close it before saving.
+**Sort warning after parsing bookmarklet data**
+→ Click the APY column on DefiLlama to sort descending before running the bookmarklet.
 
-**master.csv appears truncated after saving**
-→ Do not open master.csv in Excel while the tracker is running. Excel locks the file and can interrupt the write.
+**Chart shows a gap in a vault's history**
+→ DefiLlama changed project name casing in May 2026. The chart normalises keys to lowercase automatically. If you still see a gap, the vault may have been briefly renamed — check the vault list for a second entry with a slightly different name.
 
-**Sort warning after parsing**
-→ Click the APY column on DefiLlama to sort descending, then re-scrape.
+---
 
-**master.csv has empty columns for older dates**
-→ Expected. Columns added after initial setup will be blank for rows scraped before the upgrade.
+## Architecture notes
 
-**Version string didn't update after replacing tracker.html**
-→ Ctrl+Shift+R for a hard reload. Check the address bar to confirm which file is loaded.
+Both `tracker.html` and `chart.html` are self-contained single-file vanilla JS applications. There is no build step, no npm, no bundler, and no external dependencies beyond Chart.js (loaded from CDN in `chart.html`).
+
+File I/O uses the browser's [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API) — files are read and written directly to your local folder without any server involvement.
+
+To modify the tracker: edit `tracker.html` in any text editor. There is nothing to compile or build. Hard-reload the browser (Ctrl+Shift+R) after saving.
+
+---
+
+## License
+
+MIT — do whatever you like with it.

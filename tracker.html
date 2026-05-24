@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-23y</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24e</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -557,9 +557,7 @@ function matchVault(row, vault) {
 
 // ============ DefiLlama API ============
 
-let vaultsFyiApiKey = '';
-
-// Vaults not listed on DefiLlama — fetched via vaults.fyi if API key present.
+// Vaults not listed on DefiLlama — fetched via on-chain ERC4626 fallback.
 // Silently skipped (no error shown) if the key is missing or vault not indexed.
 // liquidityRpc: if present, calls token.balanceOf(vaultAddress) on-chain to get
 // available withdrawal liquidity (applicable to direct lending pools like Revert).
@@ -569,6 +567,7 @@ const OFFCHAIN_VAULTS = [
     address: '0x36AEAe0E411a1E28372e0d66f02E57744EbE7599',
     network: 'base', chain: 'Base', project: 'Revert Lend', pool: 'USDC',
     matchRe: { project: /revert/i, chain: /base/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true },
     liquidityRpc: {
       rpc: 'https://base.drpc.org',
       token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
@@ -604,7 +603,7 @@ const OFFCHAIN_VAULTS = [
     address: '0x4C1aeda9B43EfcF1da1d1755b18802aAbe90f61E',
     network: 'base', chain: 'Base', project: 'AlphaGrowth', pool: 'USDC',
     matchRe: { project: /alphagrowth/i },
-    erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6, eulerApy: true },
     liquidityRpc: { rpc: 'https://base.drpc.org', token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 }
   },
   {
@@ -728,6 +727,42 @@ async function rpcCall(rpc, to, data, blockTag = 'latest') {
   return null;
 }
 
+// Derive annualised supply APY for an Euler v2 lending vault from its on-chain
+// interest rate model. Formula:
+//   supplyAPY = ((1 + borrowRatePerSec × utilisation × (1 − interestFee)) ^ secondsPerYear) − 1
+// interestRate() → per-second borrow rate, scaled 1e27 (Euler v2 EVK, Borrowing.sol)
+// interestFee()  → protocol reserve fraction, scaled 1e4 (CONFIG_SCALE = 10000), selector 0xa75df498
+// Returns APY % or null if any required call fails.
+async function fetchEulerLendingApy(address, rpc, decimals, usdcToken) {
+  const scale = Math.pow(10, decimals);
+
+  // borrow rate per second (scaled 1e27)
+  const rateHex = await rpcCall(rpc, address, '0x7c3a00fd').catch(() => null); // interestRate()
+  if (!rateHex) return null;
+  const borrowRatePerSec = Number(BigInt(rateHex)) / 1e27;
+
+  // protocol interest fee (basis points, 0–10000); if unavailable, return null — don't guess
+  const feeHex = await rpcCall(rpc, address, '0xa75df498').catch(() => null); // interestFee()
+  if (!feeHex) return null;
+  const interestFee = parseInt(feeHex, 16) / 1e4;
+
+  // totalAssets() = cash + borrows
+  const assetsHex = await rpcCall(rpc, address, '0x01e1d114').catch(() => null); // totalAssets()
+  if (!assetsHex) return null;
+  const totalAssets = parseInt(assetsHex, 16) / scale;
+  if (totalAssets === 0) return null;
+
+  // idle cash = ERC20 balance of underlying token held by vault (= Euler's cash())
+  const cash = await fetchTokenBalance(rpc, usdcToken, address, decimals).catch(() => null);
+  if (cash === null) return null;
+
+  const utilisation = Math.max(0, Math.min(1, (totalAssets - cash) / totalAssets));
+  const supplyRatePerSec = borrowRatePerSec * utilisation * (1 - interestFee);
+  // annualise with per-second compounding (365.25 days = 31,557,600 s)
+  const apy = (Math.pow(1 + supplyRatePerSec, 31_557_600) - 1) * 100;
+  return apy > 0 ? apy : null;
+}
+
 // Derive annualised APY from ERC4626 share price growth over ~24h.
 // Calls convertToAssets(1e18) at current block and ~43200 blocks ago (~24h on Base).
 // Returns APY % or null if either call fails / vault too young.
@@ -830,108 +865,87 @@ async function fetchAaveLiquidity() {
 }
 
 async function fetchOffchainVaults() {
-  const vfyBase = 'https://api.vaults.fyi/v2/detailed-vaults';
-  const vfyHeaders = { 'x-api-key': vaultsFyiApiKey };
   let fetched = 0;
 
   for (const vault of OFFCHAIN_VAULTS) {
-    // Skip if DefiLlama already returned data for this vault
-    const alreadyPresent = parsedRows.find(r =>
+    // Check if DefiLlama already returned data for this vault
+    const alreadyIdx = parsedRows.findIndex(r =>
       (!vault.matchRe.project || vault.matchRe.project.test(r.project)) &&
       (!vault.matchRe.pool    || vault.matchRe.pool.test(r.pool)) &&
       (!vault.matchRe.chain   || vault.matchRe.chain.test(r.chain))
     );
-    if (alreadyPresent) { fetched++; continue; }
 
-    // ── Attempt 1: vaults.fyi (APY + TVL) ──────────────────────────────
-    let vfyOk = false;
-    if (vaultsFyiApiKey) {
+    if (alreadyIdx !== -1) {
+      // Vault is in DefiLlama — patch on-chain fields where we have better data.
       try {
-        const [apyRes, vaultRes] = await Promise.allSettled([
-          fetch(`${vfyBase}/${vault.network}/${vault.address}/apy`, { headers: vfyHeaders }),
-          fetch(`${vfyBase}/${vault.network}/${vault.address}`, { headers: vfyHeaders })
-        ]);
-        if (apyRes.status === 'fulfilled' && apyRes.value.ok) {
-          const apyData = await apyRes.value.json();
-          let tvl = 0;
-          if (vaultRes.status === 'fulfilled' && vaultRes.value.ok) {
-            const vd = await vaultRes.value.json();
-            tvl = parseFloat(vd?.tvl?.usd ?? vd?.totalAssets?.usd ?? 0);
+        // eulerApy vaults (AlphaGrowth): override DL's APY with on-chain Euler rate.
+        // DL often lags or uses a different methodology; the interest-rate model is ground truth.
+        if (vault.erc4626?.eulerApy && vault.liquidityRpc) {
+          const derivedApy = await fetchEulerLendingApy(
+            vault.address, vault.erc4626.rpc, vault.erc4626.decimals, vault.liquidityRpc.token
+          ).catch(() => null);
+          if (derivedApy !== null) {
+            parsedRows[alreadyIdx].apy      = derivedApy;
+            parsedRows[alreadyIdx].base_apy = derivedApy;
           }
-          // vaults.fyi sometimes omits TVL — fall back to on-chain totalAssets()
-          if (tvl === 0 && vault.erc4626) {
-            const hex = await rpcCall(vault.erc4626.rpc, vault.address, '0x01e1d114').catch(() => null);
-            if (hex) tvl = parseInt(hex, 16) / Math.pow(10, vault.erc4626.decimals);
-          }
-          const apy1d    = (apyData['1day']?.total  ?? 0) * 100;
-          const base1d   = (apyData['1day']?.base   ?? 0) * 100;
-          const reward1d = (apyData['1day']?.reward ?? 0) * 100;
-          const avg30d   = (apyData['30day']?.total ?? 0) * 100;
-          const tvlDisplay = tvl >= 1e6 ? `$${(tvl/1e6).toFixed(2)}m`
-            : tvl >= 1e3 ? `$${(tvl/1e3).toFixed(1)}k` : `$${tvl.toFixed(0)}`;
-
-          let avail_liquidity = null;
-          if (vault.liquidityRpc) {
-            avail_liquidity = await fetchTokenBalance(
-              vault.liquidityRpc.rpc, vault.liquidityRpc.token,
-              vault.address, vault.liquidityRpc.decimals
-            ).catch(() => null);
-          }
-
-          parsedRows.push({
-            pool: vault.pool, project: vault.project, chain: vault.chain,
-            tvl_display: tvlDisplay, tvl,
-            apy: apy1d, base_apy: base1d, reward_apy: reward1d || null,
-            base_apy_7d: null, il_7d: null,
-            avg_30d: avg30d, inception_apy: null, top_10_pct: null,
-            total_pool: tvl, total_borrowed: null,
-            avail_liquidity, supply_cap_util: null, collateral_exposure: null,
-            raw: ''
-          });
-          fetched++;
-          vfyOk = true;
         }
-      } catch { /* CORS or not indexed — fall through to ERC4626 */ }
-    }
-
-    // ── Attempt 2: ERC4626 on-chain fallback (TVL + optional share-price APY) ──
-    if (!vfyOk && vault.erc4626) {
-      try {
-        const { rpc, decimals } = vault.erc4626;
-        const assetsHex = await rpcCall(rpc, vault.address, '0x01e1d114'); // totalAssets()
-        if (!assetsHex) continue;
-        const tvl = parseInt(assetsHex, 16) / Math.pow(10, decimals);
-        const tvlDisplay = tvl >= 1e6 ? `$${(tvl/1e6).toFixed(2)}m`
-          : tvl >= 1e3 ? `$${(tvl/1e3).toFixed(1)}k` : `$${tvl.toFixed(0)}`;
-
-        // Optional: derive APY from share price growth over ~24h (convertToAssets)
-        let derivedApy = null;
-        if (vault.erc4626.shareApy) {
-          derivedApy = await fetchSharePriceApy(vault.address, rpc).catch(() => null);
-        }
-
-        // Lending vaults: also fetch idle cash as available liquidity
-        let avail_liquidity = null;
+        // liquidityRpc vaults (Revert, AlphaGrowth): precise withdrawal liquidity from chain.
         if (vault.liquidityRpc) {
-          avail_liquidity = await fetchTokenBalance(
+          const liq = await fetchTokenBalance(
             vault.liquidityRpc.rpc, vault.liquidityRpc.token,
             vault.address, vault.liquidityRpc.decimals
           ).catch(() => null);
+          if (liq !== null) parsedRows[alreadyIdx].avail_liquidity = liq;
         }
-
-        parsedRows.push({
-          pool: vault.pool, project: vault.project, chain: vault.chain,
-          tvl_display: tvlDisplay, tvl,
-          apy: derivedApy, base_apy: derivedApy, reward_apy: null,
-          base_apy_7d: null, il_7d: null,
-          avg_30d: null, inception_apy: null, top_10_pct: null,
-          total_pool: tvl, total_borrowed: null,
-          avail_liquidity, supply_cap_util: null, collateral_exposure: null,
-          raw: ''
-        });
-        fetched++;
-      } catch { /* silently skip — vault stays out of today's data */ }
+      } catch { /* keep DefiLlama values on any RPC error */ }
+      fetched++;
+      continue;
     }
+
+    // ── Not in DefiLlama — build row from on-chain ERC4626 data ──────────
+    if (!vault.erc4626) continue;
+    try {
+      const { rpc, decimals } = vault.erc4626;
+      const assetsHex = await rpcCall(rpc, vault.address, '0x01e1d114'); // totalAssets()
+      if (!assetsHex) continue;
+      let tvl = parseInt(assetsHex, 16) / Math.pow(10, decimals);
+      // Euler lending vaults: subtract accumulated fee assets to match protocol's displayed TVL
+      if (vault.erc4626.eulerApy) {
+        const feesHex = await rpcCall(rpc, vault.address, '0xf6e50f58').catch(() => null);
+        if (feesHex) tvl -= parseInt(feesHex, 16) / Math.pow(10, decimals);
+      }
+      const tvlDisplay = tvl >= 1e6 ? `$${(tvl/1e6).toFixed(2)}m`
+        : tvl >= 1e3 ? `$${(tvl/1e3).toFixed(1)}k` : `$${tvl.toFixed(0)}`;
+
+      let derivedApy = null;
+      if (vault.erc4626.eulerApy && vault.liquidityRpc) {
+        derivedApy = await fetchEulerLendingApy(
+          vault.address, rpc, decimals, vault.liquidityRpc.token
+        ).catch(() => null);
+      } else if (vault.erc4626.shareApy) {
+        derivedApy = await fetchSharePriceApy(vault.address, rpc).catch(() => null);
+      }
+
+      let avail_liquidity = null;
+      if (vault.liquidityRpc) {
+        avail_liquidity = await fetchTokenBalance(
+          vault.liquidityRpc.rpc, vault.liquidityRpc.token,
+          vault.address, vault.liquidityRpc.decimals
+        ).catch(() => null);
+      }
+
+      parsedRows.push({
+        pool: vault.pool, project: vault.project, chain: vault.chain,
+        tvl_display: tvlDisplay, tvl,
+        apy: derivedApy, base_apy: derivedApy, reward_apy: null,
+        base_apy_7d: null, il_7d: null,
+        avg_30d: null, inception_apy: null, top_10_pct: null,
+        total_pool: tvl, total_borrowed: null,
+        avail_liquidity, supply_cap_util: null, collateral_exposure: null,
+        raw: ''
+      });
+      fetched++;
+    } catch { /* silently skip — vault stays out of today's data */ }
   }
   return fetched;
 }
@@ -964,8 +978,7 @@ async function loadConfig() {
     const text = await file.text();
     if (!text.trim()) {
       const template = {
-        _note: 'DefiLlama filter settings + vaults.fyi API key for off-chain vaults (Revert, Tokemak).',
-        vaultsFyiApiKey: '',
+        _note: 'DefiLlama filter settings for YieldTracker. No API key required.',
         defiLlama: {
           chains: ['Base', 'Arbitrum', 'Optimism', 'Polygon', 'Unichain'],
           minTvl: 500000, maxApy: 50, limit: 100,
@@ -980,7 +993,6 @@ async function loadConfig() {
     if (parsed.defiLlama) {
       defiLlamaConfig = { ...defiLlamaConfig, ...parsed.defiLlama };
     }
-    vaultsFyiApiKey = parsed.vaultsFyiApiKey || '';
     updateFilterSummary();
   } catch (e) {
     console.warn('config.json read failed:', e.message);
@@ -1039,7 +1051,7 @@ async function fetchDefiLlama() {
       fetchOffchainVaults(),
       fetchAaveLiquidity()
     ]);
-    const offchainNote = offchainFetched > 0 ? ` · +${offchainFetched} off-chain` : vaultsFyiApiKey ? '' : ' · Add vaultsFyiApiKey to config.json for Revert/Tokemak';
+    const offchainNote = offchainFetched > 0 ? ` · +${offchainFetched} off-chain` : '';
     setStatus('fetchStatus', `✓ ${parsedRows.length} pools · ${dlCount} DefiLlama · ${filtered.length} matched · ${pools.length} total${offchainNote}`, 'ok');
     $('morphoFetchRow').style.display = 'block';
     $('morphoStatus').innerHTML = '';

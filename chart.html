@@ -106,6 +106,7 @@
   button.sec { color: var(--muted-mid); border-color: var(--border-hi); }
   button.sec:hover { color: var(--text); border-color: var(--muted-mid); background: transparent; }
   button.active { background: var(--accent-lo); color: var(--accent); border-color: var(--accent); }
+  button:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
 
   /* ── STATUS ── */
   .status { font-size: 11px; padding: 8px 12px; margin-top: 10px; border-left: 3px solid; letter-spacing: 0.02em; }
@@ -118,6 +119,27 @@
   .filter-bar button { padding: 5px 11px; }
   .divider { width: 1px; height: 22px; background: var(--border-hi); margin: 0 3px; }
   .row-label { color: var(--muted); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* ── THRESHOLD BAR ── */
+  .threshold-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .threshold-bar input {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border-hi);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 5px 8px;
+    width: 72px;
+    border-radius: 0;
+    outline: none;
+    transition: border-left-color 0.15s;
+  }
+  .threshold-bar input:focus { border-left-color: var(--accent-dim); }
+  .threshold-bar input::placeholder { color: var(--muted); }
+  .threshold-bar input::-webkit-outer-spin-button,
+  .threshold-bar input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .threshold-bar input[type=number] { -moz-appearance: textfield; }
 
   /* ── SEARCH ── */
   input[type=text] {
@@ -173,6 +195,15 @@
     background: var(--err-dim); color: var(--err); border: 1px solid var(--err);
   }
 
+  /* ── PAGINATION ── */
+  .pagination {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px; font-size: 10px;
+    color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .pagination button { padding: 4px 10px; }
+  .page-info { color: var(--muted-mid); }
+
   /* ── CHIPS ── */
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 28px; }
   .chip {
@@ -185,7 +216,7 @@
   .chip:hover .x { opacity: 1; }
 
   /* ── LIST CONTROLS ── */
-  .list-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .list-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px; }
   .vault-count { color: var(--muted); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
   .list-controls button { padding: 4px 10px; }
 
@@ -205,9 +236,16 @@
   canvas { width: 100% !important; }
 
   /* ── LEGEND ── */
-  #legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-  .leg-item { display: flex; align-items: center; gap: 7px; font-size: 11px; }
-  .leg-swatch { width: 20px; height: 3px; flex-shrink: 0; }
+  #legend { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 12px; }
+  .leg-item {
+    display: flex; align-items: center; gap: 7px; font-size: 11px;
+    cursor: pointer; padding: 3px 8px;
+    border: 1px solid transparent;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .leg-item:hover { background: var(--accent-glow); border-color: var(--border-hi); }
+  .leg-swatch { width: 20px; height: 3px; flex-shrink: 0; transition: height 0.12s; }
+  .leg-item:hover .leg-swatch { height: 5px; }
 </style>
 </head>
 <body>
@@ -252,18 +290,35 @@
     <button id="s-days" class="sec" onclick="setSort('days')">Days</button>
   </div>
 
-  <input type="text" id="search" placeholder="Search pool, project, chain..." oninput="renderVaultList()">
+  <div class="threshold-bar">
+    <span class="row-label">Min APY:</span>
+    <input type="number" id="minApyInput" placeholder="0" min="0" step="0.1" oninput="setThreshold()">
+    <span class="row-label">%</span>
+    <div class="divider"></div>
+    <span class="row-label">Min TVL: $</span>
+    <input type="number" id="minTvlInput" placeholder="0" min="0" step="0.1" oninput="setThreshold()">
+    <span class="row-label">m</span>
+  </div>
+
+  <input type="text" id="search" placeholder="Search pool, project, chain..." oninput="onSearch()">
 
   <div class="chips" id="chips"></div>
 
   <div class="list-controls">
     <span id="vaultCount" class="vault-count"></span>
-    <div style="display:flex;gap:5px;">
-      <button class="sec" onclick="selectFiltered()">Select All Visible</button>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">
+      <span class="row-label">Top N:</span>
+      <button class="sec" onclick="selectTopN(5)">5</button>
+      <button class="sec" onclick="selectTopN(10)">10</button>
+      <button class="sec" onclick="selectTopN(15)">15</button>
+      <div class="divider"></div>
       <button class="sec" onclick="clearAll()">Clear All</button>
     </div>
   </div>
+
   <div class="vault-list" id="vaultList"></div>
+
+  <div class="pagination" id="pagination"></div>
 </div>
 
 <!-- 03 CHART -->
@@ -332,6 +387,52 @@ function isYS(vault) {
   return match ? { ys: true, blocked: !!match.blocked } : { ys: false, blocked: false };
 }
 
+// ============ Pool-name alias map ============
+// DefiLlama went through two format changes:
+//   Era 1 (pre Apr-23):  pool = "POOL / QUALIFIER",  project = "PROJECT"
+//   Era 2 (Apr-23–May-22): pool = "POOL|QUALIFIER" (literal pipe), project = "PROJECT"
+//   Era 3 (May-23+):    pool = "POOL",              project = "project" (lowercase)
+// All values are lowercase. Old-era key → canonical (Era-3) key.
+const KEY_ALIASES = {
+  // YO Protocol / yoUSD  (Arbitrum + Base)
+  'usdc / yousd|yo protocol|arbitrum':           'usdc|yo protocol|arbitrum',
+  'usdc / yousd|yo protocol|base':               'usdc|yo protocol|base',
+  'usdc|yousd|yo protocol|arbitrum':             'usdc|yo protocol|arbitrum',
+  'usdc|yousd|yo protocol|base':                 'usdc|yo protocol|base',
+  // Beefy × MIM-USDC
+  'mim-usdc / mim|beefy|arbitrum':               'mim-usdc|beefy|arbitrum',
+  'mim-usdc|mim|beefy|arbitrum':                 'mim-usdc|beefy|arbitrum',
+  // Beefy × MIM-USDT0
+  'mim-usdt0 / mim|beefy|arbitrum':              'mim-usdt0|beefy|arbitrum',
+  'mim-usdt0|mim|beefy|arbitrum':                'mim-usdt0|beefy|arbitrum',
+  // Superform × SUPERUSDC
+  'superusdc / supervault|superform|base':        'superusdc|superform|base',
+  'superusdc|supervault|superform|base':          'superusdc|superform|base',
+  // Avantis × USDC
+  'usdc / vault|avantis|base':                   'usdc|avantis|base',
+  'usdc|vault|avantis|base':                     'usdc|avantis|base',
+  // Harvest Finance × 40 Acres
+  'usdc / 40 acres|harvest finance|base':        '40 acres|harvest finance|base',
+  'usdc|40 acres|harvest finance|base':          '40 acres|harvest finance|base',
+  // Beefy × MSUSD-USDC (Aerodrome)
+  'msusd-usdc / aerodrome|beefy|base':           'msusd-usdc|beefy|base',
+  'msusd-usdc|aerodrome|beefy|base':             'msusd-usdc|beefy|base',
+  // Aerodrome Slipstream × MSUSD-USDC
+  'msusd-usdc / cl50 - 0.05%|aerodrome slipstream|base': 'msusd-usdc|aerodrome slipstream|base',
+  'msusd-usdc|cl50 - 0.05%|aerodrome slipstream|base':   'msusd-usdc|aerodrome slipstream|base',
+  // Beefy × WAARBUSDCN-WAARBUSDT-WAARBGHO (Arbitrum)
+  'waarbusdcn-waarbusdt-waarbgho / aura|beefy|arbitrum':  'waarbusdcn-waarbusdt-waarbgho|beefy|arbitrum',
+  'waarbusdcn-waarbusdt-waarbgho|aura|beefy|arbitrum':    'waarbusdcn-waarbusdt-waarbgho|beefy|arbitrum',
+  // Beefy × WABASGHO-WABASUSDC (Base) — series ended May-20, alias for intra-historical continuity
+  'wabasgho-wabasusdc / aura|beefy|base':        'wabasgho-wabasusdc|aura|beefy|base',
+  // Beefy × WNUSDT0-WNAUSD-WNUSDC (Monad) — series ended May-21
+  'wnusdt0-wnausd-wnusdc / balancer|beefy|monad': 'wnusdt0-wnausd-wnusdc|balancer|beefy|monad',
+  // Velodrome V2 × USDC-ALUSD (Op Mainnet) — series ended May-17
+  'usdc-alusd / stable - 0.05%|velodrome v2|op mainnet': 'usdc-alusd|stable - 0.05%|velodrome v2|op mainnet',
+  // Velodrome V2 × USDC-MSUSD (Op Mainnet) — series ended May-17
+  'usdc-msusd / stable - 0.05%|velodrome v2|op mainnet': 'usdc-msusd|stable - 0.05%|velodrome v2|op mainnet',
+};
+
 // ============ Colors ============
 const COLORS = [
   '#00EF78','#4DBAF5','#F5A024','#E54E4E','#A78BFA',
@@ -340,19 +441,27 @@ const COLORS = [
 ];
 
 // ============ State ============
-let allRows    = [];
-let vaults     = [];
-let selected   = [];
-let metric     = 'apy';
-let chartInst  = null;
+let allRows      = [];
+let rowIndex     = {};   // "date|vaultkey" → row (last-wins; resolves duplicates + alias lookups)
+let vaults       = [];
+let selected     = [];
+let metric       = 'apy';
+let chartInst    = null;
 let activeFilter = 'all';
 let activeSort   = 'apy';
 let maxDays      = 7;
 let rangeLimit   = 0;
+let currentPage  = 1;
+let minApy       = null;   // null = no filter; number = minimum APY %
+let minTvl       = null;   // null = no filter; number = minimum TVL in USD
+
+const PAGE_SIZE  = 15;
+const MAX_SELECT = 15;
 
 // ============ Filter / Sort / Range ============
 function setFilter(f) {
   activeFilter = f;
+  currentPage  = 1;
   document.querySelectorAll('[id^="f-"]').forEach(b => b.className = 'sec');
   const el = document.getElementById('f-' + f);
   if (el) el.className = 'active';
@@ -360,7 +469,8 @@ function setFilter(f) {
 }
 
 function setSort(s) {
-  activeSort = s;
+  activeSort  = s;
+  currentPage = 1;
   document.querySelectorAll('[id^="s-"]').forEach(b => b.className = 'sec');
   document.getElementById('s-' + s).className = 'active';
   renderVaultList();
@@ -373,6 +483,20 @@ function setRange(r) {
   if (selected.length > 0) drawChart();
 }
 
+function setThreshold() {
+  const apyRaw = parseFloat(document.getElementById('minApyInput').value);
+  const tvlRaw = parseFloat(document.getElementById('minTvlInput').value);
+  minApy = (!isNaN(apyRaw) && apyRaw > 0) ? apyRaw : null;
+  minTvl = (!isNaN(tvlRaw) && tvlRaw > 0) ? tvlRaw * 1e6 : null;
+  currentPage = 1;
+  renderVaultList();
+}
+
+function onSearch() {
+  currentPage = 1;
+  renderVaultList();
+}
+
 function getDateRange() {
   const dates = [...new Set(allRows.map(r => r.date))].sort();
   return (rangeLimit === 0 || dates.length <= rangeLimit) ? dates : dates.slice(-rangeLimit);
@@ -382,6 +506,8 @@ function getFiltered() {
   const q = (document.getElementById('search')?.value || '').toLowerCase();
   return vaults.filter(v => {
     if (q && !v.pool.toLowerCase().includes(q) && !v.project.toLowerCase().includes(q) && !v.chain.toLowerCase().includes(q)) return false;
+    if (minApy !== null && (v.latestApy === null || v.latestApy < minApy)) return false;
+    if (minTvl !== null && (v.latestTvl === null || v.latestTvl < minTvl)) return false;
     switch (activeFilter) {
       case 'ys':       return v.ys;
       case 'morpho':   return /morpho/i.test(v.project);
@@ -402,14 +528,19 @@ function getFiltered() {
   });
 }
 
-function selectFiltered() {
-  const toAdd = getFiltered().map(v => v.key).filter(k => !selected.includes(k));
-  const spots = 15 - selected.length;
-  if (spots <= 0) { alert('Max 15 vaults selected.'); return; }
-  selected = [...selected, ...toAdd.slice(0, spots)];
+// ============ Top N select (operates on full filtered set, not current page) ============
+function selectTopN(n) {
+  const filtered = getFiltered();
+  const toAdd = filtered.map(v => v.key).filter(k => !selected.includes(k));
+  const spots = MAX_SELECT - selected.length;
+  if (spots <= 0) { alert('Max 15 vaults already selected. Clear some first.'); return; }
+  const adding = toAdd.slice(0, Math.min(n, spots));
+  if (!adding.length) return;
+  selected = [...selected, ...adding];
   renderVaultList();
   renderChips();
-  if (selected.length > 0) { document.getElementById('chartPanel').style.display = 'block'; drawChart(); }
+  document.getElementById('chartPanel').style.display = 'block';
+  drawChart();
 }
 
 // ============ File loading ============
@@ -449,13 +580,31 @@ function loadCSV(text) {
     allRows.push(row);
   }
 
+  // Build vault map and row index together.
+  // KEY_ALIASES normalises pool-name format changes across eras (` / ` → pipe → clean).
+  // rowIndex[date|key] = row uses last-wins so duplicate same-day entries resolve to the
+  // latest appended row (typically the one with the freshest data).
   const vaultMap = {};
+  rowIndex = {};
   for (const r of allRows) {
-    const key = r.pool + '|' + r.project + '|' + r.chain;
+    // Skip early entries (Apr-17–19) that had no chain field. They create ghost duplicate
+    // vaults in the selection list and are only ~3 days of data each.
+    if (!r.chain || !r.chain.trim()) continue;
+
+    // Normalise key to lowercase — DefiLlama changed project casing (Title Case → lowercase)
+    // mid-dataset; lowercase keys merge both eras into a single continuous series.
+    const rawKey = (r.pool + '|' + r.project + '|' + r.chain).toLowerCase();
+    let key = KEY_ALIASES[rawKey] ?? rawKey;
+    // DefiLlama renamed "Morpho V1" → "Morpho Blue" on Apr-23; merge the two eras.
+    key = key.replace('|morpho v1|', '|morpho blue|');
     if (!vaultMap[key]) vaultMap[key] = { key, pool: r.pool, project: r.project, chain: r.chain, days: 0, latestApy: null, latestTvl: null };
     vaultMap[key].days++;
+    // Keep display names from the latest row so they stay current
+    vaultMap[key].pool = r.pool; vaultMap[key].project = r.project; vaultMap[key].chain = r.chain;
     if (parseNum(r.apy)     !== null) vaultMap[key].latestApy = parseNum(r.apy);
     if (parseNum(r.tvl_raw) !== null) vaultMap[key].latestTvl = parseNum(r.tvl_raw);
+    // Row index for drawChart (last-wins deduplication)
+    rowIndex[r.date + '|' + key] = r;
   }
 
   vaults = Object.values(vaultMap).map(v => {
@@ -467,26 +616,41 @@ function loadCSV(text) {
   const dates = [...new Set(allRows.map(r => r.date))].sort();
   showStatus('loadStatus', `✓ ${allRows.length} rows · ${vaults.length} vaults · ${dates.length} days (${dates[0]} → ${dates[dates.length-1]})`, 'ok');
 
+  // Reset all state
   selected = []; activeFilter = 'all'; activeSort = 'apy'; rangeLimit = 0;
+  currentPage = 1; minApy = null; minTvl = null;
+  document.getElementById('minApyInput').value = '';
+  document.getElementById('minTvlInput').value = '';
   document.querySelectorAll('[id^="f-"]').forEach(b => b.className = 'sec');
   document.getElementById('f-all').className = 'active';
   document.querySelectorAll('[id^="s-"]').forEach(b => b.className = 'sec');
   document.getElementById('s-apy').className = 'active';
   document.querySelectorAll('[id^="r-"]').forEach(b => b.className = 'sec');
   document.getElementById('r-0').className = 'active';
+  document.getElementById('search').value = '';
   document.getElementById('selectPanel').style.display = 'block';
   document.getElementById('chartPanel').style.display = 'none';
   renderVaultList();
 }
 
-// ============ Vault list ============
+// ============ Vault list + pagination ============
 function renderVaultList() {
-  const filtered = getFiltered();
-  document.getElementById('vaultCount').textContent = `${filtered.length} vaults`;
-  document.getElementById('vaultList').innerHTML = filtered.slice(0, 120).map(v => {
-    const sel = selected.includes(v.key);
-    const apy = v.latestApy !== null ? v.latestApy.toFixed(2) + '%' : '—';
-    const tvl = v.latestTvl !== null ? fmtUsd(v.latestTvl) : '—';
+  const filtered  = getFiltered();
+  const total     = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const pageVaults = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const thresholdNote = (minApy !== null || minTvl !== null)
+    ? ` · filtered` : '';
+  document.getElementById('vaultCount').textContent =
+    `${total} vault${total !== 1 ? 's' : ''}${thresholdNote} · ${selected.length}/${MAX_SELECT} selected`;
+
+  document.getElementById('vaultList').innerHTML = pageVaults.map(v => {
+    const sel  = selected.includes(v.key);
+    const apy  = v.latestApy !== null ? v.latestApy.toFixed(2) + '%' : '—';
+    const tvl  = v.latestTvl !== null ? fmtUsd(v.latestTvl) : '—';
     const badge = v.ys
       ? (v.blocked ? `<span class="blocked-badge">⊘ Blocked</span>` : `<span class="ys-badge">⚡ YS</span>`)
       : '';
@@ -501,13 +665,37 @@ function renderVaultList() {
       </div>
     </div>`;
   }).join('');
+
+  renderPagination(totalPages, total);
 }
 
+function renderPagination(totalPages, total) {
+  const el = document.getElementById('pagination');
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end   = Math.min(currentPage * PAGE_SIZE, total);
+
+  el.innerHTML = `
+    <button class="sec" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>← Prev</button>
+    <span class="page-info">Page ${currentPage} of ${totalPages} &nbsp;·&nbsp; ${start}–${end} of ${total}</span>
+    <button class="sec" onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>Next →</button>
+  `;
+}
+
+function changePage(dir) {
+  const filtered    = getFiltered();
+  const totalPages  = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  currentPage       = Math.max(1, Math.min(totalPages, currentPage + dir));
+  renderVaultList();
+}
+
+// ============ Toggle / clear ============
 function toggleVault(key) {
   if (selected.includes(key)) {
     selected = selected.filter(k => k !== key);
   } else {
-    if (selected.length >= 15) { alert('Max 15 vaults at once.'); return; }
+    if (selected.length >= MAX_SELECT) { alert('Max 15 vaults at once.'); return; }
     selected.push(key);
   }
   renderVaultList();
@@ -576,16 +764,18 @@ function drawChart() {
     const v = vaults.find(x => x.key === key);
     const col = COLORS[idx % COLORS.length];
     const data = dates.map(d => {
-      const row = allRows.find(r => r.date === d && (r.pool + '|' + r.project + '|' + r.chain) === key);
+      const row = rowIndex[d + '|' + key];
       return row ? parseNum(row[metric]) : null;
     });
+    // Always show dots for sparse datasets so they're visible on long-range charts
+    const nonNull = data.filter(v => v !== null).length;
     return {
       label: v.pool + ' · ' + v.project,
       data,
       borderColor: col,
       backgroundColor: col + '12',
       pointBackgroundColor: col,
-      pointRadius: showPoints ? 3 : 0,
+      pointRadius: nonNull < 5 ? 3 : (showPoints ? 3 : 0),
       pointHoverRadius: 5,
       borderWidth: 1.5,
       tension: 0.25,
@@ -652,12 +842,50 @@ function drawChart() {
     const badge = v.ys
       ? (v.blocked ? `<span class="blocked-badge">⊘ Blocked</span>` : `<span class="ys-badge">⚡ YS</span>`)
       : '';
-    return `<div class="leg-item">
+    return `<div class="leg-item" onmouseenter="highlightSeries(${idx})" onmouseleave="clearHighlight()">
       <div class="leg-swatch" style="background:${col}"></div>
       <span>${escHtml(v.pool)} · ${escHtml(v.project)} · ${escHtml(v.chain||'—')}</span>
       ${badge}
     </div>`;
   }).join('');
+}
+
+// ============ Legend hover highlight ============
+function highlightSeries(focusIdx) {
+  if (!chartInst) return;
+  const nDates = chartInst.data.labels.length;
+  chartInst.data.datasets.forEach((ds, i) => {
+    const col = COLORS[i % COLORS.length];
+    if (i === focusIdx) {
+      ds.borderColor          = col;
+      ds.borderWidth          = 3;
+      ds.pointBackgroundColor = col;
+      ds.pointRadius          = 4;
+      ds.pointHoverRadius     = 6;
+    } else {
+      ds.borderColor          = col + '25';
+      ds.borderWidth          = 1;
+      ds.pointBackgroundColor = col + '25';
+      ds.pointRadius          = 0;
+      ds.pointHoverRadius     = 0;
+    }
+  });
+  chartInst.update('none');
+}
+
+function clearHighlight() {
+  if (!chartInst) return;
+  const showPts = chartInst.data.labels.length <= 14;
+  chartInst.data.datasets.forEach((ds, i) => {
+    const col    = COLORS[i % COLORS.length];
+    const nonNull = (ds.data || []).filter(v => v !== null).length;
+    ds.borderColor          = col;
+    ds.borderWidth          = 1.5;
+    ds.pointBackgroundColor = col;
+    ds.pointRadius          = nonNull < 5 ? 3 : (showPts ? 3 : 0);
+    ds.pointHoverRadius     = 5;
+  });
+  chartInst.update('none');
 }
 
 function renderStats(datasets, dates) {
@@ -680,12 +908,15 @@ function renderStats(datasets, dates) {
   const deltaStr   = avgDelta !== null ? (avgDelta >= 0 ? '+' : '') + fmtVal(avgDelta) : '—';
   const deltaColor = avgDelta == null ? 'var(--accent)' : avgDelta >= 0 ? 'var(--accent)' : 'var(--err)';
 
+  const filtered    = getFiltered();
+  const totalPages  = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
   document.getElementById('statsRow').innerHTML = `
     <div class="stat"><div class="label">Latest Avg</div><div class="value">${fmtVal(avg)}</div><div class="sub2">${lastDate}</div></div>
     <div class="stat"><div class="label">Period High</div><div class="value">${fmtVal(max)}</div></div>
     <div class="stat"><div class="label">Period Low</div><div class="value">${fmtVal(min)}</div></div>
     <div class="stat"><div class="label">Period Trend</div><div class="value" style="color:${deltaColor}">${deltaStr}</div><div class="sub2">${firstDate} → ${lastDate}</div></div>
-    <div class="stat"><div class="label">Vaults</div><div class="value">${selected.length}</div><div class="sub2">of 15 max</div></div>
+    <div class="stat"><div class="label">Selected</div><div class="value">${selected.length}</div><div class="sub2">of ${MAX_SELECT} · pg ${currentPage}/${totalPages}</div></div>
   `;
 }
 
