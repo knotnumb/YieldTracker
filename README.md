@@ -17,6 +17,34 @@ Built around the vault selection maintained by **[<img src="ys-logo.png" height=
 
 ---
 
+## Screenshots
+
+### Yield Tracker
+
+**Fetch & preview** — connect a folder, pull live DefiLlama data, and preview the enriched results table:
+
+![Tracker — fetch and preview](screenshots/tracker-page1.png)
+
+**YieldSeeker panel** — eligible vaults ranked by APY with liquidity and supply-cap status:
+
+![Tracker — YieldSeeker eligible vaults](screenshots/tracker-page2.png)
+
+**Blocked vaults & data overview** — ineligible entries with block reasons, plus snapshot/master counts:
+
+![Tracker — blocked vaults and data overview](screenshots/tracker-page3.png)
+
+### Chart Viewer
+
+**Vault selection** — filter by protocol, chain, or YS whitelist; sort by APY, TVL, or history length:
+
+![Chart — vault selection](screenshots/chart-page1.png)
+
+**APY time series** — up to 15 vaults overlaid, multiple metrics, selectable date ranges:
+
+![Chart — APY time series](screenshots/chart-page2.png)
+
+---
+
 ## Why local-first?
 
 - **No account, no subscription, no cloud** — your data lives in a folder you pick
