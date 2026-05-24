@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24e</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24f</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -379,7 +379,7 @@
 <!-- 05 YIELDSEEKER -->
 <div class="panel">
   <div class="ys-header">
-    <h2 style="margin:0; border:none; padding:0;">05 — YieldSeeker · Eligible Vaults</h2>
+    <h2 style="margin:0; border:none; padding:0;">05 — <img src="assets/ys-logo.png" height="18" alt="" style="vertical-align:middle;margin-right:4px">YieldSeeker · Eligible Vaults</h2>
   </div>
 
   <div class="ys-fee-warning">
@@ -1446,7 +1446,7 @@ function renderYSCard({ vault, row, eval_, eligible }, cardClass) {
       <div style="font-size:10px;color:var(--muted);">Max: 95%</div>
     </div>
     <div style="text-align:center;">
-      ${eligible ? '<span class="ys-badge pass" style="font-size:12px;padding:6px 10px;">✓ ELIGIBLE</span>' :
+      ${eligible ? '<span class="ys-badge pass" style="font-size:12px;padding:6px 10px;"><img src="assets/ys-logo.png" height="12" alt="" style="vertical-align:middle;margin-right:4px">ELIGIBLE</span>' :
         cardClass === 'no-data' ? '<span class="ys-badge info" style="font-size:12px;padding:6px 10px;">NO DATA</span>' :
         '<span class="ys-badge fail" style="font-size:12px;padding:6px 10px;">✗ BLOCKED</span>'}
     </div>
