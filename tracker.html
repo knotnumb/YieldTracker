@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24g</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24h</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -481,6 +481,7 @@ const YS_VAULTS = [
     name: 'yoVaultUSD',
     match: { pool: /yoUSD|yovault/i },
     minApy: 16,
+    rewardsUnpriced: 'YO',  // YO token not yet launched — reward APY unavailable from DefiLlama
     morpho: null,
     type: 'aggregator'
   },
@@ -1287,9 +1288,17 @@ function evaluateVault(vault, row) {
     failures.push(`TVL ${fmtUsd(row.tvl)} < $500k minimum`);
   }
 
-  // 2. APY gate for yoVaultUSD (null APY = no data yet, don't fail on missing)
-  if (vault.minApy && row && row.apy !== null && row.apy < vault.minApy) {
-    failures.push(`APY ${row.apy.toFixed(2)}% < ${vault.minApy}% minimum for this vault`);
+  // 2. APY gate — checks base + reward APY combined against vault minimum
+  if (vault.minApy && row && row.apy !== null) {
+    if (row.apy < vault.minApy) {
+      // If rewards are unpriced (token not launched), warn instead of fail —
+      // true APY is higher but unknowable until the token is listed
+      if (vault.rewardsUnpriced && row.reward_apy == null) {
+        warnings.push(`${vault.rewardsUnpriced} rewards unpriced — base APY ${row.apy.toFixed(2)}% shown; total likely ≥ ${vault.minApy}%`);
+      } else {
+        failures.push(`APY ${row.apy.toFixed(2)}% < ${vault.minApy}% minimum for this vault`);
+      }
+    }
   }
 
   // 3. Liquidity + utilisation — not applicable for aggregators (funds are deployed
