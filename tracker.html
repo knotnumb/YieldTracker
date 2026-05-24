@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24j</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24k</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -1519,7 +1519,12 @@ function setStatus(elId, msg, type='ok') {
 
 async function pickFolder() {
   try {
-    folderHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    const picked = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'documents' });
+    // If the picked folder already contains YieldTracker data, use it as-is.
+    // Otherwise auto-create a YieldTracker subfolder so the user doesn't have
+    // to manually make one (also avoids the Downloads system-folder restriction).
+    const hasData = await picked.getFileHandle('master.csv').then(() => true).catch(() => false);
+    folderHandle = hasData ? picked : await picked.getDirectoryHandle('YieldTracker', { create: true });
     await folderHandle.getDirectoryHandle('snapshots', { create: true });
     await saveFolderHandle(folderHandle);
     updateFolderStatus();
