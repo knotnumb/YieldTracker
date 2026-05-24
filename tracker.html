@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24i</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24j</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -907,13 +907,23 @@ async function fetchOffchainVaults() {
     if (!vault.erc4626) continue;
     try {
       const { rpc, decimals } = vault.erc4626;
-      const assetsHex = await rpcCall(rpc, vault.address, '0x01e1d114'); // totalAssets()
-      if (!assetsHex) continue;
-      let tvl = parseInt(assetsHex, 16) / Math.pow(10, decimals);
-      // Euler lending vaults: subtract accumulated fee assets to match protocol's displayed TVL
+      // For Euler vaults: totalAssets() − accumulated fees matches protocol's displayed TVL.
+      // For all other vaults (incl. Revert whose totalAssets() only returns idle cash):
+      // convertToAssets(totalSupply()) is the correct ERC4626 formula and gives true TVL.
+      let tvl;
       if (vault.erc4626.eulerApy) {
+        const assetsHex = await rpcCall(rpc, vault.address, '0x01e1d114').catch(() => null); // totalAssets()
+        if (!assetsHex) continue;
+        tvl = parseInt(assetsHex, 16) / Math.pow(10, decimals);
         const feesHex = await rpcCall(rpc, vault.address, '0xf6e50f58').catch(() => null);
         if (feesHex) tvl -= parseInt(feesHex, 16) / Math.pow(10, decimals);
+      } else {
+        const supplyHex = await rpcCall(rpc, vault.address, '0x18160ddd').catch(() => null); // totalSupply()
+        if (!supplyHex) continue;
+        const convertData = '0x07a2d13a' + BigInt(supplyHex).toString(16).padStart(64, '0');
+        const assetsHex = await rpcCall(rpc, vault.address, convertData).catch(() => null); // convertToAssets(totalSupply)
+        if (!assetsHex) continue;
+        tvl = parseInt(assetsHex, 16) / Math.pow(10, decimals);
       }
       const tvlDisplay = tvl >= 1e6 ? `$${(tvl/1e6).toFixed(2)}m`
         : tvl >= 1e3 ? `$${(tvl/1e3).toFixed(1)}k` : `$${tvl.toFixed(0)}`;
