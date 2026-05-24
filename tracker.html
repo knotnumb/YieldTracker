@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24l</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-24m</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -334,7 +334,8 @@
 <!-- 01 FOLDER -->
 <div class="panel">
   <h2>01 — Folder</h2>
-  <div id="folderStatus" class="folder-status">No folder selected. Click <b>Pick Folder</b>, navigate <em>inside</em> Documents (or Dropbox/Drive), then click <b>Select Folder</b> — a YieldTracker subfolder will be created automatically.</div>
+  <div id="folderStatus" class="folder-status">No folder selected.</div>
+  <div id="folderHint" style="font-size:11px; color:var(--muted); margin-bottom:10px;">In the picker, <b>open</b> Documents (or Dropbox/Drive) so you can see its contents, then click <b>Select Folder</b> — a <code>YieldTracker</code> subfolder will be created automatically.</div>
   <button id="pickFolder">Pick Folder</button>
   <button id="reconnectFolder" class="secondary" style="display:none;">Reconnect</button>
   <button id="clearFolder" class="secondary">Forget Folder</button>
@@ -1574,6 +1575,7 @@ async function clearFolder() {
   $('folderStatus').textContent = 'No folder selected.';
   $('folderStatus').classList.remove('set');
   $('reconnectFolder').style.display = 'none';
+  $('folderHint').style.display = '';
   $('overview').textContent = 'No folder selected yet.';
 }
 
@@ -1582,6 +1584,7 @@ function updateFolderStatus() {
     $('folderStatus').textContent = `Connected: ${folderHandle.name}`;
     $('folderStatus').classList.add('set');
     $('reconnectFolder').style.display = 'none';
+    $('folderHint').style.display = 'none';
     $('saveTarget').textContent = `${folderHandle.name}/snapshots/${todayISO()}.csv + master.csv`;
   }
 }
