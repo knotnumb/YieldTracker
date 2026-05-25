@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-25e</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-25h</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -558,7 +558,7 @@ const YS_VAULTS = [
     match: { project: /avantis/i, chain: /base/i },
     morpho: null,
     type: 'lending',
-    blockedReason: 'Withdrawal fee > 0.005% — manually verified too high'
+    blockedReason: 'Withdrawal fee > 0.005% — last verified 2026-05-25; fee is variable, recheck before entry'
   },
 ];
 
@@ -577,6 +577,22 @@ function matchVault(row, vault) {
 // liquidityRpc: if present, calls token.balanceOf(vaultAddress) on-chain to get
 // available withdrawal liquidity (applicable to direct lending pools like Revert).
 const OFFCHAIN_VAULTS = [
+  {
+    // In DefiLlama — liquidityRpc patches avail_liquidity only (USDC held by vault contract)
+    name: 'Fluid USD Coin',
+    address: '0xf42f5795D9ac7e9D757dB633D693cD548Cfd9169',
+    network: 'base', chain: 'Base', project: 'Fluid', pool: 'USDC',
+    matchRe: { project: /fluid/i, pool: /^usdc$/i, chain: /base/i },
+    liquidityRpc: { rpc: 'https://base.drpc.org', token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 }
+  },
+  {
+    // In DefiLlama — liquidityRpc patches avail_liquidity only (USDC held by vault contract)
+    name: 'Avantis USDC Vault',
+    address: '0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9',
+    network: 'base', chain: 'Base', project: 'Avantis', pool: 'USDC',
+    matchRe: { project: /avantis/i, chain: /base/i },
+    liquidityRpc: { rpc: 'https://base.drpc.org', token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 }
+  },
   {
     name: 'Revert Lend Base USDC',
     address: '0x36AEAe0E411a1E28372e0d66f02E57744EbE7599',
@@ -1066,7 +1082,10 @@ async function fetchDefiLlama() {
         inception_apy: null, top_10_pct: null,
         total_pool: tvl,
         total_borrowed: p.totalBorrowUsd ?? null,
-        avail_liquidity: null, supply_cap_util: null, collateral_exposure: null,
+        // Derive available liquidity for lending pools where DL provides borrow data.
+        // avail = tvl - totalBorrow. Aggregators won't have totalBorrowUsd so they stay null.
+        avail_liquidity: (p.totalBorrowUsd != null && tvl > 0) ? Math.max(0, tvl - p.totalBorrowUsd) : null,
+        supply_cap_util: null, collateral_exposure: null,
         raw: ''
       };
     });
