@@ -1,0 +1,11 @@
+{
+  "_note": "DefiLlama filter settings for YieldTracker. No API key required.",
+  "defiLlama": {
+    "chains": ["Base", "Arbitrum", "Optimism", "Polygon", "Unichain"],
+    "minTvl": 500000,
+    "maxApy": 50,
+    "limit": 100,
+    "stablecoinOnly": true,
+    "excludeOutliers": true
+  }
+}
