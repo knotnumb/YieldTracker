@@ -123,3 +123,9 @@ No automated tests. Manual testing workflow:
 ## Notes
 
 - Morpho API: Removed unsupported chain IDs (Scroll, Ink, Corn, Fraxtal, BOB, old Katana). Defensive `?? null` on `row.apy` prevents `.toFixed()` crash when API returns no data. If Fetch Protocol Data errors in future, test chain IDs individually in console.
+
+## Periodic manual checks
+
+| Vault | Action | Last checked |
+|---|---|---|
+| Avantis USDC Vault | Re-verify withdrawal fee — variable structure, may drop ≤ 0.005% and become eligible. If clear, remove `blockedReason` from `YS_VAULTS` entry. | 2026-05-25 |
