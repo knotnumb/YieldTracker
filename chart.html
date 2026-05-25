@@ -355,7 +355,7 @@
 // ============ YS Whitelist — synced with tracker.html ============
 const YS_VAULTS = [
   { pool: /40 acres/i,                   project: /harvest/i,     blocked: true  },
-  { pool: /steakusdc/i,                  project: /morpho/i                       },
+  { pool: /steakusdc|bbqusdc/i,          project: /morpho/i                       }, // bbqUSDC = renamed steakUSDC
   { pool: /steakusdcp/i,                 project: /morpho/i                       },
   { pool: /usdc/i,                       project: /aave v3/i,     chain: /base/i  },
   { pool: /sparkusdc/i,                  project: /morpho/i                       },
@@ -603,8 +603,9 @@ function loadCSV(text) {
     vaultMap[key].pool = r.pool; vaultMap[key].project = r.project; vaultMap[key].chain = r.chain;
     if (parseNum(r.apy)     !== null) vaultMap[key].latestApy = parseNum(r.apy);
     if (parseNum(r.tvl_raw) !== null) vaultMap[key].latestTvl = parseNum(r.tvl_raw);
-    // Row index for drawChart (last-wins deduplication)
-    rowIndex[r.date + '|' + key] = r;
+    // Row index for drawChart (first-wins: higher-ranked DL row appears first in CSV
+    // so this keeps the larger/primary pool when DL returns duplicates with the same key)
+    if (!rowIndex[r.date + '|' + key]) rowIndex[r.date + '|' + key] = r;
   }
 
   vaults = Object.values(vaultMap).map(v => {
