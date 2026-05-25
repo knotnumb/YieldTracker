@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-25h</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-25i</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -1140,6 +1140,7 @@ async function fetchAndEnrichMorpho() {
             supplyCapUsd
             market {
               collateralAsset { symbol }
+              state { liquidityAssetsUsd }
             }
           }
         }
@@ -1190,7 +1191,9 @@ async function fetchAndEnrichMorpho() {
     const alloc = vault.state?.allocation ?? [];
     const totalUsd = vault.state?.totalAssetsUsd ?? 0;
 
-    // Available liquidity = Σ(supplyCapUsd - supplyAssetsUsd)
+    // Available liquidity = Σ min(vaultSupplyInMarket, marketIdleCash)
+    // i.e. for each market the vault is in: the vault can only withdraw up to
+    // whichever is smaller — what it put in, or what the market currently holds idle.
     let availLiquidity = 0;
     let totalCap = 0;
     let totalSupplied = 0;
@@ -1201,15 +1204,14 @@ async function fetchAndEnrichMorpho() {
       const supUsd = parseFloat(a.supplyAssetsUsd ?? 0);
       const cap = parseFloat(a.supplyCap ?? 0);
       const sup = parseFloat(a.supplyAssets ?? 0);
+      // Withdrawal liquidity = min(vault's supply in market, market's idle cash).
+      // supUsd = how much the vault has supplied; marketLiqUsd = how much the
+      // market currently holds idle (i.e. not lent out) — the vault can only
+      // withdraw up to the lower of the two.
+      const marketLiqUsd = parseFloat(a.market?.state?.liquidityAssetsUsd ?? 0);
+      availLiquidity += Math.min(supUsd, marketLiqUsd);
 
-      // If supplyCapUsd is unrealistically large (>$500m per market), the cap is
-      // effectively unlimited (MaxUint256) — skip this market for liquidity calc
-      const SANE_CAP = 500e6;
-      if (capUsd < SANE_CAP) {
-        availLiquidity += Math.max(0, capUsd - supUsd);
-      }
-      // Still count for utilisation calc using raw token amounts
-      // but only if cap is sane (avoid MaxUint256 skewing the ratio)
+      // Utilisation: use raw token amounts; skip unlimited (MaxUint256) caps
       if (cap < 1e27) {
         totalCap += cap;
         totalSupplied += sup;
@@ -1261,7 +1263,8 @@ async function fetchAndEnrichMorpho() {
       const supUsd = parseFloat(a.supplyAssetsUsd ?? 0);
       const cap = parseFloat(a.supplyCap ?? 0);
       const sup = parseFloat(a.supplyAssets ?? 0);
-      if (capUsd < 500e6) availLiquidity += Math.max(0, capUsd - supUsd);
+      const marketLiqUsd = parseFloat(a.market?.state?.liquidityAssetsUsd ?? 0);
+      availLiquidity += Math.min(supUsd, marketLiqUsd);
       if (cap < 1e27) { totalCap += cap; totalSupplied += sup; }
       const sym = a.market?.collateralAsset?.symbol ?? 'Unknown';
       const pct = tvl > 0 ? (supUsd / tvl) * 100 : 0;
