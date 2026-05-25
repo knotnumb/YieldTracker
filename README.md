@@ -137,7 +137,7 @@ Click **Save Snapshot + Append to Master**. This:
 Open `chart.html` separately in the same browser. Click **Open master.csv** and navigate to your data folder.
 
 **Selecting vaults:**
-- Filter by protocol, chain, or <img src="ys-logo.png" height="13" alt="YS" style="vertical-align:middle"> YS whitelist status
+- Filter by protocol or <img src="ys-logo.png" height="13" alt="YS" style="vertical-align:middle"> YS whitelist status; independent chain selector stacks on top
 - Set minimum APY and TVL thresholds
 - Search by name
 - Sort by APY, TVL, or days of history
@@ -235,7 +235,7 @@ Edit `config.json` in your data folder (created automatically on first run). The
 | `top_10_pct` | Top 10% APY threshold on that day |
 | `total_pool` | Total pool size (USD) |
 | `total_borrowed` | Total borrowed (USD) |
-| `avail_liquidity` | Available liquidity (USD) |
+| `avail_liquidity` | Available liquidity (USD) — Morpho vaults: `Σ min(vaultSupplyInMarket, marketIdleCash)`; blank for Morpho rows before 2026-05-25 (historical values corrected) |
 | `supply_cap_util` | Supply cap utilisation % (Morpho vaults) |
 | `collateral_exposure` | JSON collateral breakdown (Morpho vaults) |
 
@@ -273,7 +273,7 @@ This tracker was built to support the YieldSeeker research workflow. The vault l
 → `master.csv` is open in Excel or another application. Close it and try again. Do not open `master.csv` in Excel while the tracker is running.
 
 **Chart shows a gap in a vault's history**
-→ DefiLlama changed project name casing in May 2026. The chart normalises keys to lowercase automatically. If you still see a gap, the vault may have been briefly renamed — check the vault list for a second entry with a slightly different name.
+→ DefiLlama has changed pool naming conventions twice: qualifiers moved from `POOL / qualifier` → `POOL|qualifier` → plain `POOL`, and project name casing shifted to lowercase in May 2026. The chart normalises all of these automatically via a `KEY_ALIASES` map. If you still see a gap, check the vault list for a second entry with a slightly different name — they may need an alias added in `chart.html`.
 
 ---
 

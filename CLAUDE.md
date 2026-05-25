@@ -4,7 +4,7 @@
 
 Local-first DeFi stablecoin yield tracker. Single-file vanilla JS app (`tracker.html`) that runs from `file://` in Brave/Chrome. Uses File System Access API to read/write a local folder containing CSV data. No server, no build step, no dependencies.
 
-Current version: `v2026-05-22a`
+Current version: `v2026-05-25i`
 
 ## Repo structure
 
@@ -55,15 +55,14 @@ The `0x...` addresses in `YS_VAULTS` and `OFFCHAIN_VAULTS` are public on-chain c
 
 | Line | What |
 |---|---|
-| 163 | Version string |
-| 249–310 | `YS_VAULTS` — whitelist of tracked vaults with match patterns |
-| 311–320 | `matchVault()` — regex matcher for vault identification |
-| 326 | `VAULTS_FYI_API_KEY` — TO BE MOVED to config.json (Task 1) |
-| 328–345 | `OFFCHAIN_VAULTS` — vaults not on DefiLlama (Revert, Tokemak) |
-| 347–429 | vaults.fyi fetch + enrichment functions |
-| 431–600 | Morpho API fetch + enrichment |
-| 660+ | YieldSeeker panel logic |
-| 903–1000 | `parseScrape()` — three-format parser (v2 bookmarklet / DOM paste / old bookmarklet) |
+| 326 | Version string |
+| 424–563 | `YS_VAULTS` — whitelist of tracked vaults with match patterns |
+| 565–571 | `matchVault()` — regex matcher for vault identification |
+| 573+ | DefiLlama API config + fetch |
+| 579–900 | `OFFCHAIN_VAULTS` — vaults not on DefiLlama (Revert, Tokemak, etc.) |
+| 1110–1307 | Morpho API fetch + enrichment |
+| 1308+ | YieldSeeker panel render logic |
+| 1685+ | CSV save / append to master |
 
 ## Bookmarklet (v2)
 
@@ -84,14 +83,21 @@ The parser auto-detects input format by column count (after popping chain from e
 | >15 | **DOM paste** — spacer tabs, APY before TVL, raw offsets | Copy-paste from DeFi Llama |
 | Other | **Old bookmarklet** — TVL before APY, positional offsets | Legacy `bookmarklet.txt` |
 
-## Config system (after Task 1)
+## Config system
 
-`config.json` lives in the same folder as `master.csv` (the user-picked folder, not the repo). Read via File System Access API — no `fetch()` to a file path.
+`config.json` lives in the same folder as `master.csv` (the user-picked folder, not the repo). Read via File System Access API — no `fetch()` to a file path. No API keys required.
 
 ```json
 {
-  "_note": "Paste your vaults.fyi API key. Sign up free at https://vaults.fyi/api",
-  "vaultsFyiApiKey": ""
+  "_note": "DefiLlama filter settings. Copy to config.json in your data folder.",
+  "defiLlama": {
+    "chains": ["Base", "Arbitrum", "Optimism", "Polygon", "Unichain"],
+    "minTvl": 500000,
+    "maxApy": 50,
+    "limit": 100,
+    "stablecoinOnly": true,
+    "excludeOutliers": true
+  }
 }
 ```
 
@@ -123,6 +129,8 @@ No automated tests. Manual testing workflow:
 ## Notes
 
 - Morpho API: Removed unsupported chain IDs (Scroll, Ink, Corn, Fraxtal, BOB, old Katana). Defensive `?? null` on `row.apy` prevents `.toFixed()` crash when API returns no data. If Fetch Protocol Data errors in future, test chain IDs individually in console.
+- Morpho `avail_liquidity` formula (as of v2026-05-25i): `Σ min(vaultSupplyInMarket, marketIdleCash)` across all market allocations. Reads `market.state.liquidityAssetsUsd` from the GraphQL query. Earlier versions incorrectly used deposit headroom — historical values in master.csv were blanked (Apr-22 to May-24) as they cannot be recalculated.
+- `chart.html` has its own `YS_VAULTS` array (for display names and YS highlighting) that must be kept in sync with `tracker.html`. It also has `KEY_ALIASES` to merge vault history across DefiLlama's three pool-naming eras (Era 1: `POOL / qualifier`, Era 2: `POOL|qualifier`, Era 3: `POOL` only). When DefiLlama renames a vault, add an alias; when a Morpho vault symbol changes (e.g. RE7USDC → ymvOG-USDC), add an alias and update the YS rule's pool regex.
 
 ## Periodic manual checks
 
