@@ -363,7 +363,8 @@
 // name: display label shown in chart vault list and legend (matches tracker panel names)
 const YS_VAULTS = [
   { name: '40 Acres USDC Vault',              pool: /40 acres/i,                   project: /harvest/i,    blocked: true  },
-  { name: 'Steakhouse High Yield USDC v1.1',  pool: /steakusdc|bbqusdc/i,          project: /morpho/i                     }, // bbqUSDC = renamed steakUSDC
+  { name: 'Steakhouse High Yield USDC v1.1',  pool: /bbqusdc/i,                    project: /morpho/i                     }, // on-chain renamed from steakUSDC → bbqUSDC
+  { name: 'Steakhouse Prime USDC',            pool: /^steakusdc$/i,                project: /morpho/i                     }, // separate vault, distinct from bbqUSDC
   { name: 'Steakhouse Prime USDC',            pool: /steakusdcp/i,                 project: /morpho/i                     },
   { name: 'Aave Base USDC',                   pool: /usdc/i,                       project: /aave v3/i,    chain: /base/i },
   { name: 'Spark USDC Vault',                 pool: /sparkusdc/i,                  project: /morpho/i                     },
