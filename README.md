@@ -70,12 +70,18 @@ That is all. No Node.js, no Python, no API keys.
 
 1. **[Open the app](https://knotnumb.github.io/YieldTracker/)** in Chrome or Brave — no download needed
 2. **[Download the starter folder](https://knotnumb.github.io/YieldTracker/YieldTracker.zip)** — extract it to Documents (or a Dropbox/Drive folder for automatic sync)
-3. Click **Pick Folder** and select the extracted `YieldTracker` folder
+3. Click **Pick Folder** and select the unzipped `YieldTracker` folder
 4. Click **Fetch from DefiLlama** — pulls filtered stablecoin yield data from the DefiLlama API
 5. Click **Fetch Protocol Data** — enriches results with Morpho API data and on-chain vault reads
 6. Click **Save Snapshot + Append to Master** — writes today's snapshot and appends to `master.csv`
 
-> **Want historical data right away?** The [`master.csv`](master.csv) in this repo is an ongoing public dataset. Copy it into your `YieldTracker` folder to immediately populate the chart viewer with real history.
+### Want the chart tool working straight away?
+
+The [`master.csv`](master.csv) in this repo is an ongoing public dataset with months of stablecoin yield history. Drop it into your unzipped `YieldTracker` folder (replacing the empty one from the starter pack) before connecting the folder in the app — the chart viewer will have real data from day one.
+
+1. Download [`master.csv`](master.csv) from this repo *(Raw → Save As)*
+2. Save it into your `YieldTracker` folder, replacing the empty starter one
+3. Open `chart.html`, click **Open master.csv**, and navigate to your `YieldTracker` folder
 
 ---
 
