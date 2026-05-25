@@ -269,6 +269,7 @@
   <h2>02 — Select Vaults</h2>
 
   <div class="filter-bar">
+    <span class="row-label">Filter:</span>
     <button id="f-all" class="active" onclick="setFilter('all')">All</button>
     <button id="f-ys" class="sec" onclick="setFilter('ys')"><img src="assets/ys-logo.png" height="13" alt="" style="vertical-align:middle;margin-right:4px"> YS Whitelist</button>
     <div class="divider"></div>
@@ -277,17 +278,23 @@
     <button id="f-euler" class="sec" onclick="setFilter('euler')">Euler</button>
     <button id="f-fluid" class="sec" onclick="setFilter('fluid')">Fluid</button>
     <div class="divider"></div>
-    <button id="f-base" class="sec" onclick="setFilter('base')">Base</button>
-    <button id="f-arbitrum" class="sec" onclick="setFilter('arbitrum')">Arbitrum</button>
-    <button id="f-solana" class="sec" onclick="setFilter('solana')">Solana</button>
-    <button id="f-monad" class="sec" onclick="setFilter('monad')">Monad</button>
-    <div class="divider"></div>
     <button id="f-full" class="sec" onclick="setFilter('full')">Complete Series</button>
     <div class="divider"></div>
     <span class="row-label">Sort:</span>
     <button id="s-apy" class="active" onclick="setSort('apy')">APY</button>
     <button id="s-tvl" class="sec" onclick="setSort('tvl')">TVL</button>
     <button id="s-days" class="sec" onclick="setSort('days')">Days</button>
+  </div>
+
+  <div class="filter-bar" style="margin-top:-4px;">
+    <span class="row-label">Chain:</span>
+    <button id="c-all"      class="active" onclick="setChain('all')">All</button>
+    <button id="c-base"     class="sec"    onclick="setChain('base')">Base</button>
+    <button id="c-arbitrum" class="sec"    onclick="setChain('arbitrum')">Arbitrum</button>
+    <button id="c-optimism" class="sec"    onclick="setChain('optimism')">Optimism</button>
+    <button id="c-polygon"  class="sec"    onclick="setChain('polygon')">Polygon</button>
+    <button id="c-solana"   class="sec"    onclick="setChain('solana')">Solana</button>
+    <button id="c-monad"    class="sec"    onclick="setChain('monad')">Monad</button>
   </div>
 
   <div class="threshold-bar">
@@ -353,28 +360,30 @@
 <script>
 
 // ============ YS Whitelist — synced with tracker.html ============
+// name: display label shown in chart vault list and legend (matches tracker panel names)
 const YS_VAULTS = [
-  { pool: /40 acres/i,                   project: /harvest/i,     blocked: true  },
-  { pool: /steakusdc|bbqusdc/i,          project: /morpho/i                       }, // bbqUSDC = renamed steakUSDC
-  { pool: /steakusdcp/i,                 project: /morpho/i                       },
-  { pool: /usdc/i,                       project: /aave v3/i,     chain: /base/i  },
-  { pool: /sparkusdc/i,                  project: /morpho/i                       },
-  { pool: /gtusdcf/i,                    project: /morpho/i                       },
-  { pool: /usdc/i,                       project: /revert/i                       },
-  { pool: /baseusd/i,                    project: /tokemak/i                      },
-  { pool: /ottousd/i,                    project: /tokemak/i                      },
-  { pool: /usdc/i,                       project: /alphagrowth/i                  },
-  { pool: /yoUSD|yovault/i                                                        },
-  { pool: /re7usdc|yearn.*og|og.*usdc/i, project: /morpho/i                       },
-  { pool: /ultra.*usdc|ultrayield/i,     project: /morpho/i                       },
-  { pool: /^mwusdc$/i,                   project: /morpho/i,      chain: /base/i  },
-  { pool: /^csrusdc$/i,                  project: /morpho/i                       },
-  { pool: /^csusdc$/i,                   project: /morpho/i                       },
-  { pool: /^ycsusdc$/i,                  project: /morpho/i                       },
-  { pool: /^gtusdcc$/i,                  project: /morpho/i,      chain: /base/i  },
-  { pool: /^gtusdcp$/i,                  project: /morpho/i,      chain: /base/i  },
-  { pool: /^usdc$/i,                     project: /fluid/i,       chain: /base/i  },
-  { project: /avantis/i,                 chain: /base/i,          blocked: true   },
+  { name: '40 Acres USDC Vault',              pool: /40 acres/i,                   project: /harvest/i,    blocked: true  },
+  { name: 'Steakhouse High Yield USDC v1.1',  pool: /steakusdc|bbqusdc/i,          project: /morpho/i                     }, // bbqUSDC = renamed steakUSDC
+  { name: 'Steakhouse Prime USDC',            pool: /steakusdcp/i,                 project: /morpho/i                     },
+  { name: 'Aave Base USDC',                   pool: /usdc/i,                       project: /aave v3/i,    chain: /base/i },
+  { name: 'Spark USDC Vault',                 pool: /sparkusdc/i,                  project: /morpho/i                     },
+  { name: 'Gauntlet USDC Frontier',           pool: /gtusdcf/i,                    project: /morpho/i                     },
+  { name: 'Revert Lend Base USDC',            pool: /usdc/i,                       project: /revert/i                     },
+  { name: 'Tokemak baseUSD',                  pool: /baseusd/i,                    project: /tokemak/i                    },
+  { name: 'Otto Earns ottoUSD',               pool: /ottousd/i,                    project: /tokemak/i                    },
+  { name: 'AlphaGrowth USDC',                 pool: /usdc/i,                       project: /alphagrowth/i                },
+  { name: 'yoVaultUSD',                       pool: /yoUSD|yovault/i                                                      }, // Era 1 & 2
+  { name: 'yoVaultUSD',                       project: /yo protocol/i                                                     }, // Era 3: pool → 'USDC'
+  { name: 'Yearn OG USDC',                    pool: /re7usdc|yearn.*og|og.*usdc/i, project: /morpho/i                     },
+  { name: 'UltraYield USDC',                  pool: /ultra.*usdc|ultrayield|edgeusdc/i, project: /morpho/i               },
+  { name: 'Moonwell Ecosystem USDC Vault',    pool: /^mwusdc$|^meusdc$/i,          project: /morpho/i,     chain: /base/i },
+  { name: 'Clearstar USDC Reactor',           pool: /^csrusdc$/i,                  project: /morpho/i                     },
+  { name: 'Clearstar USDC Reactor',           pool: /^csusdc$/i,                   project: /morpho/i                     },
+  { name: 'Yield Clearstar USDC',             pool: /^ycsusdc$/i,                  project: /morpho/i                     },
+  { name: 'Gauntlet USDC Core',               pool: /^gtusdcc$/i,                  project: /morpho/i,     chain: /base/i },
+  { name: 'Gauntlet USDC Prime',              pool: /^gtusdcp$/i,                  project: /morpho/i,     chain: /base/i },
+  { name: 'Fluid USD Coin',                   pool: /^usdc$/i,                     project: /fluid/i,      chain: /base/i },
+  { name: 'Avantis USDC Vault',               project: /avantis/i,                 chain: /base/i,         blocked: true  },
 ];
 
 function isYS(vault) {
@@ -384,7 +393,7 @@ function isYS(vault) {
     if (rule.chain   && !rule.chain.test(vault.chain))     return false;
     return true;
   });
-  return match ? { ys: true, blocked: !!match.blocked } : { ys: false, blocked: false };
+  return match ? { ys: true, blocked: !!match.blocked, name: match.name ?? null } : { ys: false, blocked: false, name: null };
 }
 
 // ============ Pool-name alias map ============
@@ -394,43 +403,97 @@ function isYS(vault) {
 //   Era 3 (May-23+):    pool = "POOL",              project = "project" (lowercase)
 // All values are lowercase. Old-era key → canonical (Era-3) key.
 const KEY_ALIASES = {
-  // YO Protocol / yoUSD  (Arbitrum + Base)
-  'usdc / yousd|yo protocol|arbitrum':           'usdc|yo protocol|arbitrum',
+  // ── Era 1 (` / `) + Era 2 (`|` qualifier) → Era 2 canonical ──────────────────────────
+  // YO Protocol / yoUSD  (Base + Arbitrum)
   'usdc / yousd|yo protocol|base':               'usdc|yo protocol|base',
-  'usdc|yousd|yo protocol|arbitrum':             'usdc|yo protocol|arbitrum',
   'usdc|yousd|yo protocol|base':                 'usdc|yo protocol|base',
-  // Beefy × MIM-USDC
-  'mim-usdc / mim|beefy|arbitrum':               'mim-usdc|beefy|arbitrum',
-  'mim-usdc|mim|beefy|arbitrum':                 'mim-usdc|beefy|arbitrum',
-  // Beefy × MIM-USDT0
-  'mim-usdt0 / mim|beefy|arbitrum':              'mim-usdt0|beefy|arbitrum',
-  'mim-usdt0|mim|beefy|arbitrum':                'mim-usdt0|beefy|arbitrum',
-  // Superform × SUPERUSDC
-  'superusdc / supervault|superform|base':        'superusdc|superform|base',
-  'superusdc|supervault|superform|base':          'superusdc|superform|base',
+  'usdc / yousd|yo protocol|arbitrum':           'usdc|yo protocol|arbitrum',
+  'usdc|yousd|yo protocol|arbitrum':             'usdc|yo protocol|arbitrum',
   // Avantis × USDC
   'usdc / vault|avantis|base':                   'usdc|avantis|base',
   'usdc|vault|avantis|base':                     'usdc|avantis|base',
+  // Superform × SUPERUSDC
+  'superusdc / supervault|superform|base':        'superusdc|superform|base',
+  'superusdc|supervault|superform|base':          'superusdc|superform|base',
   // Harvest Finance × 40 Acres
   'usdc / 40 acres|harvest finance|base':        '40 acres|harvest finance|base',
   'usdc|40 acres|harvest finance|base':          '40 acres|harvest finance|base',
-  // Beefy × MSUSD-USDC (Aerodrome)
+  // Beefy × MIM-USDC (Arbitrum)
+  'mim-usdc / mim|beefy|arbitrum':               'mim-usdc|beefy|arbitrum',
+  'mim-usdc|mim|beefy|arbitrum':                 'mim-usdc|beefy|arbitrum',
+  // Beefy × MIM-USDT0 (Arbitrum)
+  'mim-usdt0 / mim|beefy|arbitrum':              'mim-usdt0|beefy|arbitrum',
+  'mim-usdt0|mim|beefy|arbitrum':                'mim-usdt0|beefy|arbitrum',
+  // Beefy × MSUSD-USDC (Aerodrome, Base)
   'msusd-usdc / aerodrome|beefy|base':           'msusd-usdc|beefy|base',
   'msusd-usdc|aerodrome|beefy|base':             'msusd-usdc|beefy|base',
-  // Aerodrome Slipstream × MSUSD-USDC
-  'msusd-usdc / cl50 - 0.05%|aerodrome slipstream|base': 'msusd-usdc|aerodrome slipstream|base',
-  'msusd-usdc|cl50 - 0.05%|aerodrome slipstream|base':   'msusd-usdc|aerodrome slipstream|base',
   // Beefy × WAARBUSDCN-WAARBUSDT-WAARBGHO (Arbitrum)
-  'waarbusdcn-waarbusdt-waarbgho / aura|beefy|arbitrum':  'waarbusdcn-waarbusdt-waarbgho|beefy|arbitrum',
-  'waarbusdcn-waarbusdt-waarbgho|aura|beefy|arbitrum':    'waarbusdcn-waarbusdt-waarbgho|beefy|arbitrum',
-  // Beefy × WABASGHO-WABASUSDC (Base) — series ended May-20, alias for intra-historical continuity
+  'waarbusdcn-waarbusdt-waarbgho / aura|beefy|arbitrum': 'waarbusdcn-waarbusdt-waarbgho|beefy|arbitrum',
+  'waarbusdcn-waarbusdt-waarbgho|aura|beefy|arbitrum':   'waarbusdcn-waarbusdt-waarbgho|beefy|arbitrum',
+  // Beefy × WABASGHO-WABASUSDC (Base) — series ended May-20
   'wabasgho-wabasusdc / aura|beefy|base':        'wabasgho-wabasusdc|aura|beefy|base',
   // Beefy × WNUSDT0-WNAUSD-WNUSDC (Monad) — series ended May-21
   'wnusdt0-wnausd-wnusdc / balancer|beefy|monad': 'wnusdt0-wnausd-wnusdc|balancer|beefy|monad',
+  // Aerodrome Slipstream × MSUSD-USDC (Base)
+  'msusd-usdc / cl50 - 0.05%|aerodrome slipstream|base': 'msusd-usdc|aerodrome slipstream|base',
+  'msusd-usdc|cl50 - 0.05%|aerodrome slipstream|base':   'msusd-usdc|aerodrome slipstream|base',
   // Velodrome V2 × USDC-ALUSD (Op Mainnet) — series ended May-17
   'usdc-alusd / stable - 0.05%|velodrome v2|op mainnet': 'usdc-alusd|stable - 0.05%|velodrome v2|op mainnet',
   // Velodrome V2 × USDC-MSUSD (Op Mainnet) — series ended May-17
   'usdc-msusd / stable - 0.05%|velodrome v2|op mainnet': 'usdc-msusd|stable - 0.05%|velodrome v2|op mainnet',
+
+  // ── Era 3 (May-23+): DL dropped pool qualifiers — `POOL|qualifier` → just `POOL` ────
+  // Autofinance × USDC/baseUSD (Base)
+  'usdc / baseusd|autofinance|base':             'usdc|autofinance|base',
+  'usdc|baseusd|autofinance|base':               'usdc|autofinance|base',
+  // Autofinance × USDC/arbUSD (Arbitrum)
+  'usdc / arbusd|autofinance|arbitrum':          'usdc|autofinance|arbitrum',
+  'usdc|arbusd|autofinance|arbitrum':            'usdc|autofinance|arbitrum',
+  // Termmax × USDC vault (Base)
+  'usdc / termmax usdc vault|termmax|base':      'usdc|termmax|base',
+  'usdc|termmax usdc vault|termmax|base':        'usdc|termmax|base',
+  // Dolomite × USDC balance (Arbitrum)
+  'usdc / dolomite balance|dolomite|arbitrum':   'usdc|dolomite|arbitrum',
+  'usdc|dolomite balance|dolomite|arbitrum':     'usdc|dolomite|arbitrum',
+  // USD AI × sUSDai 30d unlock (Arbitrum)
+  'susdai / 30d unlock|usd ai|arbitrum':         'susdai|usd ai|arbitrum',
+  'susdai|30d unlock|usd ai|arbitrum':           'susdai|usd ai|arbitrum',
+  // Uniswap V3 × USDC-USDT 0.01% (Arbitrum)
+  'usdc-usdt / 0.01%|uniswap v3|arbitrum':       'usdc-usdt|uniswap v3|arbitrum',
+  'usdc-usdt|0.01%|uniswap v3|arbitrum':         'usdc-usdt|uniswap v3|arbitrum',
+  // Ondo × USDY (Arbitrum)
+  'usdy / us dollar yield|ondo yield assets|arbitrum': 'usdy|ondo yield assets|arbitrum',
+  'usdy|us dollar yield|ondo yield assets|arbitrum':   'usdy|ondo yield assets|arbitrum',
+  // Arcadia V2 × USDC pool (Base)
+  'usdc|arcadia v2 usdc pool|arcadia v2|base':   'usdc|arcadia v2|base',
+  // Harvest Finance × Autopilot (Base) — Era 3 pool became plain 'usdc|harvest finance|base'
+  'usdc / autopilot|harvest finance|base':       'usdc|harvest finance|base',
+  'usdc|autopilot|harvest finance|base':         'usdc|harvest finance|base',
+  // Harvest Finance × Morpho Gauntlet Frontier V2 (Base) — same Era 3 key
+  'usdc / morpho - gauntlet frontier v2|harvest finance|base': 'usdc|harvest finance|base',
+  'usdc|morpho - gauntlet frontier v2|harvest finance|base':   'usdc|harvest finance|base',
+  // Beefy × USDC/Morpho (Base)
+  'usdc / morpho|beefy|base':                    'usdc|beefy|base',
+  'usdc|morpho|beefy|base':                      'usdc|beefy|base',
+  // Beefy × USDC/Compound (Base)
+  'usdc / compound|beefy|base':                  'usdc|beefy|base',
+  'usdc|compound|beefy|base':                    'usdc|beefy|base',
+  // Beefy × USDC/Compound (Arbitrum) — dropped out of DL top-100 after Era 3, alias for history
+  'usdc / compound|beefy|arbitrum':              'usdc|beefy|arbitrum',
+  'usdc|compound|beefy|arbitrum':                'usdc|beefy|arbitrum',
+  // Fusion by IPOR × USDC (Base) — multiple old sub-product names merged into one
+  'usdc / harvest usdc vault base|fusion by ipor|base': 'usdc|fusion by ipor|base',
+  'usdc|harvest usdc vault base|fusion by ipor|base':   'usdc|fusion by ipor|base',
+  'usdc|yousd loooper|fusion by ipor|base':             'usdc|fusion by ipor|base',
+  // Aerodrome Slipstream × USDC-USDT (Base) — fee tier dropped
+  'usdc-usdt / cl1 - 0.0009%|aerodrome slipstream|base': 'usdc-usdt|aerodrome slipstream|base',
+  'usdc-usdt|cl1 - 0.0009%|aerodrome slipstream|base':   'usdc-usdt|aerodrome slipstream|base',
+  // Aerodrome Slipstream × USDC-USDBC (Base)
+  'usdc-usdbc / cl1 - 0.01%|aerodrome slipstream|base': 'usdc-usdbc|aerodrome slipstream|base',
+  'usdc-usdbc|cl1 - 0.01%|aerodrome slipstream|base':   'usdc-usdbc|aerodrome slipstream|base',
+  // Aerodrome Slipstream × SYRUPUSDC-USDC (Base)
+  'syrupusdc-usdc / cl1 - 0.035%|aerodrome slipstream|base': 'syrupusdc-usdc|aerodrome slipstream|base',
+  'syrupusdc-usdc|cl1 - 0.035%|aerodrome slipstream|base':   'syrupusdc-usdc|aerodrome slipstream|base',
 };
 
 // ============ Colors ============
@@ -448,6 +511,7 @@ let selected     = [];
 let metric       = 'apy';
 let chartInst    = null;
 let activeFilter = 'all';
+let activeChain  = 'all';  // independent chain filter — stacks on top of activeFilter
 let activeSort   = 'apy';
 let maxDays      = 7;
 let rangeLimit   = 0;
@@ -464,6 +528,15 @@ function setFilter(f) {
   currentPage  = 1;
   document.querySelectorAll('[id^="f-"]').forEach(b => b.className = 'sec');
   const el = document.getElementById('f-' + f);
+  if (el) el.className = 'active';
+  renderVaultList();
+}
+
+function setChain(c) {
+  activeChain = c;
+  currentPage = 1;
+  document.querySelectorAll('[id^="c-"]').forEach(b => b.className = 'sec');
+  const el = document.getElementById('c-' + c);
   if (el) el.className = 'active';
   renderVaultList();
 }
@@ -508,18 +581,16 @@ function getFiltered() {
     if (q && !v.pool.toLowerCase().includes(q) && !v.project.toLowerCase().includes(q) && !v.chain.toLowerCase().includes(q)) return false;
     if (minApy !== null && (v.latestApy === null || v.latestApy < minApy)) return false;
     if (minTvl !== null && (v.latestTvl === null || v.latestTvl < minTvl)) return false;
+    // Chain filter is independent — stacks on top of the main filter
+    if (activeChain !== 'all' && !new RegExp(activeChain, 'i').test(v.chain)) return false;
     switch (activeFilter) {
-      case 'ys':       return v.ys;
-      case 'morpho':   return /morpho/i.test(v.project);
-      case 'aave':     return /aave/i.test(v.project);
-      case 'euler':    return /euler/i.test(v.project);
-      case 'fluid':    return /fluid/i.test(v.project);
-      case 'base':     return /base/i.test(v.chain);
-      case 'arbitrum': return /arbitrum/i.test(v.chain);
-      case 'solana':   return /solana/i.test(v.chain);
-      case 'monad':    return /monad/i.test(v.chain);
-      case 'full':     return v.days >= maxDays;
-      default:         return true;
+      case 'ys':     return v.ys;
+      case 'morpho': return /morpho/i.test(v.project);
+      case 'aave':   return /aave/i.test(v.project);
+      case 'euler':  return /euler/i.test(v.project);
+      case 'fluid':  return /fluid/i.test(v.project);
+      case 'full':   return v.days >= maxDays;
+      default:       return true;
     }
   }).sort((a, b) => {
     if (activeSort === 'tvl')  return (b.latestTvl ?? 0) - (a.latestTvl ?? 0);
@@ -597,10 +668,17 @@ function loadCSV(text) {
     let key = KEY_ALIASES[rawKey] ?? rawKey;
     // DefiLlama renamed "Morpho V1" → "Morpho Blue" on Apr-23; merge the two eras.
     key = key.replace('|morpho v1|', '|morpho blue|');
-    if (!vaultMap[key]) vaultMap[key] = { key, pool: r.pool, project: r.project, chain: r.chain, days: 0, latestApy: null, latestTvl: null };
+    if (!vaultMap[key]) {
+      vaultMap[key] = { key, pool: r.pool, project: r.project, chain: r.chain, days: 0, latestApy: null, latestTvl: null };
+    } else {
+      // Preserve the most descriptive pool name — DefiLlama Era 3 (May-23) dropped all
+      // qualifiers from pool names (e.g. 'USDC / yoUSD' → 'USDC'), making them generic
+      // and unrecognisable. Keep the longest pool name seen across all rows for this vault.
+      if (r.pool.length > vaultMap[key].pool.length) vaultMap[key].pool = r.pool;
+      // Project and chain update to latest (casing and naming only improves over time)
+      vaultMap[key].project = r.project; vaultMap[key].chain = r.chain;
+    }
     vaultMap[key].days++;
-    // Keep display names from the latest row so they stay current
-    vaultMap[key].pool = r.pool; vaultMap[key].project = r.project; vaultMap[key].chain = r.chain;
     if (parseNum(r.apy)     !== null) vaultMap[key].latestApy = parseNum(r.apy);
     if (parseNum(r.tvl_raw) !== null) vaultMap[key].latestTvl = parseNum(r.tvl_raw);
     // Row index for drawChart (first-wins: higher-ranked DL row appears first in CSV
@@ -610,7 +688,7 @@ function loadCSV(text) {
 
   vaults = Object.values(vaultMap).map(v => {
     const ysInfo = isYS(v);
-    return { ...v, ys: ysInfo.ys, blocked: ysInfo.blocked };
+    return { ...v, ys: ysInfo.ys, blocked: ysInfo.blocked, ysName: ysInfo.name };
   }).sort((a, b) => (b.latestApy ?? 0) - (a.latestApy ?? 0));
 
   maxDays = Math.max(...vaults.map(v => v.days));
@@ -618,7 +696,7 @@ function loadCSV(text) {
   showStatus('loadStatus', `✓ ${allRows.length} rows · ${vaults.length} vaults · ${dates.length} days (${dates[0]} → ${dates[dates.length-1]})`, 'ok');
 
   // Reset all state
-  selected = []; activeFilter = 'all'; activeSort = 'apy'; rangeLimit = 0;
+  selected = []; activeFilter = 'all'; activeChain = 'all'; activeSort = 'apy'; rangeLimit = 0;
   currentPage = 1; minApy = null; minTvl = null;
   document.getElementById('minApyInput').value = '';
   document.getElementById('minTvlInput').value = '';
@@ -657,7 +735,7 @@ function renderVaultList() {
       : '';
     return `<div class="vault-item ${sel ? 'selected' : ''}" onclick="toggleVault('${v.key.replace(/'/g,"\\'")}')">
       <div>
-        <span class="vname">${escHtml(v.pool)}</span>${badge}
+        <span class="vname">${escHtml(v.ysName ?? v.pool)}</span>${badge}
         <div class="vmeta">${escHtml(v.project)} · ${escHtml(v.chain || '—')} · ${v.days}d</div>
       </div>
       <div style="text-align:right">
@@ -718,7 +796,7 @@ function renderChips() {
     if (!v) return '';
     const col = COLORS[idx % COLORS.length];
     return `<div class="chip" style="color:${col};border-color:${col};background:${col}18" onclick="toggleVault('${key.replace(/'/g,"\\'")}')">
-      <span>${escHtml(v.pool)}</span>
+      <span>${escHtml(v.ysName ?? v.pool)}</span>
       <span class="x">×</span>
     </div>`;
   }).join('');
@@ -771,7 +849,7 @@ function drawChart() {
     // Always show dots for sparse datasets so they're visible on long-range charts
     const nonNull = data.filter(v => v !== null).length;
     return {
-      label: v.pool + ' · ' + v.project,
+      label: (v.ysName ?? v.pool) + ' · ' + v.chain,
       data,
       borderColor: col,
       backgroundColor: col + '12',
@@ -845,7 +923,7 @@ function drawChart() {
       : '';
     return `<div class="leg-item" onmouseenter="highlightSeries(${idx})" onmouseleave="clearHighlight()">
       <div class="leg-swatch" style="background:${col}"></div>
-      <span>${escHtml(v.pool)} · ${escHtml(v.project)} · ${escHtml(v.chain||'—')}</span>
+      <span>${escHtml(v.ysName ?? v.pool)} · ${escHtml(v.chain||'—')}</span>
       ${badge}
     </div>`;
   }).join('');
