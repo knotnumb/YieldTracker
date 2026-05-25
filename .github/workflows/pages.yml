@@ -29,7 +29,7 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Build starter-folder zip
-        run: zip -r YieldTracker.zip YieldTracker/
+        run: (cd YieldTracker && zip -r ../YieldTracker.zip .)
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
