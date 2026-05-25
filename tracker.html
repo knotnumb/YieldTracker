@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-25a</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-25b</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -334,14 +334,24 @@
 <!-- 01 FOLDER -->
 <div class="panel">
   <h2>01 — Folder</h2>
+  <div id="folderHint" style="margin-bottom:20px;">
+    <div style="font-size:13px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px;">First Time? Start Here.</div>
+    <a href="https://knotnumb.github.io/YieldTracker/YieldTracker.zip" download
+       style="display:inline-block; font-size:18px; font-weight:600; color:var(--accent); text-decoration:none; border:1px solid var(--accent-dim); padding:10px 20px; letter-spacing:0.02em; margin-bottom:14px; transition:background 0.1s;"
+       onmouseover="this.style.background='var(--accent-lo)'" onmouseout="this.style.background='transparent'">
+      ↓ Download Starter Folder
+    </a>
+    <div style="font-size:11px; color:var(--text); line-height:1.7; margin-bottom:10px;">
+      Extract to Documents (or your Dropbox/Drive folder), then click <b>Pick Folder</b> and select the <code>YieldTracker</code> folder.
+    </div>
+    <div style="font-size:10px; color:var(--muted); line-height:1.6; border-left:2px solid var(--border-hi); padding-left:10px;">
+      No download? In the picker: click <b>New Folder</b>, name it <code>YieldTracker</code>, open it, then click <b>Select Folder</b>. Selecting Desktop, Documents, or Downloads directly is blocked by the browser.
+    </div>
+  </div>
   <div id="folderStatus" class="folder-status">No folder selected.</div>
   <button id="pickFolder">Pick Folder</button>
   <button id="reconnectFolder" class="secondary" style="display:none;">Reconnect</button>
   <button id="clearFolder" class="secondary">Forget Folder</button>
-  <div id="folderHint" style="margin-top:12px; padding:10px 12px; background:var(--panel-alt,#1e2530); border:1px solid var(--border); border-radius:6px; font-size:11px; line-height:1.6;">
-    ℹ️ <b>First time?</b> <a href="https://knotnumb.github.io/YieldTracker/YieldTracker.zip" style="color:var(--accent); text-decoration:none;" download>Download the starter folder ↓</a> — extract it to Documents (or your Dropbox/Drive folder), then click <b>Pick Folder</b> and select the extracted <code>YieldTracker</code> folder.<br>
-    <span style="color:var(--muted);">No download needed? In the picker: click <b>New Folder</b>, name it <code>YieldTracker</code>, open it, then click <b>Select Folder</b>. Selecting Downloads, Desktop, or Documents directly is blocked by the browser.</span>
-  </div>
 </div>
 
 <!-- 02 FETCH -->
