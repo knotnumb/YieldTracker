@@ -2,3 +2,5 @@ config.json
 !YieldTracker/config.json
 test/
 *.pdf
+snapshots/
+.claude/
