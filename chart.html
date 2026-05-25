@@ -365,7 +365,6 @@ const YS_VAULTS = [
   { name: '40 Acres USDC Vault',              pool: /40 acres/i,                   project: /harvest/i,    blocked: true  },
   { name: 'Steakhouse High Yield USDC v1.1',  pool: /bbqusdc/i,                    project: /morpho/i                     }, // on-chain renamed from steakUSDC → bbqUSDC
   { name: 'Steakhouse Prime USDC',            pool: /^steakusdc$/i,                project: /morpho/i                     }, // separate vault, distinct from bbqUSDC
-  { name: 'Steakhouse Prime USDC',            pool: /steakusdcp/i,                 project: /morpho/i                     },
   { name: 'Aave Base USDC',                   pool: /usdc/i,                       project: /aave v3/i,    chain: /base/i },
   { name: 'Spark USDC Vault',                 pool: /sparkusdc/i,                  project: /morpho/i                     },
   { name: 'Gauntlet USDC Frontier',           pool: /gtusdcf/i,                    project: /morpho/i                     },
@@ -373,12 +372,13 @@ const YS_VAULTS = [
   { name: 'Tokemak baseUSD',                  pool: /baseusd/i,                    project: /tokemak/i                    },
   { name: 'Otto Earns ottoUSD',               pool: /ottousd/i,                    project: /tokemak/i                    },
   { name: 'AlphaGrowth USDC',                 pool: /usdc/i,                       project: /alphagrowth/i                },
-  { name: 'yoVaultUSD',                       pool: /yoUSD|yovault/i                                                      }, // Era 1 & 2
-  { name: 'yoVaultUSD',                       project: /yo protocol/i                                                     }, // Era 3: pool → 'USDC'
-  { name: 'Yearn OG USDC',                    pool: /re7usdc|yearn.*og|og.*usdc/i, project: /morpho/i                     },
+  { name: 'yoVaultUSD',                       pool: /yoUSD|yovault/i,              chain: /base/i                         }, // Era 1 & 2
+  { name: 'yoVaultUSD',                       project: /yo protocol/i,             chain: /base/i                         }, // Era 3: pool → 'USDC'
+  { name: 'Yearn OG USDC',                    pool: /ymvog.?usdc|re7usdc/i,        project: /morpho/i                     },
   { name: 'UltraYield USDC',                  pool: /ultra.*usdc|ultrayield|edgeusdc/i, project: /morpho/i               },
   { name: 'Moonwell Ecosystem USDC Vault',    pool: /^mwusdc$|^meusdc$/i,          project: /morpho/i,     chain: /base/i },
   { name: 'Clearstar USDC Reactor',           pool: /^csusdc$/i,                   project: /morpho/i                     },
+  { name: 'Clearstar Boring USDC',            pool: /^csborusdc$/i,                project: /morpho/i                     },
   { name: 'Yield Clearstar USDC',             pool: /^ycsusdc$/i,                  project: /morpho/i                     },
   { name: 'Gauntlet USDC Core',               pool: /^gtusdcc$/i,                  project: /morpho/i,     chain: /base/i },
   { name: 'Gauntlet USDC Prime',              pool: /^gtusdcp$/i,                  project: /morpho/i,     chain: /base/i },
@@ -441,6 +441,10 @@ const KEY_ALIASES = {
   'usdc-alusd / stable - 0.05%|velodrome v2|op mainnet': 'usdc-alusd|stable - 0.05%|velodrome v2|op mainnet',
   // Velodrome V2 × USDC-MSUSD (Op Mainnet) — series ended May-17
   'usdc-msusd / stable - 0.05%|velodrome v2|op mainnet': 'usdc-msusd|stable - 0.05%|velodrome v2|op mainnet',
+
+  // Yearn OG USDC / RE7USDC rename: RE7 Capital → Yearn curation, symbol changed
+  // (RE7USDC data exists in snapshots Apr-20–May-04 but was not saved to master.csv)
+  're7usdc|morpho blue|base':               'ymvog-usdc|morpho|base',
 
   // ── Era 3 (May-23+): DL dropped pool qualifiers — `POOL|qualifier` → just `POOL` ────
   // Autofinance × USDC/baseUSD (Base)
