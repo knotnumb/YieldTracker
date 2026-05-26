@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-25i</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-26a</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -1129,6 +1129,7 @@ async function fetchAndEnrichMorpho() {
     vaults(first: 900, where: { chainId_in: [8453, 10, 42161, 137, 130, 143, 999, 747474, 480, 4217, 988] }) {
       items {
         address
+        chain { id }
         symbol
         state {
           netApy
@@ -1165,11 +1166,12 @@ async function fetchAndEnrichMorpho() {
     return;
   }
 
-  // Build lookup by address only — symbols are NOT unique across the API response
-  // (multiple vaults share symbols like "sparkUSDC" with different netApy values).
+  // Build lookup by address:chainId — address alone is NOT unique across the API response
+  // (same contract address can be deployed on multiple chains via CREATE2, giving different TVLs).
+  // Symbols are also not unique (multiple vaults share symbols like "sparkUSDC").
   const morphoByAddress = {};
   vaultItems.forEach(v => {
-    if (v.address) morphoByAddress[v.address.toLowerCase()] = v;
+    if (v.address && v.chain?.id) morphoByAddress[`${v.address.toLowerCase()}:${v.chain.id}`] = v;
   });
 
   let enrichedCount = 0;
@@ -1182,7 +1184,7 @@ async function fetchAndEnrichMorpho() {
     const ysVault = YS_VAULTS.find(v => v.morpho?.address && matchVault(r, v));
     if (!ysVault) return; // not a tracked vault — skip
 
-    const vault = morphoByAddress[ysVault.morpho.address.toLowerCase()];
+    const vault = morphoByAddress[`${ysVault.morpho.address.toLowerCase()}:${ysVault.morpho.chainId}`];
     if (!vault) {
       if (!notFound.includes(r.pool)) notFound.push(r.pool);
       return;
@@ -1245,7 +1247,7 @@ async function fetchAndEnrichMorpho() {
     if (!ysVault.morpho?.address) continue;
     const alreadyInRows = parsedRows.find(r => matchVault(r, ysVault));
     if (alreadyInRows) continue;
-    const v = morphoByAddress[ysVault.morpho.address.toLowerCase()];
+    const v = morphoByAddress[`${ysVault.morpho.address.toLowerCase()}:${ysVault.morpho.chainId}`];
     if (!v) continue;
     const tvl = v.state?.totalAssetsUsd ?? 0;
     const apy = v.state?.netApy != null ? parseFloat((v.state.netApy * 100).toFixed(4)) : null;
