@@ -129,6 +129,7 @@ No automated tests. Manual testing workflow:
 ## Notes
 
 - Morpho API: Removed unsupported chain IDs (Scroll, Ink, Corn, Fraxtal, BOB, old Katana). Defensive `?? null` on `row.apy` prevents `.toFixed()` crash when API returns no data. If Fetch Protocol Data errors in future, test chain IDs individually in console.
+- Morpho vault lookup uses `address:chainId` as key (not address alone) — same contract address can be deployed via CREATE2 on multiple supported chains, causing the wrong chain's TVL/liquidity data to overwrite the correct one. The `chain { id }` field (not `chainId`) is queried from the API.
 - Morpho `avail_liquidity` formula (as of v2026-05-25i): `Σ min(vaultSupplyInMarket, marketIdleCash)` across all market allocations. Reads `market.state.liquidityAssetsUsd` from the GraphQL query. Earlier versions incorrectly used deposit headroom — historical values in master.csv were blanked (Apr-22 to May-24) as they cannot be recalculated.
 - `chart.html` has its own `YS_VAULTS` array (for display names and YS highlighting) that must be kept in sync with `tracker.html`. It also has `KEY_ALIASES` to merge vault history across DefiLlama's three pool-naming eras (Era 1: `POOL / qualifier`, Era 2: `POOL|qualifier`, Era 3: `POOL` only). When DefiLlama renames a vault, add an alias; when a Morpho vault symbol changes (e.g. RE7USDC → ymvOG-USDC), add an alias and update the YS rule's pool regex.
 
