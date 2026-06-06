@@ -376,6 +376,7 @@ const YS_VAULTS = [
   { name: 'yoVaultUSD',                       project: /yo protocol/i,             chain: /base/i                         }, // Era 3: pool → 'USDC'
   { name: 'Yearn OG USDC',                    pool: /ymvog.?usdc|re7usdc/i,        project: /morpho/i                     },
   { name: 'UltraYield USDC',                  pool: /ultra.*usdc|ultrayield|edgeusdc/i, project: /morpho/i               },
+  { name: 'Moonwell USDC',                    pool: /^usdc$/i,                     project: /moonwell lending/i, chain: /base/i },
   { name: 'Moonwell Ecosystem USDC Vault',    pool: /^mwusdc$|^meusdc$/i,          project: /morpho/i,     chain: /base/i },
   { name: 'Clearstar USDC Reactor',           pool: /^csusdc$/i,                   project: /morpho/i                     },
   { name: 'Clearstar Boring USDC',            pool: /^csborusdc$/i,                project: /morpho/i                     },
@@ -673,7 +674,7 @@ function loadCSV(text) {
     // DefiLlama renamed "Morpho V1" → "Morpho Blue" on Apr-23; merge the two eras.
     key = key.replace('|morpho v1|', '|morpho blue|');
     if (!vaultMap[key]) {
-      vaultMap[key] = { key, pool: r.pool, project: r.project, chain: r.chain, days: 0, latestApy: null, latestTvl: null };
+      vaultMap[key] = { key, pool: r.pool, project: r.project, chain: r.chain, days: 0, latestApy: null, latestRewardApy: null, latestTvl: null };
     } else {
       // Preserve the most descriptive pool name — DefiLlama Era 3 (May-23) dropped all
       // qualifiers from pool names (e.g. 'USDC / yoUSD' → 'USDC'), making them generic
@@ -683,8 +684,9 @@ function loadCSV(text) {
       vaultMap[key].project = r.project; vaultMap[key].chain = r.chain;
     }
     vaultMap[key].days++;
-    if (parseNum(r.apy)     !== null) vaultMap[key].latestApy = parseNum(r.apy);
-    if (parseNum(r.tvl_raw) !== null) vaultMap[key].latestTvl = parseNum(r.tvl_raw);
+    if (parseNum(r.apy)        !== null) vaultMap[key].latestApy = parseNum(r.apy);
+    if (parseNum(r.reward_apy) !== null && parseNum(r.reward_apy) > 0) vaultMap[key].latestRewardApy = parseNum(r.reward_apy);
+    if (parseNum(r.tvl_raw)    !== null) vaultMap[key].latestTvl = parseNum(r.tvl_raw);
     // Row index for drawChart (first-wins: higher-ranked DL row appears first in CSV
     // so this keeps the larger/primary pool when DL returns duplicates with the same key)
     if (!rowIndex[r.date + '|' + key]) rowIndex[r.date + '|' + key] = r;
@@ -744,6 +746,7 @@ function renderVaultList() {
       </div>
       <div style="text-align:right">
         <div class="vapy">${apy}</div>
+        ${v.latestRewardApy !== null ? `<div style="font-size:10px;color:var(--muted);">+${v.latestRewardApy.toFixed(2)}% reward</div>` : ''}
         <div class="vtvl">${tvl}</div>
       </div>
     </div>`;

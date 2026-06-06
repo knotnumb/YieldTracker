@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-05-26a</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-06-06c</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -509,6 +509,11 @@ const YS_VAULTS = [
     name: 'UltraYield USDC',
     match: { project: /morpho/i, pool: /edgeusdc|ultra.*usdc/i }, // Morpho symbol: edgeUSDC
     morpho: { address: '0x5435BC53f2C61298167cdB11Cdf0Db2BFa259ca0', chainId: 8453 },
+    type: 'lending'
+  },
+  {
+    name: 'Moonwell USDC',
+    match: { project: /moonwell lending/i, pool: /^usdc$/i, chain: /base/i },
     type: 'lending'
   },
   {
@@ -1486,6 +1491,7 @@ function renderYSCard({ vault, row, eval_, eligible }, cardClass) {
       <div class="label">APY (24h)</div>
       <div class="ys-apy ${apyClass}">${apyStr}</div>
       ${row?.base_apy !== null && row?.base_apy !== undefined ? `<div style="font-size:10px;color:var(--muted);">Base: ${row.base_apy.toFixed(2)}%</div>` : ''}
+      ${row?.reward_apy !== null && row?.reward_apy !== undefined && row?.reward_apy > 0 ? `<div style="font-size:10px;color:var(--muted);">Reward: ${row.reward_apy.toFixed(2)}%</div>` : ''}
     </div>
     <div class="ys-metric">
       <div class="label">TVL</div>
@@ -1707,7 +1713,8 @@ function rowsToCSV(rows, includeDate=false, date=null) {
     const obj = {
       date, rank: i+1,
       pool: r.pool, project: r.project, chain: r.chain,
-      tvl: r.tvl_display, tvl_raw: r.tvl,
+      tvl: (/morpho/i.test(r.project) && r.total_pool != null) ? fmtUsd(r.total_pool) : r.tvl_display,
+      tvl_raw: (/morpho/i.test(r.project) && r.total_pool != null) ? r.total_pool : r.tvl,
       apy: r.apy, base_apy: r.base_apy, reward_apy: r.reward_apy,
       base_apy_7d: r.base_apy_7d, il_7d: r.il_7d, avg_30d: r.avg_30d,
       inception_apy: r.inception_apy, top_10_pct: r.top_10_pct,
