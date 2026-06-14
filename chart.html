@@ -182,6 +182,15 @@
   .vault-item .vmeta { color: var(--muted); font-size: 10px; margin-top: 1px; }
   .vault-item .vapy { color: var(--accent); font-size: 12px; font-variant-numeric: tabular-nums; }
   .vault-item .vtvl { color: var(--muted-mid); font-size: 10px; }
+  .protocol-link {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; margin-left: 6px;
+    font-size: 11px; font-weight: 700; line-height: 1;
+    color: var(--accent); border: 1px solid var(--accent-dim);
+    text-decoration: none; vertical-align: middle;
+    transition: background 0.1s, border-color 0.1s;
+  }
+  .protocol-link:hover { background: var(--accent-lo); border-color: var(--accent); }
   .ys-badge {
     display: inline-block;
     font-size: 8px; padding: 1px 5px; font-weight: 700;
@@ -739,9 +748,10 @@ function renderVaultList() {
     const badge = v.ys
       ? (v.blocked ? `<span class="blocked-badge">⊘ Blocked</span>` : `<span class="ys-badge"><img src="assets/ys-logo.png" height="11" alt="" style="vertical-align:middle;margin-right:3px">YS</span>`)
       : '';
+    const protocolUrl = `https://defillama.com/protocol/${protocolSlug(v.project)}`;
     return `<div class="vault-item ${sel ? 'selected' : ''}" onclick="toggleVault('${v.key.replace(/'/g,"\\'")}')">
       <div>
-        <span class="vname">${escHtml(v.ysName ?? v.pool)}</span>${badge}
+        <span class="vname">${escHtml(v.ysName ?? v.pool)}</span>${badge}<a href="${protocolUrl}" target="_blank" rel="noopener noreferrer" class="protocol-link" onclick="event.stopPropagation()" title="Open ${escHtml(v.project)} on DefiLlama">↗</a>
         <div class="vmeta">${escHtml(v.project)} · ${escHtml(v.chain || '—')} · ${v.days}d</div>
       </div>
       <div style="text-align:right">
@@ -1007,6 +1017,22 @@ function renderStats(datasets, dates) {
 }
 
 // ============ Utils ============
+// Project-name -> DefiLlama protocol slug overrides, for protocols DefiLlama
+// renamed/rebranded since the row was scraped. Add entries here as broken
+// "↗" links are found.
+const PROTOCOL_SLUG_ALIASES = {
+  'tokemak': 'autofinance', // Tokemak rebranded to AUTOfinance on DefiLlama
+  'morpho': 'morpho-blue',  // off-chain vault rows use bare "Morpho" as project
+  'yo': 'yo-protocol',      // off-chain vault rows use bare "Yo" as project
+};
+function protocolSlug(project) {
+  const key = String(project ?? '').toLowerCase().trim();
+  if (PROTOCOL_SLUG_ALIASES[key]) return PROTOCOL_SLUG_ALIASES[key];
+  return key
+    .replace(/[^a-z0-9\s.-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
 function escHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
