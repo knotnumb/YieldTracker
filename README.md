@@ -143,6 +143,7 @@ Open `chart.html` separately in the same browser. Click **Open master.csv** and 
 - Sort by APY, TVL, or days of history
 - Use **Top 5 / 10 / 15** buttons to auto-select the highest-ranking vaults from the current filter
 - Page through results (15 per page)
+- Each row has a "↗" link to that protocol's page on [DefiLlama](https://defillama.com) (opens in a new tab)
 
 **Charting:**
 - Up to 15 vaults simultaneously
@@ -274,6 +275,9 @@ This tracker was built to support the YieldSeeker research workflow. The vault l
 
 **Chart shows a gap in a vault's history**
 → DefiLlama has changed pool naming conventions twice: qualifiers moved from `POOL / qualifier` → `POOL|qualifier` → plain `POOL`, and project name casing shifted to lowercase in May 2026. The chart normalises all of these automatically via a `KEY_ALIASES` map. If you still see a gap, check the vault list for a second entry with a slightly different name — they may need an alias added in `chart.html`.
+
+**Protocol link (↗) goes to a 404 on DefiLlama**
+→ The link is built from the `project` field (e.g. "Aave V3" → `defillama.com/protocol/aave-v3`). Some protocols have since been renamed/rebranded on DefiLlama, or off-chain vault rows use a shorthand project name. Add an override to the `PROTOCOL_SLUG_ALIASES` map in `chart.html`.
 
 ---
 
