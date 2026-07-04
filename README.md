@@ -60,7 +60,9 @@ Built around the vault selection maintained by **[<img src="ys-logo.png" height=
 ## Requirements
 
 - **Browser:** Chrome or Brave (requires the File System Access API — Firefox does not support it)
-- **Brave users:** enable file system access once at `brave://settings/content/filesystem`
+- **Brave users:** two one-time steps, **in this order**:
+  1. Go to `brave://flags/#file-system-access-api`, set it to **Enabled**, and **relaunch Brave**. This turns the API on — without it the picker button does nothing.
+  2. Then go to `brave://settings/content/filesystem` and allow file system access. This is the per-site permission.
 
 That is all. No Node.js, no Python, no API keys.
 
@@ -264,8 +266,10 @@ This tracker was built to support the YieldSeeker research workflow. The vault l
 **Brave asks for folder permission every session**
 → Expected when running from `file://`. Not an issue when using the hosted version at GitHub Pages. Click **Reconnect** at the top of the tracker to re-grant access.
 
-**File system access blocked in Brave**
-→ Go to `brave://settings/content/filesystem` and enable file system access.
+**Pick Folder does nothing / file system access blocked in Brave**
+→ Brave ships with the File System Access API **disabled**, so the picker never opens. Fix it in two steps, in order:
+1. Go to `brave://flags/#file-system-access-api`, set it to **Enabled**, and **relaunch Brave**. (This is the real gate — the settings step below does nothing until this flag is on.)
+2. Go to `brave://settings/content/filesystem` and allow file system access.
 
 **Fetch Protocol Data shows 0 Morpho vaults enriched**
 → Check your internet connection. The Morpho API is public and requires no authentication.
