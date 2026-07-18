@@ -394,6 +394,32 @@ const YS_VAULTS = [
   { name: 'Gauntlet USDC Prime',              pool: /^gtusdcp$/i,                  project: /morpho/i,     chain: /base/i },
   { name: 'Fluid USD Coin',                   pool: /^usdc$/i,                     project: /fluid/i,      chain: /base/i },
   { name: 'Avantis USDC Vault',               project: /avantis/i,                 chain: /base/i,         blocked: true  },
+  // ── Morpho Vaults V2 (ERC-4626v2) — kept in sync with tracker.html YS_VAULTS (v2026-07-18a) ──
+  // master.csv pool key for these = the tracker's display name (address-keyed there, name-keyed here).
+  { name: 'Clearstar cbAssets Vault',         pool: /^clearstar cbassets vault$/i,        project: /morpho/i,     chain: /base/i },
+  { name: 'Gauntlet USDC Frontier (V2)',      pool: /^gauntlet usdc frontier \(v2\)$/i,   project: /morpho/i,     chain: /base/i },
+  { name: 'Moonwell Ecosystem USDC (V2)',     pool: /^moonwell ecosystem usdc \(v2\)$/i,  project: /morpho/i,     chain: /base/i },
+  { name: 'Yearn OG USDC V2',                 pool: /^yearn og usdc v2$/i,                project: /morpho/i,     chain: /base/i },
+  { name: 'Steakhouse High Yield USDC (V2)',  pool: /^steakhouse high yield usdc \(v2\)$/i, project: /morpho/i,   chain: /base/i },
+  { name: 'ARCHITECT Global Value II',        pool: /^architect global value ii$/i,       project: /morpho/i,     chain: /base/i },
+  { name: 'Farcaster x Steakhouse Prime',     pool: /^farcaster x steakhouse prime$/i,    project: /morpho/i,     chain: /base/i },
+  { name: 'Gauntlet USDC Prime (V2)',         pool: /^gauntlet usdc prime \(v2\)$/i,      project: /morpho/i,     chain: /base/i },
+  { name: 'RockawayX Midas USDC Prime',       pool: /^rockawayx midas usdc prime$/i,      project: /morpho/i,     chain: /base/i },
+  { name: 'Steakhouse Prime USDC (V2)',       pool: /^steakhouse prime usdc \(v2\)$/i,    project: /morpho/i,     chain: /base/i },
+  { name: 'Prime USDC',                       pool: /^prime usdc$/i,                      project: /morpho/i,     chain: /base/i },
+  { name: 'Clearstar Boring USDC (V2)',       pool: /^clearstar boring usdc \(v2\)$/i,    project: /morpho/i,     chain: /base/i },
+  { name: 'Moonwell Flagship USDC',           pool: /^moonwell flagship usdc$/i,          project: /morpho/i,     chain: /base/i },
+  { name: 'Alpha USDC Prime V2',              pool: /^alpha usdc prime v2$/i,             project: /morpho/i,     chain: /base/i },
+  { name: 'Steakhouse High Yield USDC Edition', pool: /^steakhouse high yield usdc edition$/i, project: /morpho/i, chain: /base/i },
+  { name: 'Universal USDC',                   pool: /^universal usdc$/i,                  project: /morpho/i,     chain: /base/i },
+  { name: 'Re7 USDC',                         pool: /^re7 usdc$/i,                        project: /morpho/i,     chain: /base/i },
+  { name: 'Clearstar CoreUSDC',               pool: /^clearstar coreusdc$/i,              project: /morpho/i,     chain: /base/i },
+  { name: 'Riva x Steakhouse USDC',           pool: /^riva x steakhouse usdc$/i,          project: /morpho/i,     chain: /base/i },
+  { name: 'Ethena x Steakhouse USDC',         pool: /^ethena x steakhouse usdc$/i,        project: /morpho/i,     chain: /base/i },
+  { name: 'Avantgarde USDC Conservative',     pool: /^avantgarde usdc conservative$/i,    project: /morpho/i,     chain: /base/i },
+  // ── Non-Morpho additions (v2026-07-18a) ──
+  { name: 'Compound USDC',                    pool: /^usdc$/i,                            project: /compound/i,   chain: /base/i },
+  { name: 'Spark USDC Vault (SparkFi)',       pool: /^usdc$/i,                            project: /sparkfi/i,    chain: /base/i },
 ];
 
 function isYS(vault) {

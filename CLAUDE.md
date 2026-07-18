@@ -4,7 +4,7 @@
 
 Local-first DeFi stablecoin yield tracker. Single-file vanilla JS app (`tracker.html`) that runs from `file://` in Brave/Chrome. Uses File System Access API to read/write a local folder containing CSV data. No server, no build step, no dependencies.
 
-Current version: `v2026-05-25i`
+Current version: `v2026-07-18a`
 
 ## Repo structure
 
@@ -132,6 +132,10 @@ No automated tests. Manual testing workflow:
 - Morpho vault lookup uses `address:chainId` as key (not address alone) — same contract address can be deployed via CREATE2 on multiple supported chains, causing the wrong chain's TVL/liquidity data to overwrite the correct one. The `chain { id }` field (not `chainId`) is queried from the API.
 - Morpho `avail_liquidity` formula (as of v2026-05-25i): `Σ min(vaultSupplyInMarket, marketIdleCash)` across all market allocations. Reads `market.state.liquidityAssetsUsd` from the GraphQL query. Earlier versions incorrectly used deposit headroom — historical values in master.csv were blanked (Apr-22 to May-24) as they cannot be recalculated.
 - `chart.html` has its own `YS_VAULTS` array (for display names and YS highlighting) that must be kept in sync with `tracker.html`. It also has `KEY_ALIASES` to merge vault history across DefiLlama's three pool-naming eras (Era 1: `POOL / qualifier`, Era 2: `POOL|qualifier`, Era 3: `POOL` only). When DefiLlama renames a vault, add an alias; when a Morpho vault symbol changes (e.g. RE7USDC → ymvOG-USDC), add an alias and update the YS rule's pool regex.
+- **Morpho Vaults V2 (as of v2026-07-18a):** V2 vaults collide with V1 on symbol AND name (`steakUSDC`, `gtusdcp`, `bbqUSDC`, `meUSDC`, `mwUSDC` etc. all exist as both). They can only be told apart by **contract address**. V2 entries in `YS_VAULTS` carry `morphoV2: { address, chainId }` (no `match` regex); `matchVault()` short-circuits to address matching for them and isolates them from V1 regex (a `v2addr` row matches only its `morphoV2` vault, and vice-versa). Data comes from `injectMorphoV2Vaults()` — one batched `vaultV2ByAddress` GraphQL call (V2 vaults are NOT in the `vaults` query; that returns V1 only) — injected as synthetic rows. APY = `netApy`, avail liquidity = `liquidityUsd` (both confirmed to match what YieldSeeker displays). Utilisation left null.
+- **shareApy window (as of v2026-07-18a):** `fetchSharePriceApy` now prefers a **7-day** window (falls back to 24h if week-old state isn't served), annualising `convertToAssets(1e18)` growth. The old 24h window annualised ^365 turned a single autopool harvest day into a spike (Tokemak baseUSD read 9.6% on 24h vs 5.2% on 7d). RPC archive depth for 7d comes free via `rpcCall`'s 4-endpoint fallback.
+- **Exit-fee detection (as of v2026-07-18a):** offchain ERC4626 vaults compute `exit_fee_pct` = `1 − previewRedeem(1e18)/convertToAssets(1e18)`. `evaluateVault` warns when it exceeds `EXIT_FEE_WARN_PCT` (0.005%, same threshold that blocks Avantis). Important for aggregators, which skip the liquidity/util gates so a redemption haircut would otherwise be invisible in the ranking (Tokemak baseUSD carries ~0.035%).
+- **SparkFi Spark USDC Vault:** `sUSDC` at `0x3128a0F7f0ea68E7B7c9B00AFa7E41045828e858` — distinct from the Morpho `sparkUSDC`. Not on DefiLlama; tracked via `OFFCHAIN_VAULTS` on-chain `shareApy`. No `liquidityRpc` (vault holds ~$0 idle; funds deploy to Spark). 0% withdrawal fee verified 2026-07-18.
 
 ## Security: Supply Chain & Prompt Injection Defence
 

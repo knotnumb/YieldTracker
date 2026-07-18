@@ -114,7 +114,7 @@ Click **Fetch Protocol Data**. This runs three enrichment passes:
 - Collateral exposure breakdown
 
 **Off-chain vaults** — for vaults not indexed by DefiLlama (or where on-chain data is more reliable), the tracker reads directly from the contract:
-- **ERC4626 share-price APY** — compares `convertToAssets()` at current block vs ~24 hours ago and annualises the growth rate
+- **ERC4626 share-price APY** — compares `convertToAssets()` at current block vs ~7 days ago (falls back to 24 hours) and annualises the growth rate; the 7-day window smooths out autopool harvest-day spikes
 - **Euler interest-rate APY** — reads the live borrow rate, utilisation, and protocol fee directly from the Euler V2 vault contract
 - **Available liquidity** — reads the underlying token balance held by the vault
 

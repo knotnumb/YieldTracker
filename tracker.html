@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-06-15a</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-07-18a</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -427,6 +427,7 @@ const DEPOSIT_SIZE = 20000;
 const MIN_TVL = 500000;
 const MIN_LIQUIDITY = Math.min(250000, 4 * DEPOSIT_SIZE); // = $80k
 const MAX_UTIL = 0.95;
+const EXIT_FEE_WARN_PCT = 0.005; // % — warn when an ERC4626 previewRedeem haircut exceeds this (matches the Avantis block threshold)
 
 // Whitelisted vaults: name, match strings for pool/project, optional Morpho address + chainId
 const YS_VAULTS = [
@@ -565,9 +566,61 @@ const YS_VAULTS = [
     type: 'lending',
     blockedReason: 'Withdrawal fee > 0.005% — last verified 2026-05-25; fee is variable, recheck before entry'
   },
+  {
+    // Compound III (Comet) USDC on Base — APY/TVL from DefiLlama scrape (project compound-v3).
+    // The compound-v3 "WETH-pool" variant shares symbol USDC but self-excludes (< minTvl filter).
+    name: 'Compound USDC',
+    match: { project: /compound/i, pool: /^usdc$/i, chain: /base/i },
+    morpho: null,
+    type: 'lending'
+  },
+  {
+    // SparkFi's sUSDC (Spark Savings USDC) — distinct from the Morpho sparkUSDC vault above.
+    // Not on DefiLlama; injected via OFFCHAIN_VAULTS with on-chain shareApy. No withdrawal
+    // fee (previewRedeem == convertToAssets, verified 2026-07-18).
+    name: 'Spark USDC Vault (SparkFi)',
+    match: { project: /sparkfi/i, pool: /^usdc$/i, chain: /base/i },
+    morpho: null,
+    type: 'lending'
+  },
+
+  // ============ Morpho Vaults V2 (ERC-4626v2) — added v2026-07-18a ============
+  // Identified by contract ADDRESS only. V2 symbols/names collide with V1
+  // (steakUSDC, gtusdcp, gtusdcf, bbqUSDC, meUSDC, mwUSDC all exist as both
+  // versions), so these never touch the DefiLlama scrape. APY/TVL/liquidity are
+  // pulled directly from Morpho's vaultV2ByAddress query and injected as
+  // synthetic rows — see injectMorphoV2Vaults(). Addresses verified live against
+  // api.morpho.org (all 21 resolved). "(V2)" suffix disambiguates the 4 whose
+  // name is identical to a V1 entry above; the rest carry Morpho's own name.
+  { name: 'Clearstar cbAssets Vault',           morphoV2: { address: '0x91C056B6d4311a743614FBc03ac32d4E6A2d3a3c', chainId: 8453 }, type: 'lending' },
+  { name: 'Gauntlet USDC Frontier (V2)',        morphoV2: { address: '0x1deEfABEe758AAbdC29a542B24ca3b75aFD56765', chainId: 8453 }, type: 'lending' },
+  { name: 'Moonwell Ecosystem USDC (V2)',       morphoV2: { address: '0xbB2F06CeAE42CBcF5559Ed0713538c8892D977c9', chainId: 8453 }, type: 'lending' },
+  { name: 'Yearn OG USDC V2',                   morphoV2: { address: '0xe7D0DBE3493830e2Ab62619211A2BfF0Fc60dB42', chainId: 8453 }, type: 'lending' },
+  { name: 'Steakhouse High Yield USDC (V2)',    morphoV2: { address: '0xbeeff7aE5E00Aae3Db302e4B0d8C883810a58100', chainId: 8453 }, type: 'lending' },
+  { name: 'ARCHITECT Global Value II',          morphoV2: { address: '0x6022Cbf61352618053d89FD9eEfe78Cb725B3c9d', chainId: 8453 }, type: 'lending' },
+  { name: 'Farcaster x Steakhouse Prime',       morphoV2: { address: '0xBeEF00fc6e87dE086A0e29169A2f6e25cF5C11a9', chainId: 8453 }, type: 'lending' },
+  { name: 'Gauntlet USDC Prime (V2)',           morphoV2: { address: '0x050cE30b927Da55177A4914EC73480238BAD56f0', chainId: 8453 }, type: 'lending' },
+  { name: 'RockawayX Midas USDC Prime',         morphoV2: { address: '0xAE4181CFB5aaA08bbE77d269c6B595672b9F9Edc', chainId: 8453 }, type: 'lending' },
+  { name: 'Steakhouse Prime USDC (V2)',         morphoV2: { address: '0xbeef0e0834849aCC03f0089F01f4F1Eeb06873C9', chainId: 8453 }, type: 'lending' },
+  { name: 'Prime USDC',                         morphoV2: { address: '0x5e03f8965e2957291B3c6990C6Cb9023c36d3d30', chainId: 8453 }, type: 'lending' },
+  { name: 'Clearstar Boring USDC (V2)',         morphoV2: { address: '0x0282159ecCaabA941bD1f4C518944D8fDCdc0681', chainId: 8453 }, type: 'lending' },
+  { name: 'Moonwell Flagship USDC',             morphoV2: { address: '0x48a90E85be5C56b0A669985A12ee7C449fC79965', chainId: 8453 }, type: 'lending' },
+  { name: 'Alpha USDC Prime V2',                morphoV2: { address: '0x44dd77d51629987d9555c762bF09903928c70206', chainId: 8453 }, type: 'lending' },
+  { name: 'Steakhouse High Yield USDC Edition', morphoV2: { address: '0xbeeff2490FEffa212faC2f6553682C219E6a8845', chainId: 8453 }, type: 'lending' },
+  { name: 'Universal USDC',                     morphoV2: { address: '0x0B7ee82ad75B2D3fc7f3A110A51ba68714171D25', chainId: 8453 }, type: 'lending' },
+  { name: 'Re7 USDC',                           morphoV2: { address: '0x618495ccC4e751178C4914b1E939C0fe0FB07b9b', chainId: 8453 }, type: 'lending' },
+  { name: 'Clearstar CoreUSDC',                 morphoV2: { address: '0x116e1A65717A534B73EcB7d4F6543c65DBCd0E46', chainId: 8453 }, type: 'lending' },
+  { name: 'Riva x Steakhouse USDC',             morphoV2: { address: '0xbEeF006fb43820C864894892db0eCFEee3FdF587', chainId: 8453 }, type: 'lending' },
+  { name: 'Ethena x Steakhouse USDC',           morphoV2: { address: '0xBeEfF0be997Cca5B1c13A7433c2004637975739e', chainId: 8453 }, type: 'lending' },
+  { name: 'Avantgarde USDC Conservative',       morphoV2: { address: '0xE34D43CA9152D198B60654868C8cD197196a492f', chainId: 8453 }, type: 'lending' },
 ];
 
 function matchVault(row, vault) {
+  // V2 Morpho vaults are keyed by contract ADDRESS, not regex — their symbols
+  // and names collide with V1 (steakUSDC, gtusdcp, bbqUSDC all exist as both).
+  // The injected V2 row carries `v2addr`; a V2 vault matches only its own address.
+  if (vault.morphoV2) return !!row.v2addr && row.v2addr === vault.morphoV2.address.toLowerCase();
+  if (row.v2addr) return false; // a V2-injected row belongs only to its morphoV2 vault
   const { match } = vault;
   if (match.pool && !match.pool.test(row.pool)) return false;
   if (match.project && !match.project.test(row.project)) return false;
@@ -649,6 +702,17 @@ const OFFCHAIN_VAULTS = [
     matchRe: { pool: /yovault/i },
     erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true }
     // no liquidityRpc — aggregator
+  },
+  {
+    // SparkFi sUSDC (Spark Savings USDC). Not on DefiLlama — APY derived on-chain from
+    // ERC4626 share-price growth (≈ YS 24h-avg APY). Distinct from the Morpho sparkUSDC.
+    // Vault holds ~$0 idle (funds deployed to Spark), so no liquidityRpc — balanceOf reads ~$0.
+    // No withdrawal fee (previewRedeem == convertToAssets, verified 2026-07-18).
+    name: 'Spark USDC Vault (SparkFi)',
+    address: '0x3128a0F7f0ea68E7B7c9B00AFa7E41045828e858',
+    network: 'base', chain: 'Base', project: 'SparkFi', pool: 'USDC',
+    matchRe: { project: /sparkfi/i, pool: /^usdc$/i, chain: /base/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true }
   },
   // Morpho vaults — pool names match actual on-chain ERC20 symbols (verified via Morpho API)
   {
@@ -800,8 +864,11 @@ async function fetchEulerLendingApy(address, rpc, decimals, usdcToken) {
 }
 
 // Derive annualised APY from ERC4626 share price growth over ~24h.
-// Calls convertToAssets(1e18) at current block and ~43200 blocks ago (~24h on Base).
-// Returns APY % or null if either call fails / vault too young.
+// Annualises ERC4626 share-price growth. Prefers a 7-day window to de-noise vaults
+// whose share price moves in harvest steps (Tokemak/Otto autopools) — a 24h window
+// annualised ^365 turns one good harvest day into a misleading spike (e.g. Tokemak
+// baseUSD read 9.6% on 24h vs 5.2% on 7d, 2026-07-18). Falls back to 24h if week-old
+// state isn't served. Returns APY % or null if flat / calls fail / vault too young.
 async function fetchSharePriceApy(address, rpc) {
   // Get current block number
   const bnPayload = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [] });
@@ -819,20 +886,22 @@ async function fetchSharePriceApy(address, rpc) {
 
   // convertToAssets(uint256) selector 0x07a2d13a, arg = 1e18
   const callData = '0x07a2d13a0000000000000000000000000000000000000000000000000de0b6b3a7640000';
-  const blockNow  = '0x' + currentBlock.toString(16);
-  const blockPast = '0x' + (currentBlock - 43200).toString(16);
+  const nowHex = await rpcCall(rpc, address, callData, '0x' + currentBlock.toString(16)).catch(() => null);
+  const pNow = nowHex ? BigInt(nowHex) : null;
+  if (!pNow) return null;
 
-  const [r1, r2] = await Promise.allSettled([
-    rpcCall(rpc, address, callData, blockNow),
-    rpcCall(rpc, address, callData, blockPast)
-  ]);
-  const p1 = (r1.status === 'fulfilled' && r1.value) ? BigInt(r1.value) : null;
-  const p2 = (r2.status === 'fulfilled' && r2.value) ? BigInt(r2.value) : null;
-  if (!p1 || !p2 || p2 === 0n) return null;
-
-  const dailyReturn = Number(p1 - p2) / Number(p2);
-  if (dailyReturn <= 0) return null;
-  return ((1 + dailyReturn) ** 365 - 1) * 100;
+  // ~43200 blocks/day on Base (2s blocks). Try 7d first, then fall back to 24h.
+  const windows = [{ blocks: 302400, days: 7 }, { blocks: 43200, days: 1 }];
+  for (const w of windows) {
+    if (currentBlock - w.blocks < 0) continue;
+    const pastHex = await rpcCall(rpc, address, callData, '0x' + (currentBlock - w.blocks).toString(16)).catch(() => null);
+    const pPast = pastHex ? BigInt(pastHex) : null;
+    if (!pPast || pPast === 0n) continue;
+    const periodReturn = Number(pNow - pPast) / Number(pPast);
+    if (periodReturn <= 0) return null; // flat/negative over the window — nothing to annualise
+    return ((1 + periodReturn) ** (365 / w.days) - 1) * 100;
+  }
+  return null;
 }
 
 // ERC20 balanceOf(holder) → token amount in human units (divided by 10^decimals).
@@ -972,6 +1041,21 @@ async function fetchOffchainVaults() {
         derivedApy = await fetchSharePriceApy(vault.address, rpc).catch(() => null);
       }
 
+      // Exit-fee detection: for an ERC4626 vault, previewRedeem(shares) equals
+      // convertToAssets(shares) when there's no withdrawal fee. Any shortfall is a real
+      // redemption haircut. Surfaced as a warning in evaluateVault — important for
+      // aggregators, which skip the liquidity/util gates so a fee is otherwise invisible.
+      let exit_fee_pct = null;
+      {
+        const arg1e18 = '0000000000000000000000000000000000000000000000000de0b6b3a7640000';
+        const grossHex = await rpcCall(rpc, vault.address, '0x07a2d13a' + arg1e18).catch(() => null); // convertToAssets(1e18)
+        const netHex   = await rpcCall(rpc, vault.address, '0x4cdad506' + arg1e18).catch(() => null); // previewRedeem(1e18)
+        if (grossHex && netHex) {
+          const g = Number(BigInt(grossHex)), n = Number(BigInt(netHex));
+          if (g > 0 && n <= g) exit_fee_pct = parseFloat(((1 - n / g) * 100).toFixed(4));
+        }
+      }
+
       let avail_liquidity = null;
       if (vault.liquidityRpc) {
         avail_liquidity = await fetchTokenBalance(
@@ -988,6 +1072,7 @@ async function fetchOffchainVaults() {
         avg_30d: null, inception_apy: null, top_10_pct: null,
         total_pool: tvl, total_borrowed: null,
         avail_liquidity, supply_cap_util: null, collateral_exposure: null,
+        exit_fee_pct,
         raw: ''
       });
       fetched++;
@@ -1295,6 +1380,12 @@ async function fetchAndEnrichMorpho() {
     enrichedCount++;
   }
 
+  // Inject Morpho Vaults V2 — keyed by contract address (see injectMorphoV2Vaults).
+  // These are identified purely by address, never by the colliding V1/V2 symbols.
+  const v2Injected = await injectMorphoV2Vaults();
+  injectedCount += v2Injected;
+  enrichedCount += v2Injected;
+
   morphoFetched = enrichedCount > 0;
 
   btn.disabled = false;
@@ -1310,6 +1401,74 @@ async function fetchAndEnrichMorpho() {
 
   renderPreview(parsedRows);
   renderYS();
+}
+
+// ============ Morpho Vaults V2 injection ============
+
+// V2 vaults are resolved by contract address via Morpho's vaultV2ByAddress
+// query (their symbols/names collide with V1). One batched, aliased request
+// covers all of them. Each result is pushed as a synthetic parsed row tagged
+// with `v2addr` so matchVault() can bind it to exactly one YS_VAULT entry.
+// Utilisation is left null (V2's adapter/market model differs); the liquidity
+// gate runs off `avail_liquidity` = the API's liquidityUsd (confirmed to equal
+// the "available" figure YieldSeeker displays).
+async function injectMorphoV2Vaults() {
+  const v2Vaults = YS_VAULTS.filter(v => v.morphoV2?.address);
+  if (v2Vaults.length === 0) return 0;
+
+  const parts = v2Vaults.map((v, i) =>
+    `a${i}: vaultV2ByAddress(address: "${v.morphoV2.address}", chainId: ${v.morphoV2.chainId}) ` +
+    `{ address symbol name totalAssetsUsd liquidityUsd netApy listed }`
+  );
+  const query = `{ ${parts.join(' ')} }`;
+
+  let data;
+  try {
+    const resp = await fetch('https://api.morpho.org/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    const json = await resp.json();
+    if (json.errors) throw new Error(json.errors[0].message);
+    data = json?.data ?? {};
+  } catch (e) {
+    setStatus('morphoStatus', `Morpho V2 API error: ${e.message}`, 'warn');
+    return 0;
+  }
+
+  let count = 0;
+  v2Vaults.forEach((vault, i) => {
+    const v = data[`a${i}`];
+    if (!v) return;
+    const addr = vault.morphoV2.address.toLowerCase();
+    const tvl = v.totalAssetsUsd ?? 0;
+    const liq = v.liquidityUsd != null ? parseFloat(Number(v.liquidityUsd).toFixed(2)) : null;
+    const apy = v.netApy != null ? parseFloat((v.netApy * 100).toFixed(4)) : null;
+    const tvlDisplay = tvl >= 1e9 ? `$${(tvl/1e9).toFixed(2)}b`
+      : tvl >= 1e6 ? `$${(tvl/1e6).toFixed(2)}m`
+      : tvl >= 1e3 ? `$${(tvl/1e3).toFixed(1)}k` : `$${tvl.toFixed(0)}`;
+
+    // Idempotent: drop any prior injected row for this vault before re-adding
+    const existing = parsedRows.findIndex(r => r.v2addr === addr);
+    if (existing !== -1) parsedRows.splice(existing, 1);
+
+    parsedRows.push({
+      pool: vault.name, project: 'morpho', chain: 'Base',
+      v2addr: addr,
+      tvl_display: tvlDisplay, tvl,
+      apy, base_apy: apy, reward_apy: null,
+      base_apy_7d: null, il_7d: null,
+      avg_30d: null, inception_apy: null, top_10_pct: null,
+      total_pool: tvl, total_borrowed: null,
+      avail_liquidity: liq, supply_cap_util: null,
+      collateral_exposure: null,
+      raw: ''
+    });
+    morphoData[addr] = v;
+    count++;
+  });
+  return count;
 }
 
 // ============ YieldSeeker render ============
@@ -1375,6 +1534,12 @@ function evaluateVault(vault, row) {
     if (utilisationPct !== null && utilisationPct >= MAX_UTIL) {
       failures.push(`Supply cap utilisation ${(utilisationPct * 100).toFixed(1)}% ≥ 95% — vault near full`);
     }
+  }
+
+  // 4. Exit-fee warning — shown for any vault where we could read it on-chain.
+  //    Aggregators skip the gates above, so a redemption haircut is otherwise invisible.
+  if (row && row.exit_fee_pct != null && row.exit_fee_pct > EXIT_FEE_WARN_PCT) {
+    warnings.push(`Exit fee ~${row.exit_fee_pct.toFixed(3)}% on withdrawal (> ${EXIT_FEE_WARN_PCT}% threshold)`);
   }
 
   // 5. Max allocation warning (40 Acres)
