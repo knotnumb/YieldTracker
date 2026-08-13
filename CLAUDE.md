@@ -1,5 +1,13 @@
 # YieldTracker — Claude Code Instructions
 
+> ## ⚠️ ACTIVE WORK — VPS auto-collector + cross-platform viewer
+> **Next session, start here.** David wants the daily fetch to run automatically on the VPS,
+> append to a master file, sync that master to the public repo, and be read by a new
+> cross-platform viewer (Windows app + browser HTML, usable from Android). Feasibility already
+> confirmed (headless collection is a clean fit — 100% HTTP + math, zero npm deps, no secrets).
+> **Full detail, recommended architecture, and 5 open decisions David must confirm before coding:**
+> **`docs/VPS_COLLECTOR_PLAN.md`**. Do not start coding until those decisions are answered.
+
 ## Project overview
 
 Local-first DeFi stablecoin yield tracker. Single-file vanilla JS app (`tracker.html`) that runs from `file://` in Brave/Chrome. Uses File System Access API to read/write a local folder containing CSV data. No server, no build step, no dependencies.
