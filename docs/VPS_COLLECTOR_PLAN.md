@@ -5,6 +5,49 @@ all open decisions resolved with David 2026-08-16 (see "Decisions — LOCKED" be
 
 ---
 
+## ⏸ RESUME HERE — paused 2026-08-16 mid-cutover (continue on ohmnuc)
+
+**The collector is BUILT and fully proven on the VPS. Only the go-live cutover remains.**
+This WIP is on branch **`wip/vps-collector`** → on ohmnuc: `git fetch && git checkout wip/vps-collector`.
+(`master.csv`'s browser Aug 16 row was left uncommitted on the old machine — discard it; the collector
+regenerates Aug 16 at resume, per the "gap between snaps" plan.)
+
+### Done & verified (all on VPS 103.16.131.237, as `mosaic`)
+- Bootstrap: Node v22.23.2 system-wide; `/opt/yieldtracker` group-model dir (setgid `2775`,
+  `mosaic:yieldtracker`), passwordless. One-time sudo already spent.
+- `collector.js` — full pipeline ported from tracker.html (DefiLlama + off-chain ERC4626/RPC + Aave +
+  Morpho V1 enrich + V2 inject). **Parity vs browser save: mean |Δapy| 0.0008 pp, 131/131 rows.** ~24s run.
+- 4 fail-closed validation gates + Telegram alert (reuses portfolio bot). Pass + fail-closed paths
+  tested; a real alert reached David's phone.
+- Idempotent `master.csv` append (trailing newline) → git commit → **push to origin proven** (deploy
+  key over 443, tested on a throwaway branch then deleted). `/opt/yieldtracker` is a clone of the repo.
+
+### Remaining cutover steps (to go live)
+1. **Ship to `main`:** merge `wip/vps-collector` (collector.js + this doc). Finish docs: CHANGELOG.md,
+   SESSION_LOG.md, CLAUDE.md (retire the ACTIVE WORK block → make the hosted viewer + native app the new
+   active work; those are plan steps 5–6, NOT yet built).
+2. **Aug 16 → origin:** run the collector once at resume (`cd /opt/yieldtracker && node collector.js`
+   after step 3) — it appends Aug 16 + pushes. Gives the wanted time gap from the earlier browser saves.
+3. **VPS sync:** on the clone, remove the untracked `collector.js`, then `git pull` main (or `git add
+   collector.js` in the clone and let it ride with the main merge).
+4. **Enable cron** (mosaic crontab) — VPS is Perth (UTC+8), so pin UTC:
+   ```
+   CRON_TZ=UTC
+   1 0 * * * cd /opt/yieldtracker && /usr/bin/node collector.js >> /opt/yieldtracker/collector.log 2>&1
+   ```
+   First live run: next 00:01 UTC (08:01 Perth).
+
+### Operational reference (VPS)
+- Test modes: `YT_MODE=emit` (stdout only), `YT_NO_PUSH=1` (commit, no push), `YT_PUSH_BRANCH=x`,
+  `YT_TEST_FORCE_GATE=n` (trip gate n → alert).
+- **GitHub SSH: port 22 is BLOCKED from the VPS — use 443** via ssh alias `yt-github` (→ ssh.github.com:443)
+  with deploy key `~/.ssh/github_yieldtracker_deploy` (repo Deploy key, write-enabled). Remote already set.
+- **Telegram: VPS IPv6 → api.telegram.org is dead — collector forces IPv4** in-code. Token read from
+  `/opt/portfolio/collector_config.json` (`telegram.bot_token`/`chat_id`) via portfolio group; never printed.
+- git identity in the clone already set (`yieldtracker-collector`).
+
+---
+
 ## What David asked for (his words, paraphrased)
 
 > The whole daily-fetch process should run automatically on the VPS. It fetches the data daily at
@@ -145,10 +188,16 @@ recur going forward: 00:01 UTC = 08:01 Perth sits just past the pre-dawn danger 
 
 ## Risks to validate before/while building
 
-- **Datacenter-IP RPC limits.** Public Base RPCs sometimes throttle datacenter ranges harder than
-  home IPs, and the off-chain APY needs **7-day archive depth**. The 4-endpoint fallback helps — test
-  from the VPS early.
-- **Node 18+ present on the VPS** — prerequisite check (needs global `fetch`).
+- ✅ **CLEARED 2026-08-16 — Datacenter-IP RPC limits.** Ran the full collector on the VPS: all four
+  RPC-dependent paths returned cleanly from the datacenter IP with **no throttling**, and the **7-day
+  archive depth works** (share-price APYs de-noised: Revert 5.29%, Tokemak baseUSD 6.14%, ottoUSD 6.12%,
+  40 Acres 11.83%, yoUSD 4.03%, SparkFi 3.52%; AlphaGrowth Euler 9.73%; Aave patched). Full run ≈24s.
+  The plan's biggest risk did not materialise.
+- ✅ **CLEARED — Node present.** Node v22.23.2 installed (see step 1). `fetch`/`BigInt` available.
+- ✅ **Parity PASSED 2026-08-16 (structural + numeric).** Collector vs browser save: identical 20-col
+  header, 131 vs 131 rows, exact (pool·project·chain) set match. Same-minute numeric compare (collision-
+  aware multiset on APY): **mean |Δapy| = 0.0008 pp, worst 0.04 pp** (a Morpho V2 netApy tick between
+  captures). The headless port reproduces the browser app's output. Acceptance gate cleared.
 - **Trailing-newline hygiene** — a prior save omitted the trailing newline, causing a delete+re-add of
   the last row in a diff. The collector must always write a trailing `\n` so daily diffs stay clean.
 - **Untrusted-data rule still applies.** DefiLlama/Morpho/RPC responses are untrusted; the collector
@@ -156,13 +205,27 @@ recur going forward: 00:01 UTC = 08:01 Perth sits just past the pre-dawn danger 
   validation gate 4, per project CLAUDE.md security section).
 - **Telegram secret handling** — reuse the portfolio bot token via the group model; never read, print,
   or commit its value (decision #11).
+- ⚠️ **GOTCHA (found+fixed 2026-08-16) — VPS IPv6 → Telegram is dead.** `api.telegram.org` has an AAAA
+  record, but this box's IPv6 route to it black-holes (ETIMEDOUT); IPv4 works fine. Node's `fetch`
+  (undici) grabs the AAAA and its happy-eyeballs (`autoSelectFamily`) still hangs even with
+  `ipv4first`. Fix in `collector.js`: `dns.setDefaultResultOrder('ipv4first')` **plus**
+  `net.setDefaultAutoSelectFamily(false)`. curl/PowerShell fall back to IPv4 silently, so the portfolio
+  (.ps1) bot never hit this — **any Node tool on this VPS talking to Telegram needs the same two lines.**
 
 ---
 
 ## First concrete steps when work resumes
 
-1. Verify **Node 18+** on the VPS; provision `/opt/yieldtracker/` to the group model (setgid `2775`
-   + group membership). Sort group read-access to the portfolio Telegram bot secret (no duplication).
+1. ✅ **DONE 2026-08-16.** VPS bootstrap complete (one-time sudo block, verified passwordless after):
+   - **Node.js v22.23.2** + npm 10.9.8 installed system-wide via NodeSource (`/usr/bin/node`) —
+     Ubuntu 24.04.4 LTS. (Distro's own Node is 18/EOL; NodeSource gives current LTS.)
+   - **`/opt/yieldtracker/`** created `drwxrwsr-x mosaic:yieldtracker` setgid `2775`. New `yieldtracker`
+     group (gid 1001); `mosaic` added. Passwordless write from a fresh SSH session **verified** (file
+     lands `664 mosaic:yieldtracker`). No sudo needed for anything from here.
+   - **Telegram secret access:** NOT re-provisioned — the portfolio bot config lives at
+     `/opt/portfolio/collector_config.json` (`640 portfolio:portfolio`) and `mosaic` already reads it
+     via existing `portfolio` group membership. Collector will run **as `mosaic`** so it inherits that
+     read with zero new grants / zero duplication (satisfies decision #11). No separate service user.
 2. Prototype `collector.js` — DefiLlama fetch + one Morpho enrich + one RPC call — and **diff its
    output row-for-row against a browser-app save for the same day** (parity check).
 3. Add the **validation gate** (4 gates above, fail-closed) + Telegram alert on failure.
