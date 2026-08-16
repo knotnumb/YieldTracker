@@ -1,12 +1,14 @@
 # YieldTracker — Claude Code Instructions
 
 > ## ⚠️ ACTIVE WORK — VPS auto-collector + cross-platform viewer
-> **Next session, start here.** David wants the daily fetch to run automatically on the VPS,
-> append to a master file, sync that master to the public repo, and be read by a new
-> cross-platform viewer (Windows app + browser HTML, usable from Android). Feasibility already
-> confirmed (headless collection is a clean fit — 100% HTTP + math, zero npm deps, no secrets).
-> **Full detail, recommended architecture, and 5 open decisions David must confirm before coding:**
-> **`docs/VPS_COLLECTOR_PLAN.md`**. Do not start coding until those decisions are answered.
+> **Next session, start here — all decisions are LOCKED (2026-08-16), ready to build.** The daily
+> fetch runs headless on the VPS at 00:01 UTC, validates (fail-closed, Telegram-alerts on failure),
+> appends to `master.csv` (UTC-dated), and auto-pushes to the public repo. A public hosted web page
+> on epgpvr serves today's values → history → graphs (PWA, offline). A native Windows app (C# +
+> WebView2, Inno Setup) is a thin shell over the live URL that also drops a daily local `master.csv`.
+> `tracker.html` is kept only as the manual backfill escape hatch. **All 14 locked decisions, the
+> validation-gate spec, the timezone audit result, and the build steps are in**
+> **`docs/VPS_COLLECTOR_PLAN.md`**. Build order starts at "First concrete steps when work resumes".
 
 ## Project overview
 
