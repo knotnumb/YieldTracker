@@ -1,5 +1,27 @@
 # Session Log
 
+## 2026-08-16 — Web viewer + PWA built (plan step 5)
+
+- **Built the public hosted viewer** (decisions from the plan): new `index.html` landing —
+  best-yields snapshot of the latest `master.csv` day, "as of DATE (UTC)", presets
+  (Best APY / By Chain / By Protocol / Blue-chip / YieldSeeker), chain/min-TVL/search/compact
+  controls persisted to `localStorage`, tap-to-expand full detail, DefiLlama `↗` links.
+- **Re-wired `chart.html`** to auto-`fetch('master.csv')` from its origin (picker fallback kept),
+  with two-way nav to/from the landing.
+- **Vendored Chart.js** locally (`assets/chart.umd.min.js`) — dropped the `cdnjs` CDN so graphs
+  work offline and the zero-CDN rule holds.
+- **PWA**: `manifest.json` + `sw.js` (shell cache-first, `master.csv` network-first), new neutral
+  green-chart app icon (SVG + generated square PNGs), install screenshots (wide + narrow).
+- **Bug caught pre-ship:** landing keyed the latest day by `pool|project|chain`, which collapsed
+  131 → 114 (17 vaults share the triple, no address column). Fixed to key by daily `rank`.
+- **YS logo scope clarified with David:** fine in *result* badges (refers to YS's own vaults),
+  NOT as our app/landing icon — app icon is the neutral glyph. Left `tracker.html` untouched.
+- **Tested locally** via a throwaway Node static server (fetch needs an http origin); David verified
+  landing, graphs, and a clean PWA manifest in Brave. **Not yet hosted** — next: Namecheap A-record
+  + Caddy route on epgpvr, then plan step 6 (native Windows app).
+- Recorded the `YS_VAULTS`/`PROTOCOL_SLUG_ALIASES` triple-duplication as a follow-up in
+  `docs/VPS_COLLECTOR_PLAN.md`.
+
 ## 2026-08-16 — VPS auto-collector LIVE (cutover complete)
 
 - **Went live.** Resumed on ohmnuc mid-cutover. Confirmed the VPS clone's untracked `collector.js`

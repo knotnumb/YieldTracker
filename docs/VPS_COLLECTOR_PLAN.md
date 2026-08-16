@@ -244,3 +244,16 @@ recur going forward: 00:01 UTC = 08:01 Perth sits just past the pre-dawn danger 
    HTTPS from epgpvr, as a **PWA** (service-worker offline cache).
 6. Build the **native Windows app** (C# + WebView2, Inno Setup): thin shell → live URL, PWA offline,
    daily local `master.csv` drop to a user-chosen folder (default `Documents\YieldTracker`).
+
+---
+
+## Known follow-ups (viewer) — not blocking, record so they aren't lost
+
+- **`YS_VAULTS` is now duplicated across THREE files** — `tracker.html`, `chart.html`, and (as of the
+  viewer build) `index.html`. All three hold a full verbatim copy of the ~46-entry whitelist + match
+  patterns; nothing links them. **Risk:** a vault add/rename/pattern change (which recurs when DefiLlama
+  renames pools) must be hand-applied to all three, or the pages silently drift (e.g. the landing badges
+  a vault as YS but the chart doesn't). **Fix (deferred, needs its own decision):** extract to one shared
+  `ys-vaults.js` that `chart.html` + `index.html` load. Wrinkle: `tracker.html` has the hard "single file,
+  never split" rule, so it either keeps its own copy or that rule is relaxed. Until consolidated, **edit
+  all three in lockstep.** (Same applies to `PROTOCOL_SLUG_ALIASES`, now also copied into `index.html`.)

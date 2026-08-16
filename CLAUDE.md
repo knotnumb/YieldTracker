@@ -3,9 +3,22 @@
 > **✅ VPS auto-collector is LIVE** (2026-08-16) — `collector.js`, cron 00:01 UTC → public repo.
 > Details in `docs/VPS_COLLECTOR_PLAN.md` + CHANGELOG.
 >
-> ## ⚠️ ACTIVE WORK — cross-platform viewer + native Windows app (not built)
-> Plan steps 5–6: public PWA viewer on epgpvr + native Windows shell (C#/WebView2). Full spec +
-> build order → **`docs/VPS_COLLECTOR_PLAN.md`** ("First concrete steps when work resumes").
+> **✅ Web viewer + PWA built** (2026-08-16, plan step 5) — `index.html` landing + re-wired
+> `chart.html` + `manifest.json`/`sw.js`, zero external deps. Not yet hosted (see below). Details
+> in CHANGELOG.
+>
+> ## ⚠️ ACTIVE WORK — host the viewer (BOTH), then native Windows app
+> Hosting = **both** (decided 2026-08-16): GitHub Pages (public/backup) + epgpvr (primary domain).
+> 1. **GitHub Pages** — already auto-deploys this repo; the viewer goes live on push at
+>    `knotnumb.github.io/YieldTracker/` and reads the daily-pushed `master.csv` same-origin. No
+>    action beyond pushing. (Note: the Pages root now shows the viewer, not the old tracker redirect.)
+> 2. **epgpvr/Caddy** — Namecheap A-record `yieldtracker → 103.16.131.237` + Caddy route, docroot =
+>    the `/opt/yieldtracker` clone (serves `master.csv` live, no rebuild lag). URL:
+>    `yieldtracker.epgpvr.com`. Needs the A-record + one Caddy paste + a `git pull` on the clone.
+> 3. **Plan step 6 — native Windows app** (C#/WebView2, Inno Setup): thin shell → live URL, PWA
+>    offline, daily local `master.csv` drop.
+>
+> Full spec + build order → **`docs/VPS_COLLECTOR_PLAN.md`** (steps 5–6 + "Known follow-ups").
 
 ## Project overview
 
@@ -16,8 +29,13 @@ Current version: `v2026-07-18a`
 ## Repo structure
 
 ```
-tracker.html          # The app — all HTML/CSS/JS in one file
-chart.html            # Historical chart viewer (reads master.csv)
+tracker.html          # The local data-entry/backfill app — all HTML/CSS/JS in one file (file://)
+index.html            # Public hosted viewer — landing "best yields" snapshot (PWA); fetches master.csv live
+chart.html            # Historical chart viewer (auto-fetches master.csv when hosted; picker fallback)
+manifest.json         # PWA manifest (viewer)
+sw.js                 # PWA service worker — shell cache-first, master.csv network-first
+collector.js          # Headless VPS daily collector (Node, zero-dep) — sole daily writer of master.csv
+assets/               # chart.umd.min.js (vendored), icon.svg, icon-192/512.png, screenshots, ys-logo.png
 bookmarklet.txt       # DefiLlama scraper bookmarklet (v2 — extracts by child index)
 master.csv            # Append-only time-series data (public market data, no secrets)
 snapshots/            # Daily raw CSV captures (YYYY-MM-DD.csv)
@@ -25,9 +43,14 @@ config.json           # LOCAL ONLY — API keys, never committed
 config.example.json   # Template showing required config shape
 README.md             # User documentation
 README.pdf            # PDF export of README
-BRIEF_v5.md           # Current task brief
+docs/                 # On-demand reference (VPS_COLLECTOR_PLAN.md = viewer/collector plan + follow-ups)
 .gitignore            # Excludes config.json, test/, PDFs
 ```
+
+**Viewer note:** `index.html` and `chart.html` are served from a web origin (Caddy on epgpvr) and
+read `master.csv` from the same folder. `YS_VAULTS` + `PROTOCOL_SLUG_ALIASES` are duplicated across
+`tracker.html`, `chart.html`, and `index.html` — **edit all three in lockstep** (consolidation is a
+recorded follow-up in `docs/VPS_COLLECTOR_PLAN.md`).
 
 ## Git hygiene — CRITICAL
 

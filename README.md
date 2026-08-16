@@ -1,6 +1,8 @@
 # DeFi Yield Tracker
 
-**[→ Open in browser](https://knotnumb.github.io/YieldTracker/)** &nbsp;·&nbsp; Chrome or Brave required &nbsp;·&nbsp; no install needed
+**[→ Open the online viewer](https://knotnumb.github.io/YieldTracker/)** &nbsp;·&nbsp; best-yields snapshot + charts, installable (PWA) &nbsp;·&nbsp; also served at `yieldtracker.epgpvr.com`
+
+*The local data-entry tool is `tracker.html` (see [Quick start](#quick-start)); Chrome or Brave required.*
 
 [![Deploy to GitHub Pages](https://github.com/knotnumb/YieldTracker/actions/workflows/pages.yml/badge.svg)](https://github.com/knotnumb/YieldTracker/actions/workflows/pages.yml)
 
@@ -18,6 +20,7 @@ Built around the vault selection maintained by **[<img src="ys-logo.png" height=
 - Flags vaults against a configurable watchlist — pre-loaded with the **YieldSeeker** curated selection (marked <img src="ys-logo.png" height="13" alt="YS" style="vertical-align:middle"> YS)
 - Saves each daily fetch as an append-only CSV time-series you own and control
 - Includes a separate **historical chart viewer** (`chart.html`) for visualising APY trends across any vaults in your dataset
+- Publishes a **public online viewer** (`index.html`) — a mobile-friendly "best yields" snapshot of the latest data, installable as an app (PWA), reading the same daily `master.csv`
 
 ---
 
@@ -134,9 +137,24 @@ Click **Save Snapshot + Append to Master**. This:
 
 ---
 
+## Online viewer (PWA)
+
+The **online viewer** (`index.html`) is the public, hosted face of the tracker — no data folder, no setup. It reads the latest day from `master.csv` and shows a ranked **"best stablecoin yields"** list, labelled **"as of DATE (UTC)"**.
+
+- **Layout presets:** Best APY · By Chain · By Protocol · Blue-chip (largest TVL) · YieldSeeker
+- Filter by chain, minimum TVL, or search; a **Compact** density toggle — your choices are remembered
+- **Tap any row** to expand full detail (base/reward split, 7d, 30d average, available liquidity, cap utilisation, etc.)
+- Each row has a **"↗"** link to that protocol on [DefiLlama](https://defillama.com)
+- **Graphs →** opens the historical chart viewer
+- **Installable (PWA)** and **works offline** — install it from your browser's address bar; the last-loaded data stays available with no connection
+
+**Where it's hosted:** GitHub Pages (`knotnumb.github.io/YieldTracker/`) and `yieldtracker.epgpvr.com`. Both read the `master.csv` that the VPS collector appends and pushes daily.
+
+---
+
 ## Historical chart viewer
 
-Open `chart.html` separately in the same browser. Click **Open master.csv** and navigate to your data folder.
+When opened from a hosted URL, `chart.html` **loads `master.csv` automatically**. Opened as a local file (`file://`), click **Reload / Open master.csv** and navigate to your data folder.
 
 **Selecting vaults:**
 - Filter by protocol or <img src="ys-logo.png" height="13" alt="YS" style="vertical-align:middle"> YS whitelist status; independent chain selector stacks on top

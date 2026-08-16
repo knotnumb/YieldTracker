@@ -1,5 +1,40 @@
 # Changelog
 
+## 2026-08-16 — Web viewer + PWA (plan step 5)
+
+### Added — public hosted viewer
+- **New landing page (`index.html`)** — replaces the old redirect-to-tracker stub. Public,
+  mobile-first "best stablecoin yields" snapshot of the latest day in `master.csv`, labelled
+  **"as of DATE (UTC)"**. Reuses `chart.html`'s green-terminal design system.
+  - **Layout presets:** Best APY · By Chain · By Protocol · Blue-chip (by TVL) · YieldSeeker.
+  - Chain chips, min-TVL, search, Compact density toggle; **all persisted to `localStorage`**
+    (so the future native Windows app inherits the user's config in its own WebView2 profile).
+  - **Tap any row → expands** to full 20-column detail (base/reward, 7d, 30d, avail liquidity,
+    cap util, etc.); DefiLlama `↗` protocol links per row (carried over from `chart.html`).
+- **`chart.html` re-wired for hosting** — auto-`fetch('master.csv')` from its own origin on load
+  (manual picker kept as a `file://`/offline fallback); two-way nav with the landing.
+- **Vendored Chart.js** (`assets/chart.umd.min.js`, v4.4.0) — replaces the `cdnjs` CDN `<script>`.
+  Makes graphs work offline (SW-cacheable, same-origin) and restores the project's zero-CDN ethos.
+- **PWA** — `manifest.json` + `sw.js` service worker. App shell cache-first; **`master.csv`
+  network-first** (fresh online, last-cached offline). Installable, offline-capable.
+  - New neutral app icon (`assets/icon.svg` + generated square `icon-192/512.png`) — a green
+    yield-line glyph, **not** the YieldSeeker logo (that stays only in *result* badges, where it
+    refers to YS's own vaults).
+  - Install-dialog screenshots (wide + narrow).
+
+### Fixed
+- Landing latest-day snapshot keys rows by the daily **`rank`** column, not `pool|project|chain`
+  — 17 distinct vaults share the same triple (no address column in the schema), so a triple key
+  silently dropped them (131 → 114). Rank is unique per day and also collapses any accidental
+  same-day double-append.
+
+### Notes
+- **`YS_VAULTS` + `PROTOCOL_SLUG_ALIASES` are now duplicated in three files** (`tracker.html`,
+  `chart.html`, `index.html`) — edit all three in lockstep until consolidated. Deferred follow-up
+  recorded in `docs/VPS_COLLECTOR_PLAN.md` ("Known follow-ups").
+- Remaining plan work: hosting handover (Namecheap A-record + Caddy route on epgpvr) and plan
+  step 6 (native Windows app).
+
 ## 2026-08-16 — VPS auto-collector LIVE (cutover)
 
 ### Added — headless daily collector (`collector.js`)

@@ -1,0 +1,21 @@
+{
+  "id": "/index.html",
+  "name": "YieldTracker",
+  "short_name": "YieldTracker",
+  "description": "Best stablecoin DeFi yields — daily snapshot and history.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#060908",
+  "theme_color": "#060908",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "assets/screenshot-wide.png", "sizes": "1212x927", "type": "image/png", "form_factor": "wide", "label": "Best stablecoin yields — desktop" },
+    { "src": "assets/screenshot-narrow.png", "sizes": "419x857", "type": "image/png", "form_factor": "narrow", "label": "Best stablecoin yields — mobile" }
+  ]
+}

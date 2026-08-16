@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DeFi Yield Chart</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#060908">
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+<link rel="apple-touch-icon" href="assets/icon.svg">
 <style>
   :root {
     --bg:          #060908;
@@ -107,6 +112,14 @@
   button.sec:hover { color: var(--text); border-color: var(--muted-mid); background: transparent; }
   button.active { background: var(--accent-lo); color: var(--accent); border-color: var(--accent); }
   button:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+  a.navlink {
+    display: inline-block; text-decoration: none;
+    color: var(--accent); border: 1px solid var(--accent-dim);
+    padding: 6px 14px; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    transition: background 0.1s, border-color 0.1s;
+  }
+  a.navlink:hover { background: var(--accent-lo); border-color: var(--accent); }
 
   /* ── STATUS ── */
   .status { font-size: 11px; padding: 8px 12px; margin-top: 10px; border-left: 3px solid; letter-spacing: 0.02em; }
@@ -262,14 +275,17 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Chart</div>
-    <div class="app-meta">Historical APY · Load master.csv → select vaults → chart</div>
+    <div class="app-meta">Historical APY · select vaults → chart</div>
+  </div>
+  <div>
+    <a href="index.html" class="navlink">← Yields</a>
   </div>
 </div>
 
 <!-- 01 LOAD -->
 <div class="panel">
   <h2>01 — Load Data</h2>
-  <button onclick="pickFile()">Open master.csv</button>
+  <button onclick="pickFile()">Reload / Open master.csv</button>
   <div id="loadStatus"></div>
 </div>
 
@@ -365,7 +381,7 @@
   <div id="legend"></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="assets/chart.umd.min.js"></script>
 <script>
 
 // ============ YS Whitelist — synced with tracker.html ============
@@ -1065,6 +1081,27 @@ function escHtml(s) {
 }
 function showStatus(id, msg, type) {
   document.getElementById(id).innerHTML = `<div class="status ${type}">${msg}</div>`;
+}
+
+// ============ Auto-load ============
+// Served from a web origin, master.csv lives alongside this file — fetch it directly.
+// Falls back to the manual picker when opened from file:// (fetch blocked) or offline
+// with no cached copy.
+async function autoLoad() {
+  showStatus('loadStatus', 'Loading master.csv…', 'info');
+  try {
+    const res = await fetch('master.csv?t=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    loadCSV(await res.text());
+  } catch (e) {
+    showStatus('loadStatus', 'Could not fetch master.csv (' + e.message +
+      '). If you opened this file directly, click "Reload / Open master.csv" to pick it manually.', 'err');
+  }
+}
+autoLoad();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
 </script>
 </body>
