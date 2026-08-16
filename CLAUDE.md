@@ -1,22 +1,11 @@
 # YieldTracker — Claude Code Instructions
 
-> ## ✅ DONE — VPS auto-collector is LIVE (2026-08-16)
-> The daily fetch runs headless on the VPS (`collector.js`, cron 00:01 UTC), validates fail-closed
-> (Telegram-alerts on failure), appends UTC-dated rows to `master.csv`, and auto-pushes to the public
-> repo. First live snapshot (Aug 16) pushed; first automated run 00:01 UTC Aug 17. `tracker.html` is
-> the manual backfill escape hatch. Full record: `docs/VPS_COLLECTOR_PLAN.md`, CHANGELOG.
+> **✅ VPS auto-collector is LIVE** (2026-08-16) — `collector.js`, cron 00:01 UTC → public repo.
+> Details in `docs/VPS_COLLECTOR_PLAN.md` + CHANGELOG.
 >
-> ## ⚠️ ACTIVE WORK — cross-platform viewer + native Windows app (NOT yet built)
-> **Next session, start here.** Two pieces remain from the locked plan (steps 5–6):
-> 1. **Public hosted viewer** on epgpvr, served over HTTPS as a **PWA** (offline cache): landing =
->    today's values labelled "as of DATE (UTC)" → load full `master.csv` history → graphing tool
->    (evolves `chart.html`). Reads master live off the server.
-> 2. **Native Windows app** (C# + WebView2, Inno Setup): thin shell over the live URL (install once,
->    never stale), PWA offline, drops a daily local `master.csv` to a user-chosen folder (default
->    `Documents\YieldTracker`).
->
-> All 14 decisions, the validation-gate spec, and build order are in **`docs/VPS_COLLECTOR_PLAN.md`**
-> ("First concrete steps when work resumes", steps 5–6).
+> ## ⚠️ ACTIVE WORK — cross-platform viewer + native Windows app (not built)
+> Plan steps 5–6: public PWA viewer on epgpvr + native Windows shell (C#/WebView2). Full spec +
+> build order → **`docs/VPS_COLLECTOR_PLAN.md`** ("First concrete steps when work resumes").
 
 ## Project overview
 
