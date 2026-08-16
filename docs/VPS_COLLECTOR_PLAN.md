@@ -8,9 +8,9 @@ all open decisions resolved with David 2026-08-16 (see "Decisions — LOCKED" be
 ## ⏸ RESUME HERE — paused 2026-08-16 mid-cutover (continue on ohmnuc)
 
 **The collector is BUILT and fully proven on the VPS. Only the go-live cutover remains.**
-This WIP is on branch **`wip/vps-collector`** → on ohmnuc: `git fetch && git checkout wip/vps-collector`.
-(`master.csv`'s browser Aug 16 row was left uncommitted on the old machine — discard it; the collector
-regenerates Aug 16 at resume, per the "gap between snaps" plan.)
+`collector.js` + this doc are committed to **`main`** — on ohmnuc just `git pull` and open Claude as
+normal. (`master.csv`'s browser Aug 16 row was left uncommitted on the old machine — discard it; the
+collector regenerates Aug 16 at resume, per the "gap between snaps" plan.)
 
 ### Done & verified (all on VPS 103.16.131.237, as `mosaic`)
 - Bootstrap: Node v22.23.2 system-wide; `/opt/yieldtracker` group-model dir (setgid `2775`,
