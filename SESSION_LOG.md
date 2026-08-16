@@ -1,5 +1,19 @@
 # Session Log
 
+## 2026-08-16 — VPS auto-collector LIVE (cutover complete)
+
+- **Went live.** Resumed on ohmnuc mid-cutover. Confirmed the VPS clone's untracked `collector.js`
+  was byte-identical (sha256) to the committed one, removed it, fast-forwarded the clone to `main`.
+- **First live run:** `emit` dry-run first (131 rows, all gates PASSED, exit 0), then the real run —
+  appended the 2026-08-16 snapshot (131 rows) and **pushed to the public repo** (commit `01b4cde`).
+  Diff was +132/−1 = 131 new rows + the one-time trailing-newline fix on the old last row; every
+  future daily diff is a clean single block. Pulled to ohmnuc.
+- **Cron enabled** at 00:01 UTC daily (`CRON_TZ=UTC`; cron daemon confirmed active + enabled).
+  First automated run 00:01 UTC 2026-08-17 (08:01 Perth).
+- **Docs:** CHANGELOG, this log, and CLAUDE.md updated. Retired the ACTIVE WORK block for the
+  collector → the **hosted viewer (PWA) + native Windows app** (plan steps 5–6, not yet built) are
+  the new active work.
+
 ## 2026-08-13 — VPS auto-collector scoped (no code)
 
 - Reviewed a "different-looking" master.csv commit: benign. Data was normal (131 rows, 20 cols, all

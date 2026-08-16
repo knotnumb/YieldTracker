@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-08-16 — VPS auto-collector LIVE (cutover)
+
+### Added — headless daily collector (`collector.js`)
+- **The daily fetch now runs headless on the VPS**, not in the browser. `collector.js` is a
+  zero-npm-dependency Node port of `tracker.html`'s data pipeline (DefiLlama + off-chain
+  ERC4626/RPC + Aave + Morpho V1 enrich + V2 inject). Parity vs a browser save: mean |Δapy|
+  0.0008 pp across 131/131 rows. Full run ≈24s.
+- **4 fail-closed validation gates** (fetch integrity, schema/format drift, value sanity,
+  CSV-injection safety). If any gate trips, nothing is written or pushed and a **Telegram alert**
+  (reusing the portfolio bot) names the failed gate + source — David backfills via `tracker.html`.
+- **Idempotent append → git commit → push to the public repo.** The collector rebuilds `master.csv`
+  with a guaranteed trailing newline, so daily diffs are a single clean added block. Push uses a
+  write-enabled deploy key over 443 (port 22 is blocked from the VPS).
+- Test modes: `YT_MODE=emit` (stdout only), `YT_NO_PUSH=1`, `YT_PUSH_BRANCH=x`,
+  `YT_TEST_FORCE_GATE=n`.
+
+### Cutover (this session)
+- Provisioned `/opt/yieldtracker/` under the `mosaic` group model (setgid 2775, passwordless).
+- **First live run appended the 2026-08-16 snapshot (131 rows) and pushed to origin.**
+- **Cron enabled at 00:01 UTC daily** (`CRON_TZ=UTC`, VPS is Perth UTC+8) — first automated run
+  00:01 UTC 2026-08-17.
+- Row dating is now **declared UTC** going forward (landing page will label "as of DATE (UTC)").
+
+### Notes
+- Two Node-on-this-VPS gotchas baked into `collector.js`: forces **IPv4** for Telegram
+  (`dns.setDefaultResultOrder('ipv4first')` + `net.setDefaultAutoSelectFamily(false)` — the box's
+  IPv6 route to `api.telegram.org` black-holes) and uses the `yt-github` SSH alias (→ 443).
+- Full plan, all 14 locked decisions, validation-gate spec, and operational reference:
+  `docs/VPS_COLLECTOR_PLAN.md`.
+
 ## v2026-07-18a
 
 ### Added — Morpho Vaults V2 (21 vaults)

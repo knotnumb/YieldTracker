@@ -1,14 +1,22 @@
 # YieldTracker — Claude Code Instructions
 
-> ## ⚠️ ACTIVE WORK — VPS auto-collector + cross-platform viewer
-> **Next session, start here — all decisions are LOCKED (2026-08-16), ready to build.** The daily
-> fetch runs headless on the VPS at 00:01 UTC, validates (fail-closed, Telegram-alerts on failure),
-> appends to `master.csv` (UTC-dated), and auto-pushes to the public repo. A public hosted web page
-> on epgpvr serves today's values → history → graphs (PWA, offline). A native Windows app (C# +
-> WebView2, Inno Setup) is a thin shell over the live URL that also drops a daily local `master.csv`.
-> `tracker.html` is kept only as the manual backfill escape hatch. **All 14 locked decisions, the
-> validation-gate spec, the timezone audit result, and the build steps are in**
-> **`docs/VPS_COLLECTOR_PLAN.md`**. Build order starts at "First concrete steps when work resumes".
+> ## ✅ DONE — VPS auto-collector is LIVE (2026-08-16)
+> The daily fetch runs headless on the VPS (`collector.js`, cron 00:01 UTC), validates fail-closed
+> (Telegram-alerts on failure), appends UTC-dated rows to `master.csv`, and auto-pushes to the public
+> repo. First live snapshot (Aug 16) pushed; first automated run 00:01 UTC Aug 17. `tracker.html` is
+> the manual backfill escape hatch. Full record: `docs/VPS_COLLECTOR_PLAN.md`, CHANGELOG.
+>
+> ## ⚠️ ACTIVE WORK — cross-platform viewer + native Windows app (NOT yet built)
+> **Next session, start here.** Two pieces remain from the locked plan (steps 5–6):
+> 1. **Public hosted viewer** on epgpvr, served over HTTPS as a **PWA** (offline cache): landing =
+>    today's values labelled "as of DATE (UTC)" → load full `master.csv` history → graphing tool
+>    (evolves `chart.html`). Reads master live off the server.
+> 2. **Native Windows app** (C# + WebView2, Inno Setup): thin shell over the live URL (install once,
+>    never stale), PWA offline, drops a daily local `master.csv` to a user-chosen folder (default
+>    `Documents\YieldTracker`).
+>
+> All 14 decisions, the validation-gate spec, and build order are in **`docs/VPS_COLLECTOR_PLAN.md`**
+> ("First concrete steps when work resumes", steps 5–6).
 
 ## Project overview
 

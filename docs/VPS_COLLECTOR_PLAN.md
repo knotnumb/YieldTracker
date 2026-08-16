@@ -5,12 +5,22 @@ all open decisions resolved with David 2026-08-16 (see "Decisions — LOCKED" be
 
 ---
 
-## ⏸ RESUME HERE — paused 2026-08-16 mid-cutover (continue on ohmnuc)
+## ✅ CUTOVER COMPLETE — collector is LIVE (2026-08-16, done on ohmnuc)
 
-**The collector is BUILT and fully proven on the VPS. Only the go-live cutover remains.**
-`collector.js` + this doc are committed to **`main`** — on ohmnuc just `git pull` and open Claude as
-normal. (`master.csv`'s browser Aug 16 row was left uncommitted on the old machine — discard it; the
-collector regenerates Aug 16 at resume, per the "gap between snaps" plan.)
+**The collector went live 2026-08-16.** All four cutover steps done:
+1. VPS clone fast-forwarded to `main` (untracked `collector.js` confirmed sha256-identical, removed).
+2. First live run: `emit` dry-run (131 rows, all gates PASSED) → real run appended the **Aug 16
+   snapshot (131 rows)** and **pushed to origin** (commit `01b4cde`). Diff +132/−1 = 131 new rows +
+   one-time trailing-newline fix; future daily diffs are a clean single block. Pulled to ohmnuc.
+3. **Cron enabled** on the `mosaic` crontab at 00:01 UTC (`CRON_TZ=UTC`; daemon active+enabled).
+   First automated run 00:01 UTC 2026-08-17 (08:01 Perth).
+4. Docs updated (CHANGELOG, SESSION_LOG, CLAUDE.md — ACTIVE WORK moved to viewer + native app).
+
+**Remaining work = plan steps 5–6 (viewer + native app), NOT yet built.** See "First concrete steps
+when work resumes". The historical build/verify notes below are kept as the collector's operational
+reference.
+
+### Original resume notes (collector build — now closed)
 
 ### Done & verified (all on VPS 103.16.131.237, as `mosaic`)
 - Bootstrap: Node v22.23.2 system-wide; `/opt/yieldtracker` group-model dir (setgid `2775`,
