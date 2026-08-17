@@ -366,6 +366,7 @@
     <button id="btn-tvl_raw"         class="sec"    onclick="setMetric('tvl_raw')">TVL</button>
     <button id="btn-avail_liquidity" class="sec"    onclick="setMetric('avail_liquidity')">Avail. Liq.</button>
     <button id="btn-supply_cap_util" class="sec"    onclick="setMetric('supply_cap_util')">Cap Util %</button>
+    <button id="btn-exit_fee"        class="sec"    onclick="setMetric('exit_fee')">Exit Fee %</button>
   </div>
 
   <div class="btn-group">
@@ -862,7 +863,7 @@ function renderChips() {
 }
 
 // ============ Metric ============
-const METRICS = ['apy','base_apy','reward_apy','avg_30d','tvl_raw','avail_liquidity','supply_cap_util'];
+const METRICS = ['apy','base_apy','reward_apy','avg_30d','tvl_raw','avail_liquidity','supply_cap_util','exit_fee'];
 
 function setMetric(m) {
   metric = m;
@@ -874,7 +875,8 @@ function metricLabel() {
   return {
     apy: 'APY %', base_apy: 'Base APY %', reward_apy: 'Reward APY %',
     avg_30d: '30d Avg APY %', tvl_raw: 'TVL (USD)',
-    avail_liquidity: 'Avail. Liquidity (USD)', supply_cap_util: 'Supply Cap Util %'
+    avail_liquidity: 'Avail. Liquidity (USD)', supply_cap_util: 'Supply Cap Util %',
+    exit_fee: 'Exit Fee %'
   }[metric] || metric;
 }
 

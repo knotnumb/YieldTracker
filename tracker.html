@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-07-18a</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-08-17a</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -1868,7 +1868,7 @@ const MASTER_COLS = [
   'date','rank','pool','project','chain','tvl','tvl_raw',
   'apy','base_apy','reward_apy','base_apy_7d','il_7d','avg_30d','inception_apy','top_10_pct',
   'total_pool','total_borrowed','avail_liquidity',
-  'supply_cap_util','collateral_exposure'
+  'supply_cap_util','collateral_exposure','exit_fee'
 ];
 
 function rowsToCSV(rows, includeDate=false, date=null) {
@@ -1886,7 +1886,8 @@ function rowsToCSV(rows, includeDate=false, date=null) {
       total_pool: r.total_pool, total_borrowed: r.total_borrowed,
       avail_liquidity: r.avail_liquidity,
       supply_cap_util: r.supply_cap_util ?? null,
-      collateral_exposure: r.collateral_exposure ?? null
+      collateral_exposure: r.collateral_exposure ?? null,
+      exit_fee: r.exit_fee_pct ?? null
     };
     lines.push(cols.map(c => csvEscape(obj[c])).join(','));
   });

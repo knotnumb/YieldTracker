@@ -1,30 +1,23 @@
 # YieldTracker — Claude Code Instructions
 
-> **✅ VPS auto-collector is LIVE** (2026-08-16) — `collector.js`, cron 00:01 UTC → public repo.
-> Details in `docs/VPS_COLLECTOR_PLAN.md` + CHANGELOG.
+> **✅ VPS auto-collector LIVE + viewer hosted** (2026-08-17). `collector.js` runs daily and pushes
+> to the public repo; the viewer is live at **`knotnumb.github.io/YieldTracker/`** (GitHub Pages) and
+> **`yieldtracker.epgpvr.com`** (Caddy, docroot = `/opt/yieldtracker` clone, serves `master.csv` live).
+> `master.csv` schema is now **21 columns** (`exit_fee` added). Details in CHANGELOG.
+> - **Cron runs `1 8 * * *` (08:01 Perth ≡ 00:01 UTC).** Debian `cron` ignores `CRON_TZ`, so it's
+>   scheduled in local time; Perth has no DST so this is permanent. Do NOT "fix" it back to UTC.
 >
-> **✅ Web viewer + PWA built** (2026-08-16, plan step 5) — `index.html` landing + re-wired
-> `chart.html` + `manifest.json`/`sw.js`, zero external deps. Not yet hosted (see below). Details
-> in CHANGELOG.
->
-> ## ⚠️ ACTIVE WORK — host the viewer (BOTH), then native Windows app
-> Hosting = **both** (decided 2026-08-16): GitHub Pages (public/backup) + epgpvr (primary domain).
-> 1. **GitHub Pages** — already auto-deploys this repo; the viewer goes live on push at
->    `knotnumb.github.io/YieldTracker/` and reads the daily-pushed `master.csv` same-origin. No
->    action beyond pushing. (Note: the Pages root now shows the viewer, not the old tracker redirect.)
-> 2. **epgpvr/Caddy** — Namecheap A-record `yieldtracker → 103.16.131.237` + Caddy route, docroot =
->    the `/opt/yieldtracker` clone (serves `master.csv` live, no rebuild lag). URL:
->    `yieldtracker.epgpvr.com`. Needs the A-record + one Caddy paste + a `git pull` on the clone.
-> 3. **Plan step 6 — native Windows app** (C#/WebView2, Inno Setup): thin shell → live URL, PWA
->    offline, daily local `master.csv` drop.
->
-> Full spec + build order → **`docs/VPS_COLLECTOR_PLAN.md`** (steps 5–6 + "Known follow-ups").
+> ## ⚠️ ACTIVE WORK — native Windows app (plan step 6, only piece left)
+> C#/WebView2 thin shell over the live URL (install once, never goes stale), Inno Setup installer to
+> Program Files, PWA offline cache, drops a daily local `master.csv` to a user-chosen folder
+> (default `Documents\YieldTracker`). Full spec + build order → **`docs/VPS_COLLECTOR_PLAN.md`**
+> (step 6 + "Known follow-ups").
 
 ## Project overview
 
 Local-first DeFi stablecoin yield tracker. Single-file vanilla JS app (`tracker.html`) that runs from `file://` in Brave/Chrome. Uses File System Access API to read/write a local folder containing CSV data. No server, no build step, no dependencies.
 
-Current version: `v2026-07-18a`
+Current version: `v2026-08-17a`
 
 ## Repo structure
 
@@ -146,7 +139,7 @@ No automated tests. Manual testing workflow:
 
 - `master.csv` contains public protocol-level market data scraped from DefiLlama (TVLs, APYs, utilisation). No wallet addresses or personal positions.
 - Snapshots are daily captures — one file per scrape day.
-- CSV schema is 20 columns, documented in README.md. Do not add/remove/rename columns without updating the README.
+- CSV schema is 21 columns (added `exit_fee` 2026-08-17), documented in README.md. Do not add/remove/rename columns without updating the README. Column-order writers (`collector.js` `MASTER_COLS`, `tracker.html` `MASTER_COLS`) and the gate-2 length check must stay in sync.
 
 ## What NOT to do
 

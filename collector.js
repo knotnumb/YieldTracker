@@ -157,7 +157,7 @@ function matchVault(row, vault) {
 // ---------- Off-chain vaults (not on DefiLlama) — on-chain ERC4626 fallback ----------
 const OFFCHAIN_VAULTS = [
   { name: 'Fluid USD Coin', address: '0xf42f5795D9ac7e9D757dB633D693cD548Cfd9169', network: 'base', chain: 'Base', project: 'Fluid', pool: 'USDC', matchRe: { project: /fluid/i, pool: /^usdc$/i, chain: /base/i }, liquidityRpc: { rpc: 'https://base.drpc.org', token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 } },
-  { name: 'Avantis USDC Vault', address: '0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9', network: 'base', chain: 'Base', project: 'Avantis', pool: 'USDC', matchRe: { project: /avantis/i, chain: /base/i }, liquidityRpc: { rpc: 'https://base.drpc.org', token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 } },
+  { name: 'Avantis USDC Vault', address: '0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9', network: 'base', chain: 'Base', project: 'Avantis', pool: 'USDC', matchRe: { project: /avantis/i, chain: /base/i }, probeExitFee: true, liquidityRpc: { rpc: 'https://base.drpc.org', token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 } },
   { name: 'Revert Lend Base USDC', address: '0x36AEAe0E411a1E28372e0d66f02E57744EbE7599', network: 'base', chain: 'Base', project: 'Revert Lend', pool: 'USDC', matchRe: { project: /revert/i, chain: /base/i }, erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true }, liquidityRpc: { rpc: 'https://base.drpc.org', token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 } },
   { name: 'Tokemak baseUSD', address: '0x9c6864105AEC23388C89600046213a44C384c831', network: 'base', chain: 'Base', project: 'Tokemak', pool: 'baseUSD', matchRe: { project: /tokemak/i, pool: /baseusd/i }, erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true } },
   { name: 'Otto Earns ottoUSD', address: '0xc8Fdf193f4837BD2c181658488953afC9c044e1F', network: 'base', chain: 'Base', project: 'Tokemak', pool: 'ottoUSD', matchRe: { project: /tokemak/i, pool: /ottousd/i }, erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true } },
@@ -318,6 +318,19 @@ async function fetchAaveLiquidity() {
   } catch { /* silently fail — DefiLlama data still intact */ }
 }
 
+// ERC4626 withdrawal-fee probe: 1 − previewRedeem(1e18)/convertToAssets(1e18), as a %.
+// Returns null if the contract doesn't implement the calls or reports no haircut.
+async function probeExitFeePct(rpc, address) {
+  const arg1e18 = '0000000000000000000000000000000000000000000000000de0b6b3a7640000';
+  const grossHex = await rpcCall(rpc, address, '0x07a2d13a' + arg1e18).catch(() => null); // convertToAssets(1e18)
+  const netHex   = await rpcCall(rpc, address, '0x4cdad506' + arg1e18).catch(() => null); // previewRedeem(1e18)
+  if (grossHex && netHex) {
+    const g = Number(BigInt(grossHex)), n = Number(BigInt(netHex));
+    if (g > 0 && n <= g) return parseFloat(((1 - n / g) * 100).toFixed(4));
+  }
+  return null;
+}
+
 async function fetchOffchainVaults() {
   let fetched = 0;
   for (const vault of OFFCHAIN_VAULTS) {
@@ -335,6 +348,12 @@ async function fetchOffchainVaults() {
         if (vault.liquidityRpc) {
           const liq = await fetchTokenBalance(vault.liquidityRpc.rpc, vault.liquidityRpc.token, vault.address, vault.liquidityRpc.decimals).catch(() => null);
           if (liq !== null) parsedRows[alreadyIdx].avail_liquidity = liq;
+        }
+        // Exit-fee probe for DefiLlama-passthrough vaults that aren't erc4626 share-price
+        // vaults (e.g. Avantis) — otherwise their variable withdrawal fee is never captured.
+        if (vault.probeExitFee && vault.address) {
+          const fee = await probeExitFeePct(vault.probeRpc || vault.liquidityRpc?.rpc || 'https://base.drpc.org', vault.address).catch(() => null);
+          if (fee !== null) parsedRows[alreadyIdx].exit_fee_pct = fee;
         }
       } catch { /* keep DefiLlama values on any RPC error */ }
       fetched++;
@@ -366,17 +385,9 @@ async function fetchOffchainVaults() {
       } else if (vault.erc4626.shareApy) {
         derivedApy = await fetchSharePriceApy(vault.address, rpc).catch(() => null);
       }
-      // Exit-fee detection (display-only in browser; computed here for parity/logging, not a CSV column).
-      let exit_fee_pct = null;
-      {
-        const arg1e18 = '0000000000000000000000000000000000000000000000000de0b6b3a7640000';
-        const grossHex = await rpcCall(rpc, vault.address, '0x07a2d13a' + arg1e18).catch(() => null); // convertToAssets(1e18)
-        const netHex   = await rpcCall(rpc, vault.address, '0x4cdad506' + arg1e18).catch(() => null); // previewRedeem(1e18)
-        if (grossHex && netHex) {
-          const g = Number(BigInt(grossHex)), n = Number(BigInt(netHex));
-          if (g > 0 && n <= g) exit_fee_pct = parseFloat(((1 - n / g) * 100).toFixed(4));
-        }
-      }
+      // Exit-fee detection — persisted to master.csv (col `exit_fee`) so the withdrawal
+      // haircut can be charted over time (variable-fee vaults like Avantis move daily).
+      const exit_fee_pct = await probeExitFeePct(rpc, vault.address);
       let avail_liquidity = null;
       if (vault.liquidityRpc) {
         avail_liquidity = await fetchTokenBalance(vault.liquidityRpc.rpc, vault.liquidityRpc.token, vault.address, vault.liquidityRpc.decimals).catch(() => null);
@@ -420,12 +431,12 @@ function csvEscape(v) {
   return s;
 }
 
-// ---------- CSV schema (20 columns; must match README + master.csv) ----------
+// ---------- CSV schema (21 columns; must match README + master.csv) ----------
 const MASTER_COLS = [
   'date', 'rank', 'pool', 'project', 'chain', 'tvl', 'tvl_raw',
   'apy', 'base_apy', 'reward_apy', 'base_apy_7d', 'il_7d', 'avg_30d', 'inception_apy', 'top_10_pct',
   'total_pool', 'total_borrowed', 'avail_liquidity',
-  'supply_cap_util', 'collateral_exposure'
+  'supply_cap_util', 'collateral_exposure', 'exit_fee'
 ];
 
 function rowsToCSV(rows, date) {
@@ -444,7 +455,8 @@ function rowsToCSV(rows, date) {
       total_pool: r.total_pool, total_borrowed: r.total_borrowed,
       avail_liquidity: r.avail_liquidity,
       supply_cap_util: r.supply_cap_util ?? null,
-      collateral_exposure: r.collateral_exposure ?? null
+      collateral_exposure: r.collateral_exposure ?? null,
+      exit_fee: r.exit_fee_pct ?? null
     };
     lines.push(cols.map(c => csvEscape(obj[c])).join(','));
   });
@@ -730,7 +742,7 @@ function validate(rows, masterPath, today) {
   if (force) throw new GateError(Number(force), 'forced test trip (YT_TEST_FORCE_GATE)');
 
   // Gate 2 — output schema integrity.
-  if (MASTER_COLS.length !== 20) throw new GateError(2, `schema drift: MASTER_COLS is ${MASTER_COLS.length}, expected 20`);
+  if (MASTER_COLS.length !== 21) throw new GateError(2, `schema drift: MASTER_COLS is ${MASTER_COLS.length}, expected 21`);
   if (!Array.isArray(rows) || rows.length === 0) throw new GateError(2, 'no rows assembled');
 
   // Gate 3 — value sanity.

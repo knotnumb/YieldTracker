@@ -150,9 +150,10 @@
   input[type=number] { -moz-appearance: textfield; }
 
   /* ── LIST ── */
+  .list-scroll { overflow-x: auto; }
   .list-head {
-    display: grid; grid-template-columns: 1fr 90px 90px;
-    gap: 8px; padding: 6px 12px;
+    display: grid; grid-template-columns: minmax(0,1fr) 88px 76px 92px 58px;
+    gap: 8px; padding: 6px 12px; min-width: 540px;
     font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
     border-bottom: 1px solid var(--border-hi);
   }
@@ -165,23 +166,30 @@
     border-bottom: 1px solid var(--border); border-top: 1px solid var(--border);
   }
   .group-head:first-child { border-top: none; }
+  .group-head.gh-ok { color: var(--accent); border-left: 3px solid var(--accent-dim); }
+  .group-head.gh-no { color: var(--err);    border-left: 3px solid var(--err); }
 
   .item { border-bottom: 1px solid var(--border); }
   .item:last-child { border-bottom: none; }
   .item.ys { border-left: 2px solid var(--accent-dim); }
   .item-main {
-    display: grid; grid-template-columns: 1fr 90px 90px;
+    display: grid; grid-template-columns: minmax(0,1fr) 88px 76px 92px 58px;
     gap: 8px; padding: 9px 12px; cursor: pointer; align-items: center;
-    transition: background 0.1s;
+    transition: background 0.1s; min-width: 540px;
   }
   .item-main:hover { background: var(--accent-glow); }
   .item.open .item-main { background: var(--accent-lo); }
   .nm { min-width: 0; }
   .nm .vname { color: var(--text); font-weight: 500; font-size: 12px; }
-  .nm .vmeta { color: var(--muted); font-size: 10px; margin-top: 1px; }
+  .nm .vmeta { color: var(--muted); font-size: 10px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .vapy { text-align: right; color: var(--accent); font-size: 13px; font-variant-numeric: tabular-nums; }
-  .vrwd { font-size: 9px; color: var(--muted); }
-  .vtvl { text-align: right; color: var(--muted-mid); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .vbase, .vrwd { font-size: 9px; color: var(--muted); }
+  .vtvl, .vliq, .vutil { text-align: right; color: var(--muted-mid); font-size: 11px; font-variant-numeric: tabular-nums; }
+  /* threshold colour coding (shared by compare cells + YS cards) */
+  .m-ok   { color: var(--accent); }
+  .m-warn { color: var(--warn); }
+  .m-err  { color: var(--err); }
+  .m-na   { color: var(--muted); }
 
   .protocol-link {
     display: inline-flex; align-items: center; justify-content: center;
@@ -210,6 +218,27 @@
   .dcell .dl { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 3px; }
   .dcell .dv { color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; }
 
+  /* ── YS DECISION CARDS (YieldSeeker tab) ── */
+  .ys-card { border-bottom: 1px solid var(--border); padding: 12px 14px; }
+  .ys-card:last-child { border-bottom: none; }
+  .ys-card.blk-card { opacity: 0.85; }
+  .ysc-head { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+  .ysc-name { color: var(--text); font-weight: 600; font-size: 13px; }
+  .ysc-meta { color: var(--muted); font-size: 10px; margin: 3px 0 0; }
+  .tag { display: inline-block; font-size: 8px; padding: 1px 6px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; border: 1px solid; }
+  .tag.cat  { color: var(--info);   border-color: var(--info);       background: var(--info-dim); }
+  .tag.elig { color: var(--accent); border-color: var(--accent-dim); background: var(--accent-lo); }
+  .tag.blk  { color: var(--err);    border-color: var(--err);        background: var(--err-dim); }
+  .ysc-fee  { margin-left: auto; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ysc-note { margin-top: 8px; padding: 6px 9px; font-size: 10px; letter-spacing: 0.02em; border-left: 3px solid; }
+  .ysc-note.warn { color: var(--warn); background: var(--warn-dim); border-color: var(--warn); }
+  .ysc-note.fail { color: var(--err);  background: var(--err-dim);  border-color: var(--err); }
+  .ysc-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; margin-top: 10px; }
+  .ysc-cell { border: 1px solid var(--border); border-bottom: 2px solid var(--border-hi); padding: 7px 9px; background: var(--panel); }
+  .ysc-cell .cl { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: 0.11em; }
+  .ysc-cell .cv { font-size: 15px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .ysc-cell .cs { font-size: 9px; color: var(--muted); margin-top: 1px; }
+
   /* ── COMPACT DENSITY ── */
   body.compact .item-main { padding: 5px 12px; }
   body.compact .nm .vmeta { display: none; }
@@ -220,8 +249,10 @@
   .foot .note { color: var(--muted); font-size: 10px; letter-spacing: 0.06em; }
 
   @media (max-width: 560px) {
-    .list-head, .item-main { grid-template-columns: 1fr 72px 72px; gap: 6px; }
+    /* compare columns keep their widths and scroll horizontally (min-width above);
+       the YS cards reflow to two metric columns so they stay readable on a phone. */
     .app-name { font-size: 16px; }
+    .ysc-metrics { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
@@ -271,10 +302,12 @@
 <div id="loadStatus"></div>
 
 <div class="panel" id="listPanel" style="display:none">
-  <div class="list-head">
-    <div>Vault</div><div class="r">APY</div><div class="r">TVL</div>
+  <div class="list-scroll">
+    <div class="list-head" id="listHead">
+      <div>Vault</div><div class="r">APY</div><div class="r">TVL</div><div class="r">Avail&nbsp;Liq</div><div class="r">Util</div>
+    </div>
+    <div class="list" id="list"></div>
   </div>
-  <div class="list" id="list"></div>
 </div>
 
 <div class="foot">
@@ -344,6 +377,31 @@ function isYS(v) {
     return true;
   });
   return m ? { ys: true, blocked: !!m.blocked, name: m.name ?? null } : { ys: false, blocked: false, name: null };
+}
+
+// Aggregators deploy into underlying protocols, so the liquidity/utilisation gates
+// don't apply to them (matches tracker.html evaluateVault). Names from collector OFFCHAIN_VAULTS.
+const AGGREGATOR_NAMES = new Set(['40 Acres USDC Vault', 'Tokemak baseUSD', 'Otto Earns ottoUSD', 'yoVaultUSD']);
+
+// YieldSeeker eligibility thresholds — kept in sync with tracker.html.
+const MIN_TVL = 500000, MIN_LIQUIDITY = 80000, MAX_UTIL = 95, EXIT_FEE_WARN = 0.005;
+
+// Reconstruct the YieldSeeker eligibility verdict from the stored row. Exit-fee is now a
+// real master.csv column (blank on historical rows collected before the schema addition).
+function evaluateVault(v) {
+  const failures = [], warnings = [];
+  if (v.blocked) failures.push('Blocked in YieldSeeker (see vault notes)');
+  if (v.tvl !== null && v.tvl < MIN_TVL)
+    failures.push(`TVL ${fmtUsd(v.tvl)} below ${fmtUsd(MIN_TVL)} minimum`);
+  if (v.type !== 'aggregator') {
+    if (v.avail_liquidity !== null && v.avail_liquidity < MIN_LIQUIDITY)
+      failures.push(`Available liquidity ${fmtUsd(v.avail_liquidity)} below ${fmtUsd(MIN_LIQUIDITY)}`);
+    if (v.supply_cap_util !== null && v.supply_cap_util >= MAX_UTIL)
+      failures.push(`Utilisation ${v.supply_cap_util.toFixed(1)}% at/above ${MAX_UTIL}% cap`);
+  }
+  if (v.exit_fee !== null && v.exit_fee > EXIT_FEE_WARN)
+    warnings.push(`Exit fee ~${v.exit_fee.toFixed(3)}% on withdrawal (> ${EXIT_FEE_WARN}% threshold)`);
+  return { eligible: failures.length === 0, failures, warnings };
 }
 
 // DefiLlama protocol-slug overrides (kept in sync with chart.html).
@@ -456,7 +514,10 @@ function render() {
   const vis = getVisible();
   const panel = document.getElementById('listPanel');
   const list = document.getElementById('list');
+  const head = document.getElementById('listHead');
   panel.style.display = 'block';
+  const ysMode = prefs.preset === 'ys';
+  head.style.display = ysMode ? 'none' : 'grid';
 
   if (!vis.length) {
     list.innerHTML = `<div class="empty">No vaults match the current filters.</div>`;
@@ -464,37 +525,99 @@ function render() {
     return;
   }
 
-  const grouped = (prefs.preset === 'chain' || prefs.preset === 'protocol');
-  const groupKey = prefs.preset === 'chain' ? (v => v.chain) : (v => v.project);
-  let html = '', lastGroup = null;
+  if (ysMode) {
+    // YieldSeeker tab → two decision sections, Eligible then Ineligible (as the old panel did).
+    const evd = vis.map(v => ({ v, ev: evaluateVault(v) }));
+    const elig   = evd.filter(x => !x.v.blocked && x.ev.eligible);
+    const inelig = evd.filter(x =>  x.v.blocked || !x.ev.eligible);
+    let html = '';
+    if (elig.length)   html += `<div class="group-head gh-ok">✓ Eligible · ${elig.length}</div>`   + elig.map(x => renderYSCard(x.v)).join('');
+    if (inelig.length) html += `<div class="group-head gh-no">⊘ Ineligible · ${inelig.length}</div>` + inelig.map(x => renderYSCard(x.v)).join('');
+    list.innerHTML = html || `<div class="empty">No YieldSeeker vaults match the current filters.</div>`;
+  } else {
+    // Other tabs → aligned comparison columns; row click-expands the deep stats.
+    const grouped = (prefs.preset === 'chain' || prefs.preset === 'protocol');
+    const groupKey = prefs.preset === 'chain' ? (v => v.chain) : (v => v.project);
+    let html = '', lastGroup = null;
+    vis.forEach((v, i) => {
+      if (grouped) {
+        const g = groupKey(v);
+        if (g !== lastGroup) { html += `<div class="group-head">${escHtml(g || '—')}</div>`; lastGroup = g; }
+      }
+      html += renderCompareRow(v, i);
+    });
+    list.innerHTML = html;
+  }
 
-  vis.forEach((v, i) => {
-    if (grouped) {
-      const g = groupKey(v);
-      if (g !== lastGroup) { html += `<div class="group-head">${escHtml(g || '—')}</div>`; lastGroup = g; }
-    }
-    const badge = v.ys
-      ? (v.blocked ? `<span class="blocked-badge">⊘ Blocked</span>` : `<span class="ys-badge"><img src="assets/ys-logo.png" height="10" alt="" style="vertical-align:middle;margin-right:3px">YS</span>`)
-      : '';
-    const url = `https://defillama.com/protocol/${protocolSlug(v.project)}`;
-    const rwd = (v.reward_apy !== null && v.reward_apy > 0) ? `<div class="vrwd">+${v.reward_apy.toFixed(2)}% rwd</div>` : '';
-    html += `<div class="item ${v.ys ? 'ys' : ''}" id="it-${i}">
+  const ys = vis.filter(v => v.ys).length;
+  document.getElementById('countNote').textContent =
+    `${vis.length} of ${rows.length} vaults${ys ? ` · ${ys} YieldSeeker` : ''}`;
+}
+
+function renderCompareRow(v, i) {
+  const badge = v.ys
+    ? (v.blocked ? `<span class="blocked-badge">⊘ Blocked</span>` : `<span class="ys-badge"><img src="assets/ys-logo.png" height="10" alt="" style="vertical-align:middle;margin-right:3px">YS</span>`)
+    : '';
+  const url = `https://defillama.com/protocol/${protocolSlug(v.project)}`;
+  const base = v.base_apy !== null ? `<div class="vbase">Base ${v.base_apy.toFixed(2)}%</div>` : '';
+  const util = v.supply_cap_util !== null ? v.supply_cap_util.toFixed(1) + '%' : '—';
+  return `<div class="item ${v.ys ? 'ys' : ''}" id="it-${i}">
       <div class="item-main" onclick="toggleItem(${i})">
         <div class="nm">
           <span class="vname">${escHtml(v.name || v.pool)}</span>${badge}<a href="${url}" target="_blank" rel="noopener noreferrer" class="protocol-link" onclick="event.stopPropagation()" title="Open ${escHtml(v.project)} on DefiLlama">↗</a>
           <div class="vmeta">${escHtml(v.project)} · ${escHtml(v.chain || '—')}</div>
         </div>
-        <div class="vapy">${fmtPct(v.apy)}${rwd}</div>
+        <div class="vapy">${fmtPct(v.apy)}${base}</div>
         <div class="vtvl">${fmtUsd(v.tvl)}</div>
+        <div class="vliq">${fmtUsd(v.avail_liquidity)}</div>
+        <div class="vutil">${util}</div>
       </div>
       <div class="detail">${detailHtml(v)}</div>
     </div>`;
-  });
-  list.innerHTML = html;
+}
 
-  const ys = vis.filter(v => v.ys).length;
-  document.getElementById('countNote').textContent =
-    `${vis.length} of ${rows.length} vaults${ys ? ` · ${ys} YieldSeeker` : ''}`;
+function renderYSCard(v) {
+  const ev = evaluateVault(v);
+  const isAgg = v.type === 'aggregator';
+  const url = `https://defillama.com/protocol/${protocolSlug(v.project)}`;
+  const cat = `<span class="tag cat">${isAgg ? 'Aggregator' : 'Lending'}</span>`;
+  const verdict = (v.blocked || !ev.eligible)
+    ? `<span class="tag blk">⊘ ${v.blocked ? 'Blocked' : 'Ineligible'}</span>`
+    : `<span class="tag elig">✓ Eligible</span>`;
+
+  const tvlCls  = v.tvl !== null ? (v.tvl >= MIN_TVL ? 'm-ok' : 'm-err') : 'm-na';
+  const liqCls  = isAgg ? 'm-na' : (v.avail_liquidity !== null ? (v.avail_liquidity >= MIN_LIQUIDITY ? 'm-ok' : 'm-err') : 'm-na');
+  const utilCls = isAgg ? 'm-na' : (v.supply_cap_util !== null ? (v.supply_cap_util >= MAX_UTIL ? 'm-err' : v.supply_cap_util >= 85 ? 'm-warn' : 'm-ok') : 'm-na');
+
+  const cells = [
+    ['APY (24h)', `<span class="m-ok">${fmtPct(v.apy)}</span>`, `Base ${v.base_apy !== null ? v.base_apy.toFixed(2) + '%' : '—'}`],
+    ['TVL', `<span class="${tvlCls}">${fmtUsd(v.tvl)}</span>`, `Min ${fmtUsd(MIN_TVL)}`],
+    ['Avail. Liquidity', `<span class="${liqCls}">${isAgg ? 'n/a' : fmtUsd(v.avail_liquidity)}</span>`, isAgg ? 'deployed (aggregator)' : `Min ${fmtUsd(MIN_LIQUIDITY)}`],
+    ['Supply Cap Util', `<span class="${utilCls}">${isAgg ? 'n/a' : (v.supply_cap_util !== null ? v.supply_cap_util.toFixed(1) + '%' : '—')}</span>`, isAgg ? 'n/a (aggregator)' : `Max ${MAX_UTIL}%`],
+  ];
+  // Exit fee sits on the heading line (right edge, number only) so the metric cells stay
+  // a uniform 4-across and align across cards. Only shown when there's an actual fee.
+  const feeTag = (v.exit_fee !== null && v.exit_fee > 0)
+    ? `<span class="ysc-fee ${v.exit_fee > EXIT_FEE_WARN ? 'm-warn' : 'm-ok'}" title="Exit fee on withdrawal">${(+v.exit_fee.toFixed(4))}%</span>`
+    : '';
+
+  const notes = [
+    ...ev.failures.map(f => `<div class="ysc-note fail">⊘ ${escHtml(f)}</div>`),
+    ...ev.warnings.map(w => `<div class="ysc-note warn">⚠ ${escHtml(w)}</div>`),
+  ].join('');
+
+  return `<div class="ys-card ${(v.blocked || !ev.eligible) ? 'blk-card' : ''}">
+      <div class="ysc-head">
+        <span class="ysc-name">${escHtml(v.name || v.pool)}</span>${cat}${verdict}
+        <a href="${url}" target="_blank" rel="noopener noreferrer" class="protocol-link" title="Open ${escHtml(v.project)} on DefiLlama">↗</a>
+        ${feeTag}
+      </div>
+      <div class="ysc-meta">${escHtml(v.pool)} · ${escHtml(v.project)} · ${escHtml(v.chain || '—')}</div>
+      ${notes}
+      <div class="ysc-metrics">
+        ${cells.map(([l, val, sub]) => `<div class="ysc-cell"><div class="cl">${l}</div><div class="cv">${val}</div><div class="cs">${sub}</div></div>`).join('')}
+      </div>
+    </div>`;
 }
 
 function detailHtml(v) {
@@ -511,6 +634,7 @@ function detailHtml(v) {
     ['Total Borrowed', fmtUsd(v.total_borrowed)],
     ['Avail. Liquidity', fmtUsd(v.avail_liquidity)],
     ['Cap Util',       v.supply_cap_util !== null ? v.supply_cap_util.toFixed(1) + '%' : '—'],
+    ['Exit Fee',       v.exit_fee !== null ? v.exit_fee.toFixed(3) + '%' : '—'],
     ['Top 10%',        v.top_10_pct !== null ? v.top_10_pct.toFixed(1) + '%' : '—'],
   ];
   return `<div class="detail-grid">` + cells.map(([l, val]) =>
@@ -559,6 +683,8 @@ function buildLatest(all) {
     return {
       pool: r.pool, project: r.project, chain: r.chain,
       name: ys.name, ys: ys.ys, blocked: ys.blocked,
+      type: AGGREGATOR_NAMES.has(ys.name) ? 'aggregator' : 'lending',
+      exit_fee:       parseNum(r.exit_fee),
       rank: r.rank,
       apy:            parseNum(r.apy),
       base_apy:       parseNum(r.base_apy),

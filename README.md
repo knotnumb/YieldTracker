@@ -235,7 +235,7 @@ Edit `config.json` in your data folder (created automatically on first run). The
 
 ## master.csv schema
 
-20 columns, append-only. Do not edit directly. If opening in Excel, choose **Don't Save** when closing.
+21 columns, append-only. Do not edit directly. If opening in Excel, choose **Don't Save** when closing.
 
 | Column | Description |
 |---|---|
@@ -259,6 +259,7 @@ Edit `config.json` in your data folder (created automatically on first run). The
 | `avail_liquidity` | Available liquidity (USD) — Morpho vaults: `Σ min(vaultSupplyInMarket, marketIdleCash)`; blank for Morpho rows before 2026-05-25 (historical values corrected) |
 | `supply_cap_util` | Supply cap utilisation % (Morpho vaults) |
 | `collateral_exposure` | JSON collateral breakdown (Morpho vaults) |
+| `exit_fee` | Withdrawal-fee % on ERC4626 off-chain vaults — `1 − previewRedeem(1e18)/convertToAssets(1e18)`. Blank on historical rows (added 2026-08-17) and on pools with no fee. Charts over time (e.g. Avantis's variable fee) |
 
 ---
 

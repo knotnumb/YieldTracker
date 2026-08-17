@@ -1,5 +1,37 @@
 # Changelog
 
+## 2026-08-17 — Comparison viewer, exit-fee tracking, hosting live, cron fix
+
+### Changed — viewer redesigned for comparison
+- **`index.html` list rebuilt into always-visible aligned columns** — Vault · APY (Base) · TVL ·
+  Avail Liquidity · Util — so vaults can be scanned/compared down a column at a glance. The old
+  layout hid every metric behind a per-row expand, which made comparison impossible. Rows still
+  click-expand for the deep stats. Horizontal-scroll on narrow screens keeps all columns.
+- **YieldSeeker tab → decision cards, split Eligible / Ineligible** (as the old tracker panel did):
+  ELIGIBLE/BLOCKED verdict, threshold labels (Min $500k TVL / Min $80k liq / Max 95% util),
+  AGGREGATOR/LENDING category, colour-coded metrics, and the exit-fee shown on the heading line
+  (right edge, number only) so metric cells stay a uniform 4-across.
+
+### Added — exit-fee time series
+- **New `exit_fee` column (master.csv schema 20 → 21).** The collector already *computed* the
+  ERC4626 withdrawal-fee (`1 − previewRedeem/convertToAssets`) but dropped it; it's now persisted.
+- **Avantis exit-fee now captured.** Avantis isn't an `erc4626` share-price vault, so it never hit
+  the fee calc — added a `probeExitFee` path for DefiLlama-passthrough vaults. Avantis reads
+  **0.4975%** live (99× the 0.005% block threshold — confirms its BLOCKED status). Tokemak baseUSD
+  0.0196%, ottoUSD 0.0244%.
+- **`chart.html`** — new **Exit Fee %** metric (accrues a time series going forward).
+- `tracker.html` writer aligned to 21 columns; version → `v2026-08-17a`.
+
+### Fixed — collector cron ran on the wrong clock
+- Cron was set `CRON_TZ=UTC` + `1 0 * * *`, but **Debian/Ubuntu's `cron` package ignores `CRON_TZ`**
+  (a cronie feature). The job was firing at 00:01 **Perth** (16:01 UTC), not 00:01 UTC. Fixed by
+  scheduling in local time: **`1 8 * * *`** (08:01 Perth ≡ 00:01 UTC permanently — Perth has no DST).
+
+### Hosting — went live (both targets)
+- **GitHub Pages** (`knotnumb.github.io/YieldTracker/`) auto-deploys on push.
+- **epgpvr** (`yieldtracker.epgpvr.com`) — Caddy site block, docroot = the `/opt/yieldtracker`
+  clone, serves `master.csv` live (no rebuild lag), gzip. Public, HTTPS, PWA-installable.
+
 ## 2026-08-16 — Web viewer + PWA (plan step 5)
 
 ### Added — public hosted viewer

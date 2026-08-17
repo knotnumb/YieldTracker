@@ -1,5 +1,24 @@
 # Session Log
 
+## 2026-08-17 — Cutover verified, hosting live, comparison viewer + exit-fee tracking
+
+- **Found the cutover was already done** (RESUME note was stale): cron live, collector had pushed
+  Aug-16, viewer shipped. This laptop was just 5 commits behind — synced.
+- **epgpvr hosting live** — added the Caddy site block (`yieldtracker.epgpvr.com`, docroot =
+  `/opt/yieldtracker` clone, gzip, public HTTPS). GitHub Pages was already live on push.
+- **Cron bug diagnosed + fixed** — Debian `cron` ignores `CRON_TZ=UTC`, so the job was firing at
+  00:01 **Perth** (16:01 UTC). Rescheduled to `1 8 * * *` (08:01 Perth ≡ 00:01 UTC, no DST). Ran
+  the collector once to fill the Aug-17 gap.
+- **Checked a suspected duplicate** — Aug-16 is clean (131 rows). Only `2026-04-17` has real dupes
+  (134 rows = a normal snapshot + an extra Morpho capture, all distinct pools). Left as-is by
+  decision — deleting would lose unique data, not copies.
+- **Viewer redesigned for comparison** — always-visible aligned columns on the default tabs; the
+  YieldSeeker tab rebuilt into Eligible/Ineligible decision cards. (The expand-per-row layout made
+  comparison impossible — the whole reason for the redesign.)
+- **Exit-fee now tracked** — persisted the already-computed ERC4626 fee as a new `master.csv`
+  column (schema 20→21); added a probe so **Avantis** (not an erc4626 vault) is captured too — reads
+  0.4975% live. Added an Exit Fee % chart metric. Verified the whole pipeline locally in emit mode.
+
 ## 2026-08-16 — Web viewer + PWA built (plan step 5)
 
 - **Built the public hosted viewer** (decisions from the plan): new `index.html` landing —

@@ -1,7 +1,28 @@
 # VPS Auto-Collector + Cross-Platform Viewer — Plan / Brief
 
-**Status:** Decisions LOCKED (2026-08-16). Ready to build next session. Captured 2026-08-13;
-all open decisions resolved with David 2026-08-16 (see "Decisions — LOCKED" below).
+**Status:** Collector LIVE + viewer HOSTED (2026-08-17). Only plan step 6 (native Windows app) remains.
+
+---
+
+## ✅ HOSTING LIVE + fixes (2026-08-17)
+
+- **Both hosts live.** GitHub Pages (`knotnumb.github.io/YieldTracker/`) auto-deploys on push;
+  **epgpvr** (`yieldtracker.epgpvr.com`) added as a Caddy site block — docroot = the `/opt/yieldtracker`
+  clone (serves `master.csv` live, gzip, public HTTPS, PWA-installable). Caddyfile edit was the one
+  paste-with-password structural change; validated + reloaded clean.
+- **⚠️ GOTCHA — Debian `cron` ignores `CRON_TZ`.** The crontab had `CRON_TZ=UTC` + `1 0 * * *`, but
+  Ubuntu's `cron` package (Vixie, 3.0pl1) does NOT support `CRON_TZ` (that's a cronie feature). The
+  job was firing at 00:01 **Perth** (16:01 UTC), not 00:01 UTC — proven by the `0e5b59f` commit at
+  exactly `00:01 +0800`. **Fix: schedule in local time — `1 8 * * *` (08:01 Perth ≡ 00:01 UTC,
+  permanent, Perth has no DST).** Any timed cron on this box must use local Perth time, not `CRON_TZ`.
+- **Viewer redesigned for comparison** (David: expand-per-row made comparison impossible). Default
+  tabs → always-visible aligned columns; YieldSeeker tab → Eligible/Ineligible decision cards.
+- **Schema 20 → 21: `exit_fee` added.** The collector already computed the ERC4626 withdrawal fee
+  but dropped it — now persisted. Added a `probeExitFee` path so **Avantis** (a DefiLlama passthrough,
+  not an `erc4626` vault) is captured — reads **0.4975%** live. Gate-2 length check now expects 21.
+- **`2026-04-17` duplicate ranks: left as-is (decision).** 134 rows = a normal snapshot + an extra
+  Morpho capture, all 134 pools distinct — no repeated data. Deduping would delete unique
+  observations, not copies. Only the `rank` column is non-unique for that one day (charts key on pool).
 
 ---
 
