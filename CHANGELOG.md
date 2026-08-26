@@ -24,10 +24,14 @@
   the freshest `index.html`/`chart.html` online, falling back to cache offline. Static assets stay
   cache-first. `CACHE_VERSION` → `v5` (purges the old shell once).
 
-### Known follow-up (not fixed here)
-- **Cross-chain mis-enrichment** — symbol-only YS match rules with no `chain` constraint stamp
-  off-target rows (e.g. Arbitrum `BBQUSDC`) with the Base vault's TVL. Fix = make `matchVault` for
-  morpho entries chain/address-specific. Tracked in `docs/DUPLICATE_ROWS_FIX.md`.
+### Fixed — cross-chain mis-enrichment
+- **Morpho YS match rules are now chain-constrained.** Symbol-only rules (e.g. Steakhouse High Yield
+  `{project:/morpho/i, pool:/bbqusdc/i}`) matched the symbol on *any* chain, so `enrichMorpho`
+  stamped e.g. the Arbitrum `BBQUSDC` row with the Base vault's TVL ($2.44m) — wrong data, and the
+  viewer mislabelled it as the tracked vault. Every tracked morpho vault is Base-only, so added
+  `chain: /base/i` to all morpho match rules that lacked it — in lockstep across `collector.js`,
+  `tracker.html`, `chart.html`, `index.html` (both `YS_VAULTS` and the off-chain `matchRe` blocks).
+  Arbitrum `BBQUSDC` now keeps its own DefiLlama data ($2.14m / 6.8%).
 
 ## 2026-08-17 — Comparison viewer, exit-fee tracking, hosting live, cron fix
 

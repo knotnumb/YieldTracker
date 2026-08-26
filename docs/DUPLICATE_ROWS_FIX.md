@@ -45,8 +45,11 @@ collector self-runs on `require`). Data is correct; the commit message understat
 it also removed the historical dupes. Not force-reworded (already public / cron-pulled);
 provenance recorded here instead.
 
-## Open follow-up (not fixed here)
-Cross-chain mis-enrichment: symbol-only YS rules with no `chain` constraint stamp
-off-chain-target rows (e.g. Arbitrum `BBQUSDC`) with the Base vault's data. Proper fix
-= make `matchVault` for morpho entries require the vault's `chainId`, or match by
-address only. Tracked for a future session.
+## Cross-chain mis-enrichment (FIXED 2026-08-26)
+Symbol-only YS rules with no `chain` constraint matched the symbol on any chain, so
+`enrichMorpho` stamped off-target rows (e.g. Arbitrum `BBQUSDC`) with the Base vault's
+data, and the viewer mislabelled them as the tracked vault. Every tracked morpho vault
+is Base-only → added `chain: /base/i` to all morpho match rules that lacked it, in
+lockstep across `collector.js`, `tracker.html`, `chart.html`, `index.html` (both the
+`YS_VAULTS` rules and the off-chain `matchRe` blocks). Arbitrum `BBQUSDC` now keeps its
+own DefiLlama data ($2.14m / 6.8%) instead of the Base vault's $2.44m.

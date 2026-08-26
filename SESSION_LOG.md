@@ -16,8 +16,10 @@
   (self-runs `main()`), which pushed the cleaned + re-deduped `master.csv` to `origin/main` as
   `collector: 2026-08-26 snapshot (112 rows)`. Data correct; provenance recorded in
   `docs/DUPLICATE_ROWS_FIX.md`; not force-reworded (already public).
-- **Open follow-up:** cross-chain mis-enrichment (symbol-only rules stamp Arbitrum `BBQUSDC` with
-  Base data) — needs chain/address-specific `matchVault`. Tracked in the doc.
+- **Cross-chain mis-enrichment fixed (same session):** added `chain: /base/i` to all morpho match
+  rules lacking it (all tracked morpho vaults are Base-only), in lockstep across `collector.js`,
+  `tracker.html`, `chart.html`, `index.html`. Arbitrum `BBQUSDC` now keeps its own data
+  ($2.14m/6.8%) instead of the Base vault's $2.44m. Verified via `YT_MODE=emit` run.
 
 ## 2026-08-17 — Cutover verified, hosting live, comparison viewer + exit-fee tracking
 
