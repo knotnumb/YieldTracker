@@ -736,6 +736,30 @@ function trailingRowCounts(masterPath, today) {
   } catch { return []; }
 }
 
+// ---------- Dedup: collapse DefiLlama symbol-collision duplicates ----------
+// DefiLlama's /pools lists several DISTINCT pools under one symbol on one chain
+// (e.g. two Base "GTUSDCP" vaults, two Base "BBQUSDC"). The symbol-keyed Morpho
+// enrich then stamps every same-symbol row with the SAME whitelisted vault's
+// TVL/APY, so they emerge byte-identical → duplicate rows in master.csv and the
+// viewer. Collapse to one row per (pool, project, chain), keeping the highest
+// effective TVL (for morpho rows that's total_pool, else the DefiLlama tvl).
+// Distinct-name rows (V2 vaults carry their own name) never collide, so they're
+// untouched. See docs/DUPLICATE_ROWS_FIX.md.
+function effectiveTvl(r) {
+  return (/morpho/i.test(r.project) && r.total_pool != null) ? r.total_pool : (r.tvl ?? 0);
+}
+function dedupeRows(rows) {
+  const best = new Map();
+  for (const r of rows) {
+    const key = `${String(r.pool).toLowerCase()}|${String(r.project).toLowerCase()}|${String(r.chain).toLowerCase()}`;
+    const cur = best.get(key);
+    if (!cur || effectiveTvl(r) > effectiveTvl(cur)) best.set(key, r);
+  }
+  const kept = new Set(best.values());
+  const out = rows.filter(r => kept.has(r)); // preserve original APY-sorted order
+  return { rows: out, removed: rows.length - out.length };
+}
+
 // ---------- Gates 2 & 3: schema / value sanity on the assembled rows ----------
 function validate(rows, masterPath, today) {
   const force = process.env.YT_TEST_FORCE_GATE;
@@ -832,6 +856,9 @@ async function main() {
     // Same order as tracker.html: DefiLlama → off-chain + Aave (parallel) → Morpho enrich.
     [offchainCount] = await Promise.all([fetchOffchainVaults(), fetchAaveLiquidity()]);
     ({ enrichedCount, injectedCount, notFound } = await enrichMorpho());
+    const dd = dedupeRows(parsedRows);              // collapse symbol-collision duplicates
+    parsedRows = dd.rows;
+    if (dd.removed > 0) process.stderr.write(`[collector] deduped ${dd.removed} symbol-collision row(s)\n`);
     const sanitized = sanitizeRows(parsedRows);     // gate 4 (soft — sanitise + log)
     if (sanitized > 0) process.stderr.write(`[collector] gate 4: sanitised ${sanitized} text field(s) (possible injection/format) — see security section\n`);
     validate(parsedRows, masterPath, date);         // gates 2 & 3 (hard — throw)

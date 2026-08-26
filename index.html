@@ -701,6 +701,20 @@ function buildLatest(all) {
       supply_cap_util: parseNum(r.supply_cap_util),
     };
   });
+  // Belt-and-suspenders: drop byte-identical duplicate rows. DefiLlama lists
+  // several distinct pools under one symbol on one chain and the collector's
+  // symbol-keyed Morpho enrich stamps them with the same vault's TVL/APY, so
+  // pre-fix history carries identical duplicate rows (fixed at source in
+  // collector.js dedupeRows). Keyed on the display-significant fields, so
+  // genuinely-distinct same-triple vaults (different APY/TVL) are preserved —
+  // consistent with the rank-keying rationale above. See docs/DUPLICATE_ROWS_FIX.md.
+  const seen = new Set();
+  rows = rows.filter(r => {
+    const sig = [r.pool, r.project, r.chain, r.apy, r.tvl, r.total_pool, r.avail_liquidity].join('|');
+    if (seen.has(sig)) return false;
+    seen.add(sig);
+    return true;
+  });
 }
 
 function ingest(text) {

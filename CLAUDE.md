@@ -17,7 +17,7 @@
 
 Local-first DeFi stablecoin yield tracker. Single-file vanilla JS app (`tracker.html`) that runs from `file://` in Brave/Chrome. Uses File System Access API to read/write a local folder containing CSV data. No server, no build step, no dependencies.
 
-Current version: `v2026-08-17a`
+Current version: `v2026-08-26a`
 
 ## Repo structure
 

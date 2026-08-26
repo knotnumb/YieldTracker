@@ -735,13 +735,20 @@ function loadCSV(text) {
       // Project and chain update to latest (casing and naming only improves over time)
       vaultMap[key].project = r.project; vaultMap[key].chain = r.chain;
     }
+    // Row index for drawChart (first-wins: higher-ranked DL row appears first in CSV
+    // so this keeps the larger/primary pool when DL returns duplicates with the same key)
+    const dk = r.date + '|' + key;
+    const firstForDay = !rowIndex[dk];
+    if (firstForDay) rowIndex[dk] = r;
+    // Count each vault once per day. DefiLlama lists several distinct pools under one
+    // symbol/chain and the collector's symbol-keyed enrich stamps them identically, so
+    // pre-fix history carries duplicate same-day rows (fixed at source in collector.js
+    // dedupeRows) — without this guard they double-inflate `days`. See docs/DUPLICATE_ROWS_FIX.md.
+    if (!firstForDay) continue;
     vaultMap[key].days++;
     if (parseNum(r.apy)        !== null) vaultMap[key].latestApy = parseNum(r.apy);
     if (parseNum(r.reward_apy) !== null && parseNum(r.reward_apy) > 0) vaultMap[key].latestRewardApy = parseNum(r.reward_apy);
     if (parseNum(r.tvl_raw)    !== null) vaultMap[key].latestTvl = parseNum(r.tvl_raw);
-    // Row index for drawChart (first-wins: higher-ranked DL row appears first in CSV
-    // so this keeps the larger/primary pool when DL returns duplicates with the same key)
-    if (!rowIndex[r.date + '|' + key]) rowIndex[r.date + '|' + key] = r;
   }
 
   vaults = Object.values(vaultMap).map(v => {

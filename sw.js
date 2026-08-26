@@ -1,8 +1,11 @@
 // YieldTracker viewer service worker.
-// - App shell (HTML/JS/icon): cache-first, so the viewer opens instantly and offline.
-// - master.csv: network-first, so it's fresh online and falls back to the last cached
-//   copy offline. Bump CACHE_VERSION whenever a shell file changes to force a refresh.
-const CACHE_VERSION = 'yt-viewer-v4';
+// - HTML pages (navigations) + master.csv: network-first, so the newest page and data
+//   always load when online and fall back to the last cached copy offline. This is why
+//   the old cache-first shell needed a Ctrl+F5 after every deploy — network-first fixes
+//   that: a normal reload now always gets the freshest index.html/chart.html.
+// - Static assets (JS/icons/manifest): cache-first, so the viewer opens instantly.
+// Bump CACHE_VERSION on any shell change to purge the old cache on activate.
+const CACHE_VERSION = 'yt-viewer-v5';
 const SHELL = [
   './',
   './index.html',
@@ -48,7 +51,22 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Everything else (shell) → cache-first, fall back to network and cache it.
+  // HTML pages (navigations, or a direct .html request) → network-first, so a deploy
+  // shows up on a normal reload with no Ctrl+F5. Falls back to cache offline.
+  if (req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req).then((hit) => hit || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Static assets (JS/icons/manifest) → cache-first, fall back to network and cache it.
   e.respondWith(
     caches.match(req).then((hit) => hit || fetch(req).then((res) => {
       const copy = res.clone();

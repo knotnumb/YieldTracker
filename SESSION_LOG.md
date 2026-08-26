@@ -1,5 +1,24 @@
 # Session Log
 
+## 2026-08-26 — Duplicate YS-vault rows: root-caused + fixed end-to-end
+
+- **Reported symptom:** viewer showed some YS vaults 2–3× (Steakhouse High Yield v1.1, Gauntlet USDC
+  Prime, Steakhouse Prime ×3). Arrays were clean — it was a **data** bug.
+- **Root cause:** DefiLlama `/pools` returns several distinct pools under one symbol on one chain;
+  the symbol-keyed Morpho enrich stamped them all with the same vault's TVL/APY → byte-identical
+  duplicate rows. Persisted daily since 2026-04-18 (~11–12/day, 1,369 total).
+- **Fix (3 parts):** collector `dedupeRows` (source), `index.html`/`chart.html` render-time dedup
+  (belt-and-suspenders), and a one-off clean of `master.csv` (1,369 rows removed, 2026-04-17 left
+  intact per the prior decision). Verified 0 dup triples remain.
+- **SW Ctrl+F5 fixed:** `sw.js` HTML pages were cache-first → stale shell after every deploy. Now
+  network-first (normal reload gets freshest page); `CACHE_VERSION` → v5.
+- **Process note:** accidentally triggered a real collector run via `require('./collector.js')`
+  (self-runs `main()`), which pushed the cleaned + re-deduped `master.csv` to `origin/main` as
+  `collector: 2026-08-26 snapshot (112 rows)`. Data correct; provenance recorded in
+  `docs/DUPLICATE_ROWS_FIX.md`; not force-reworded (already public).
+- **Open follow-up:** cross-chain mis-enrichment (symbol-only rules stamp Arbitrum `BBQUSDC` with
+  Base data) — needs chain/address-specific `matchVault`. Tracked in the doc.
+
 ## 2026-08-17 — Cutover verified, hosting live, comparison viewer + exit-fee tracking
 
 - **Found the cutover was already done** (RESUME note was stale): cron live, collector had pushed

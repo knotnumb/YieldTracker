@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-08-26 — Duplicate YS-vault rows fixed (collector + viewer + data clean) · SW no longer needs Ctrl+F5
+
+### Fixed — duplicate vaults in the viewer (root cause: DefiLlama symbol collisions)
+- **Collector now de-dupes** (`collector.js` `dedupeRows`, run after `enrichMorpho`). DefiLlama's
+  `/pools` returns several *distinct* pools under one symbol on one chain (e.g. two Base `GTUSDCP`,
+  two Base `BBQUSDC`); the symbol-keyed Morpho enrich then stamped them all with the *same* vault's
+  TVL/APY, so they emerged byte-identical → duplicate rows. Collapsed to one row per
+  `(pool, project, chain)`, keeping the highest effective TVL. V2 vaults carry their own name, so
+  they never collide and are preserved.
+- **Historical `master.csv` cleaned once** — removed **1,369** duplicate `(date,pool,project,chain)`
+  rows across 94 days (2026-04-18 → 2026-08-26), keeping the highest-TVL copy. `2026-04-17`'s 134
+  rows were genuinely distinct pools (per the 2026-08-17 decision) and left untouched. 0 dup triples
+  remain.
+- **Viewer belt-and-suspenders** — `index.html` drops byte-identical rows at render (keyed on the
+  display-significant fields, so genuinely-distinct same-triple vaults survive — the viewer keys on
+  daily `rank`, not the triple). `chart.html` now counts each vault once per day (its `rowIndex` was
+  already first-wins, so charts never double-plotted; only the `days` tally was inflated).
+- Full write-up: `docs/DUPLICATE_ROWS_FIX.md`.
+
+### Fixed — viewer no longer needs Ctrl+F5 after a deploy
+- **`sw.js` HTML pages are now network-first** (were cache-first). A normal reload now always loads
+  the freshest `index.html`/`chart.html` online, falling back to cache offline. Static assets stay
+  cache-first. `CACHE_VERSION` → `v5` (purges the old shell once).
+
+### Known follow-up (not fixed here)
+- **Cross-chain mis-enrichment** — symbol-only YS match rules with no `chain` constraint stamp
+  off-target rows (e.g. Arbitrum `BBQUSDC`) with the Base vault's TVL. Fix = make `matchVault` for
+  morpho entries chain/address-specific. Tracked in `docs/DUPLICATE_ROWS_FIX.md`.
+
 ## 2026-08-17 — Comparison viewer, exit-fee tracking, hosting live, cron fix
 
 ### Changed — viewer redesigned for comparison
