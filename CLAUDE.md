@@ -13,6 +13,23 @@
 > (default `Documents\YieldTracker`). Full spec + build order → **`docs/VPS_COLLECTOR_PLAN.md`**
 > (step 6 + "Known follow-ups").
 
+> ## ⚠️ THE VPS IS SHARED — two other live projects run on it (2026-09-17)
+> `103.16.131.237` serves **three** sites from **ONE** `/etc/caddy/Caddyfile`:
+> `yieldtracker.epgpvr.com` (this project) · `portfolio.epgpvr.com` · `confluencer.epgpvr.com`.
+> Project files are isolated per `/opt/<project>` — **the Caddy config is not**, and restarting it
+> restarts all three. **After ANY Caddy change, verify all three sites, not just this one:**
+> ```bash
+> for h in yieldtracker.epgpvr.com portfolio.epgpvr.com confluencer.epgpvr.com; do
+>   echo "$h -> $(curl -s -o /dev/null -w '%{http_code}' --max-time 12 https://$h/)"; done
+> # EXPECT: yieldtracker 200 · portfolio 401 (basic auth) · confluencer 302
+> # Any 000/5xx = you broke someone else's site. Restore /etc/caddy/Caddyfile.bak-<newest>.
+> ```
+> Never write into `/opt/portfolio` or `/opt/market-confluencer`. **David does not administer this
+> box and cannot check your work.** Back up + `caddy validate` before installing, always.
+> Full model → `~/Dropbox/Claude/vps-access-decision.md` (READ IT — skipping it has cost two
+> sessions already). ⚠ Also: never run a collector by hand as `mosaic` — deploy it and let the
+> scheduler run it, or you get silent "Access denied" and re-owned data files.
+
 ## Project overview
 
 Local-first DeFi stablecoin yield tracker. Single-file vanilla JS app (`tracker.html`) that runs from `file://` in Brave/Chrome. Uses File System Access API to read/write a local folder containing CSV data. No server, no build step, no dependencies.
