@@ -18,6 +18,9 @@
   ratchets the rate up daily (confirmed on their site). Already `blockedReason` in YS_VAULTS. Expect it
   to hit the 50% cap in ~11 days → quarantine + ping; promote if still real. Lesson: a smooth APY
   climb alone doesn't mean bad data — check utilisation/liquidity.
+- **CLAUDE.md trimmed 15.0k → 6.3k chars:** reference moved to `docs/VAULT_DATA_NOTES.md` +
+  `docs/BOOKMARKLET_PARSER.md`; security/git-hygiene/what-not-to-do merged (each rule once); dead
+  vaults.fyi API-key references dropped (unused — config needs no key); version line ref fixed 163→326.
 - **Moonwell watch:** David monitors it himself — no watch mechanism (decided; he declined re-adding it
   via quarantine because that folder is for promotable rows only).
 
