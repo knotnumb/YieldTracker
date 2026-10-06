@@ -8,8 +8,18 @@
   reward calc bug, not real yield.
 - **Fix:** removed both from `YS_VAULTS` in all four files (David's call). Dry run (`YT_MODE=emit`)
   passes all gates, 115 rows, nothing >50%. Re-ran today's collection on the VPS.
-- **Open:** David wants to keep watching this vault (thinks it's broken, not unwanted); and the
-  maxApy-after-enrichment gap. Both recorded in `docs/VPS_COLLECTOR_PLAN.md` follow-ups.
+- **Then built quarantine** (David's design): per-row bad values set aside to `quarantine/`, rest of
+  day written, Telegram "partial" alert; >5 set aside still fails. APY cap 500 → 50, chosen from the
+  `master.csv` distribution (all >50% values came from the post-enrich overwrite path). Tested via emit
+  at caps 50/30/10 and the write path (incl. same-day re-run removing the file) in a throwaway clone.
+- **Moved 34 bad Moonwell rows** (V1+V2, 09-19 → 10-05) out of `master.csv` into `archive/` (David:
+  `quarantine/` is only for promotion candidates; keep the bad rows in case the vault is re-added).
+- **40 Acres creep is REAL, not a bug:** 100% utilisation, 0 exit liquidity, 40 Acres' new dynamic fee
+  ratchets the rate up daily (confirmed on their site). Already `blockedReason` in YS_VAULTS. Expect it
+  to hit the 50% cap in ~11 days → quarantine + ping; promote if still real. Lesson: a smooth APY
+  climb alone doesn't mean bad data — check utilisation/liquidity.
+- **Moonwell watch:** David monitors it himself — no watch mechanism (decided; he declined re-adding it
+  via quarantine because that folder is for promotable rows only).
 
 ## 2026-08-26 — Duplicate YS-vault rows: root-caused + fixed end-to-end
 

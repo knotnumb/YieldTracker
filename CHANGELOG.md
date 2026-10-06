@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-10-06 (b) — Collector quarantine: bad rows set aside instead of failing the day
+
+### Changed — `collector.js` gate 3 split into per-row and day-level checks
+- **Per-row (gate 3a, new):** APY outside [−10, **50**] (was 500), TVL out of band, NaN or blank
+  pool/project/chain → row moved to `quarantine/YYYY-MM-DD.csv` (21 cols + `reason`); the rest of the
+  day is written. Telegram sends a "⚠️ partial" alert listing them. Commit reads
+  `snapshot (N rows, K quarantined)`. Idempotent per day (re-run overwrites/removes that day's file).
+- **Day-level (unchanged, still fail the day):** source fetch errors, schema drift, row-count band,
+  >5 tracked vaults missing — now run on the full row set *before* quarantine, so a set-aside vault
+  never counts as "missing". **>5 rows quarantined in one day = fail** (systemic).
+- **Why 50%:** matches `cfg.maxApy`, which only filtered DefiLlama pools *before* Morpho/on-chain values
+  overwrite APY. In 18.5k historical rows, every value above 50% came from that overwrite path (40 Acres
+  503% first day, RE7USDC 288%, Yearn 155%, AlphaGrowth 87%); the highest genuine DefiLlama values sit at
+  45–49.7%. A cap of 500% let Moonwell creep 51→401% for 11 days unflagged.
+- Test hook `YT_TEST_APY_CAP=n` (with `YT_MODE=emit`) exercises quarantine without writing.
+
+### Data — Moonwell Ecosystem bad rows moved out of `master.csv`
+- 34 rows (V1 `MWUSDC` + V2, 2026-09-19 → 2026-10-05, the full inflated run from 20% to 401%) moved to
+  `archive/moonwell-ecosystem-bad-netapy-2026-09-19_to_2026-10-05.csv` (21 cols + `reason`), kept in
+  case the vault is re-added. Not in `quarantine/` — that folder is only for rows that may be promoted
+  back into master. Moonwell's good history (April → 2026-09-18) stays in `master.csv`.
+
 ## 2026-10-06 — v2026-10-06a · Moonwell Ecosystem USDC vaults removed (V1 + V2)
 
 ### Fixed — collector failed Gate 3 on 2026-10-06 (`APY out of band: 534%`)

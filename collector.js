@@ -21,6 +21,7 @@
  *   YT_NO_PUSH=1       write + commit locally, do NOT push (VPS testing)
  *   YT_PUSH_BRANCH=x   push to refs/heads/x instead of main (safe push testing)
  *   YT_TEST_FORCE_GATE=n  force gate n to trip (alert-path testing)
+ *   YT_TEST_APY_CAP=n  lower the per-row APY cap (default 50) to exercise quarantine
  *
  * The vault whitelist (YS_VAULTS), matchVault, and the Morpho enrich/inject
  * logic are ported verbatim from tracker.html (as of v2026-07-18a) — keep them
@@ -758,7 +759,58 @@ function dedupeRows(rows) {
   return { rows: out, removed: rows.length - out.length };
 }
 
-// ---------- Gates 2 & 3: schema / value sanity on the assembled rows ----------
+// ---------- Gate 3a: per-row value sanity → quarantine, not a day-level fail ----------
+// One bad vault (e.g. Moonwell Ecosystem's 534% netApy, 2026-10-06) must not block
+// the whole snapshot. Offending rows go to quarantine/YYYY-MM-DD.csv for review;
+// promote them into master.csv by hand once checked. Too many at once = systemic,
+// so that still fails the day. APY cap 50 mirrors cfg.maxApy, which only filters
+// DefiLlama pools *before* Morpho/on-chain values overwrite apy.
+const APY_CAP = Number(process.env.YT_TEST_APY_CAP) || 50;
+const MAX_QUARANTINE = 5;
+const QUARANTINE_DIR = path.join(__dirname, 'quarantine');
+
+function rowProblem(r) {
+  const NUMERIC = ['tvl', 'apy', 'base_apy', 'reward_apy', 'base_apy_7d', 'il_7d',
+    'avg_30d', 'total_pool', 'total_borrowed', 'avail_liquidity', 'supply_cap_util'];
+  for (const f of ['pool', 'project', 'chain']) {
+    if (r[f] == null || String(r[f]).trim() === '') return `null required cell "${f}"`;
+  }
+  for (const f of NUMERIC) {
+    if (r[f] != null && Number.isNaN(Number(r[f]))) return `NaN in "${f}"`;
+  }
+  if (r.apy != null && (!Number.isFinite(r.apy) || r.apy < -10 || r.apy > APY_CAP))
+    return `APY ${Number.isFinite(r.apy) ? +r.apy.toFixed(2) : r.apy}% outside [-10, ${APY_CAP}]`;
+  const tvlRaw = (/morpho/i.test(r.project) && r.total_pool != null) ? r.total_pool : r.tvl;
+  if (tvlRaw != null && (!Number.isFinite(tvlRaw) || tvlRaw < 0 || tvlRaw > 1e13))
+    return `TVL ${tvlRaw} out of band`;
+  return null;
+}
+
+function splitQuarantine(rows) {
+  const keep = [], quarantined = [];
+  for (const r of rows) {
+    const reason = rowProblem(r);
+    if (reason) { r.q_reason = reason; quarantined.push(r); } else keep.push(r);
+  }
+  if (quarantined.length > MAX_QUARANTINE)
+    throw new GateError(3, `${quarantined.length} rows failed value sanity (> ${MAX_QUARANTINE}, looks systemic): ` +
+      quarantined.slice(0, 5).map(r => `${r.pool} — ${r.q_reason}`).join('; '));
+  return { keep, quarantined };
+}
+
+// Same 21 columns + `reason`. Idempotent per day: overwrites today's file, and
+// removes it if a re-run quarantines nothing.
+function writeQuarantine(rows, date) {
+  const file = path.join(QUARANTINE_DIR, `${date}.csv`);
+  if (rows.length === 0) { if (fs.existsSync(file)) fs.unlinkSync(file); return; }
+  fs.mkdirSync(QUARANTINE_DIR, { recursive: true });
+  const lines = rowsToCSV(rows, date).split('\n');
+  const out = [lines[0] + ',reason', ...lines.slice(1).map((l, i) => l + ',' + csvEscape(rows[i].q_reason))];
+  fs.writeFileSync(file, out.join('\n') + '\n');
+}
+
+// ---------- Gates 2 & 3b: schema / day-level sanity on the full row set ----------
+// Runs BEFORE quarantine so a set-aside tracked vault can't count as "missing".
 function validate(rows, masterPath, today) {
   const force = process.env.YT_TEST_FORCE_GATE;
   if (force) throw new GateError(Number(force), 'forced test trip (YT_TEST_FORCE_GATE)');
@@ -766,23 +818,6 @@ function validate(rows, masterPath, today) {
   // Gate 2 — output schema integrity.
   if (MASTER_COLS.length !== 21) throw new GateError(2, `schema drift: MASTER_COLS is ${MASTER_COLS.length}, expected 21`);
   if (!Array.isArray(rows) || rows.length === 0) throw new GateError(2, 'no rows assembled');
-
-  // Gate 3 — value sanity.
-  const NUMERIC = ['tvl', 'apy', 'base_apy', 'reward_apy', 'base_apy_7d', 'il_7d',
-    'avg_30d', 'total_pool', 'total_borrowed', 'avail_liquidity', 'supply_cap_util'];
-  for (const r of rows) {
-    for (const f of ['pool', 'project', 'chain']) {
-      if (r[f] == null || String(r[f]).trim() === '') throw new GateError(3, `null required cell "${f}" (pool="${r.pool}")`);
-    }
-    for (const f of NUMERIC) {
-      if (r[f] != null && Number.isNaN(Number(r[f]))) throw new GateError(3, `NaN in "${f}" (pool="${r.pool}")`);
-    }
-    if (r.apy != null && (!Number.isFinite(r.apy) || r.apy < -10 || r.apy > 500))
-      throw new GateError(3, `APY out of band: ${r.apy} (pool="${r.pool}")`);
-    const tvlRaw = (/morpho/i.test(r.project) && r.total_pool != null) ? r.total_pool : r.tvl;
-    if (tvlRaw != null && (!Number.isFinite(tvlRaw) || tvlRaw < 0 || tvlRaw > 1e13))
-      throw new GateError(3, `TVL out of band: ${tvlRaw} (pool="${r.pool}")`);
-  }
 
   // Row-count band vs trailing average (falls back to an absolute band if no history).
   const hist = trailingRowCounts(masterPath, today);
@@ -822,13 +857,14 @@ function git(args) {
   return cp.execFileSync('git', args, { cwd: __dirname, stdio: ['ignore', 'pipe', 'pipe'] }).toString().trim();
 }
 
-function gitCommitPush(date, nRows) {
-  git(['add', 'master.csv']);
-  if (!git(['status', '--porcelain', 'master.csv'])) {
+function gitCommitPush(date, nRows, nQuarantined) {
+  const paths = fs.existsSync(QUARANTINE_DIR) ? ['master.csv', 'quarantine'] : ['master.csv'];
+  git(['add', '-A', '--', ...paths]);
+  if (!git(['status', '--porcelain', '--', ...paths])) {
     process.stderr.write('[collector] master.csv unchanged — nothing to commit\n');
     return 'unchanged';
   }
-  git(['commit', '-m', `collector: ${date} snapshot (${nRows} rows)`]);
+  git(['commit', '-m', `collector: ${date} snapshot (${nRows} rows${nQuarantined ? `, ${nQuarantined} quarantined` : ''})`]);
   if (process.env.YT_NO_PUSH) { process.stderr.write('[collector] YT_NO_PUSH — committed locally, not pushed\n'); return 'committed'; }
   const ref = process.env.YT_PUSH_BRANCH ? `HEAD:refs/heads/${process.env.YT_PUSH_BRANCH}` : 'HEAD:main';
   try {
@@ -849,6 +885,7 @@ async function main() {
   const date = utcDate();
   const masterPath = path.join(__dirname, 'master.csv');
   let dlCount, offchainCount, injectedCount, enrichedCount, notFound;
+  let quarantined = [];
   try {
     ({ dlCount } = await fetchDefiLlama());
     // Same order as tracker.html: DefiLlama → off-chain + Aave (parallel) → Morpho enrich.
@@ -859,7 +896,8 @@ async function main() {
     if (dd.removed > 0) process.stderr.write(`[collector] deduped ${dd.removed} symbol-collision row(s)\n`);
     const sanitized = sanitizeRows(parsedRows);     // gate 4 (soft — sanitise + log)
     if (sanitized > 0) process.stderr.write(`[collector] gate 4: sanitised ${sanitized} text field(s) (possible injection/format) — see security section\n`);
-    validate(parsedRows, masterPath, date);         // gates 2 & 3 (hard — throw)
+    validate(parsedRows, masterPath, date);         // gates 2 & 3b (hard — throw)
+    ({ keep: parsedRows, quarantined } = splitQuarantine(parsedRows)); // gate 3a (per-row; throws if > MAX_QUARANTINE)
   } catch (e) {
     const names = { 1: '1 (fetch integrity)', 2: '2 (schema drift)', 3: '3 (value sanity)' };
     const gname = (e instanceof GateError) ? names[e.gate] || String(e.gate) : 'unexpected error';
@@ -875,6 +913,8 @@ async function main() {
     `Morpho enriched ${enrichedCount} · all gates PASSED` +
     (notFound && notFound.length ? ` · unmatched: ${notFound.join(', ')}` : '') + '\n'
   );
+  const qList = quarantined.map(r => `${r.pool} (${r.project}, ${r.chain}): ${r.q_reason}`);
+  if (quarantined.length) process.stderr.write(`[collector] QUARANTINED ${quarantined.length}: ${qList.join('; ')}\n`);
 
   if (process.env.YT_MODE === 'emit') {
     process.stdout.write(rowsToCSV(parsedRows, date) + '\n');
@@ -885,8 +925,13 @@ async function main() {
   try {
     const masterPath2 = path.join(__dirname, 'master.csv');
     writeMasterAppend(masterPath2, parsedRows, date);
-    const result = gitCommitPush(date, parsedRows.length);
+    writeQuarantine(quarantined, date);
+    const result = gitCommitPush(date, parsedRows.length, quarantined.length);
     process.stderr.write(`[collector] ${date} done — ${result}\n`);
+    if (quarantined.length) {
+      await sendTelegram(`⚠️ YieldTracker partial — ${date} UTC\n${parsedRows.length} rows written, ` +
+        `${quarantined.length} quarantined:\n${qList.join('\n')}\nReview quarantine/${date}.csv; ask Claude to promote if genuine.`);
+    }
   } catch (e) {
     const msg = `⚠️ YieldTracker collector — data OK but WRITE/PUSH failed (${date} UTC)\n${e.message}\nRow computed but not published; check the VPS.`;
     process.stderr.write(`[collector] WRITE/PUSH FAIL: ${e.message}\n`);

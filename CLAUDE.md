@@ -49,6 +49,8 @@ assets/               # chart.umd.min.js (vendored), icon.svg, icon-192/512.png,
 bookmarklet.txt       # DefiLlama scraper bookmarklet (v2 — extracts by child index)
 master.csv            # Append-only time-series data (public market data, no secrets)
 snapshots/            # Daily raw CSV captures (YYYY-MM-DD.csv)
+quarantine/           # Collector-created (only when needed): rows set aside by gate 3a, promote by hand
+archive/              # Bad rows removed from master.csv, kept for reference (not for promotion)
 config.json           # LOCAL ONLY — API keys, never committed
 config.example.json   # Template showing required config shape
 README.md             # User documentation

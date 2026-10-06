@@ -150,6 +150,14 @@ The **online viewer** (`index.html`) is the public, hosted face of the tracker �
 
 **Where it's hosted:** GitHub Pages (`knotnumb.github.io/YieldTracker/`) and `yieldtracker.epgpvr.com`. Both read the `master.csv` that the VPS collector appends and pushes daily.
 
+**Quarantine — one bad vault no longer kills the day.** The daily collector checks every row. A row with an
+implausible value (APY above **50%** or below −10%, impossible TVL, blank/NaN fields) is **set aside** into
+`quarantine/YYYY-MM-DD.csv` (same columns as `master.csv` plus a `reason`) and the rest of the day is written
+as normal. Telegram sends a **"⚠️ partial"** alert naming the set-aside rows. The viewer never shows quarantined
+rows; once checked, a genuine one can be promoted back into `master.csv` by hand. More than 5 set-aside rows
+in one day, a data source being down, or a big drop in row count still **fails the whole day** (those mean
+something systemic is wrong).
+
 ---
 
 ## Historical chart viewer
