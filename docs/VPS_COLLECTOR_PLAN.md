@@ -270,6 +270,10 @@ recur going forward: 00:01 UTC = 08:01 Perth sits just past the pre-dawn danger 
 
 ## Known follow-ups (viewer) — not blocking, record so they aren't lost
 
+- **(2026-10-06, open) CLAUDE.md "never run a collector by hand as `mosaic`" is wrong for this repo** —
+  that rule is from the portfolio collector (runs as `portfolio`). YieldTracker's cron runs as `mosaic`,
+  so a manual `node collector.js` in `/opt/yieldtracker` is identical to the scheduled run (done safely
+  2026-10-06). Proposed rewording awaiting David's OK.
 - **(2026-10-06) Moonwell Ecosystem USDC (V1 0xE1bA…b773 + V2 0xbB2F…77c9, Base) removed** after its
   Morpho `netApy` inflated to 534% and failed Gate 3. David wants to **keep an eye on it** — likely a
   broken reward calc, not an unwanted vault. Re-add both entries (git history, commit of 2026-10-06)
