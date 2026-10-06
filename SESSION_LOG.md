@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-06 — Collector Gate 3 failure: Moonwell Ecosystem vaults removed
+
+- **Alert:** `Gate 3 (value sanity): APY out of band: 534.0102 (pool="MWUSDC")`; no row written.
+- **Cause:** Morpho `netApy` for Moonwell Ecosystem USDC V1 + V2 (tiny vaults, ~99.9% stkWELL
+  rewards) has been inflating smoothly ~25–30%/day since 2026-09-19. Looks like a Morpho-side
+  reward calc bug, not real yield.
+- **Fix:** removed both from `YS_VAULTS` in all four files (David's call). Dry run (`YT_MODE=emit`)
+  passes all gates, 115 rows, nothing >50%. Re-ran today's collection on the VPS.
+- **Open:** David wants to keep watching this vault (thinks it's broken, not unwanted); and the
+  maxApy-after-enrichment gap. Both recorded in `docs/VPS_COLLECTOR_PLAN.md` follow-ups.
+
 ## 2026-08-26 — Duplicate YS-vault rows: root-caused + fixed end-to-end
 
 - **Reported symptom:** viewer showed some YS vaults 2–3× (Steakhouse High Yield v1.1, Gauntlet USDC

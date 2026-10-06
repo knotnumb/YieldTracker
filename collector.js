@@ -109,7 +109,6 @@ const YS_VAULTS = [
   { name: 'Yearn OG USDC', match: { project: /morpho/i, pool: /ymvog.?usdc|re7usdc/i, chain: /base/i }, morpho: { address: '0xef417a2512C5a41f69AE4e021648b69a7CdE5D03', chainId: 8453 }, type: 'lending' },
   { name: 'UltraYield USDC', match: { project: /morpho/i, pool: /edgeusdc|ultra.*usdc/i, chain: /base/i }, morpho: { address: '0x5435BC53f2C61298167cdB11Cdf0Db2BFa259ca0', chainId: 8453 }, type: 'lending' },
   { name: 'Moonwell USDC', match: { project: /moonwell lending/i, pool: /^usdc$/i, chain: /base/i }, type: 'lending' },
-  { name: 'Moonwell Ecosystem USDC Vault', match: { project: /morpho/i, pool: /meusdc|mwusdc/i, chain: /base/i }, morpho: { address: '0xE1bA476304255353aEF290e6474A417D06e7b773', chainId: 8453 }, type: 'lending' },
   { name: 'Clearstar USDC Reactor', match: { project: /morpho/i, pool: /^csusdc$/i, chain: /base/i }, morpho: { address: '0x1D3b1Cd0a0f242d598834b3F2d126dC6bd774657', chainId: 8453 }, type: 'lending' },
   { name: 'Clearstar Boring USDC', match: { project: /morpho/i, pool: /^csborusdc$/i, chain: /base/i }, morpho: { address: '0x43e623Ff7D14d5b105F7bE9c488F36dbF11D1F46', chainId: 8453 }, type: 'lending' },
   { name: 'Yield Clearstar USDC', match: { project: /morpho/i, pool: /^ycsusdc$/i, chain: /base/i }, morpho: { address: '0xE74c499fA461AF1844fCa84204490877787cED56', chainId: 8453 }, type: 'lending' },
@@ -123,7 +122,6 @@ const YS_VAULTS = [
   // Morpho Vaults V2 — identified by contract ADDRESS only (symbols collide with V1).
   { name: 'Clearstar cbAssets Vault',           morphoV2: { address: '0x91C056B6d4311a743614FBc03ac32d4E6A2d3a3c', chainId: 8453 }, type: 'lending' },
   { name: 'Gauntlet USDC Frontier (V2)',        morphoV2: { address: '0x1deEfABEe758AAbdC29a542B24ca3b75aFD56765', chainId: 8453 }, type: 'lending' },
-  { name: 'Moonwell Ecosystem USDC (V2)',       morphoV2: { address: '0xbB2F06CeAE42CBcF5559Ed0713538c8892D977c9', chainId: 8453 }, type: 'lending' },
   { name: 'Yearn OG USDC V2',                   morphoV2: { address: '0xe7D0DBE3493830e2Ab62619211A2BfF0Fc60dB42', chainId: 8453 }, type: 'lending' },
   { name: 'Steakhouse High Yield USDC (V2)',    morphoV2: { address: '0xbeeff7aE5E00Aae3Db302e4B0d8C883810a58100', chainId: 8453 }, type: 'lending' },
   { name: 'ARCHITECT Global Value II',          morphoV2: { address: '0x6022Cbf61352618053d89FD9eEfe78Cb725B3c9d', chainId: 8453 }, type: 'lending' },

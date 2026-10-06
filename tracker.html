@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-08-17a</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-10-06a</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -518,12 +518,6 @@ const YS_VAULTS = [
     type: 'lending'
   },
   {
-    name: 'Moonwell Ecosystem USDC Vault',
-    match: { project: /morpho/i, pool: /meusdc|mwusdc/i, chain: /base/i }, // Morpho symbol: meUSDC
-    morpho: { address: '0xE1bA476304255353aEF290e6474A417D06e7b773', chainId: 8453 },
-    type: 'lending'
-  },
-  {
     name: 'Clearstar USDC Reactor',
     match: { project: /morpho/i, pool: /^csusdc$/i, chain: /base/i }, // Morpho symbol: CSUSDC
     morpho: { address: '0x1D3b1Cd0a0f242d598834b3F2d126dC6bd774657', chainId: 8453 },
@@ -594,7 +588,6 @@ const YS_VAULTS = [
   // name is identical to a V1 entry above; the rest carry Morpho's own name.
   { name: 'Clearstar cbAssets Vault',           morphoV2: { address: '0x91C056B6d4311a743614FBc03ac32d4E6A2d3a3c', chainId: 8453 }, type: 'lending' },
   { name: 'Gauntlet USDC Frontier (V2)',        morphoV2: { address: '0x1deEfABEe758AAbdC29a542B24ca3b75aFD56765', chainId: 8453 }, type: 'lending' },
-  { name: 'Moonwell Ecosystem USDC (V2)',       morphoV2: { address: '0xbB2F06CeAE42CBcF5559Ed0713538c8892D977c9', chainId: 8453 }, type: 'lending' },
   { name: 'Yearn OG USDC V2',                   morphoV2: { address: '0xe7D0DBE3493830e2Ab62619211A2BfF0Fc60dB42', chainId: 8453 }, type: 'lending' },
   { name: 'Steakhouse High Yield USDC (V2)',    morphoV2: { address: '0xbeeff7aE5E00Aae3Db302e4B0d8C883810a58100', chainId: 8453 }, type: 'lending' },
   { name: 'ARCHITECT Global Value II',          morphoV2: { address: '0x6022Cbf61352618053d89FD9eEfe78Cb725B3c9d', chainId: 8453 }, type: 'lending' },

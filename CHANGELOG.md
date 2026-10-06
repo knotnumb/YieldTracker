@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-06 — v2026-10-06a · Moonwell Ecosystem USDC vaults removed (V1 + V2)
+
+### Fixed — collector failed Gate 3 on 2026-10-06 (`APY out of band: 534%`)
+- Morpho `netApy` for **Moonwell Ecosystem USDC** (V1 `mwUSDC` $16k TVL, V2 $3.6k TVL, Base) climbed
+  smoothly ~25–30%/day from 3.7% (2026-09-18) to 534% (2026-10-06), nearly all from its stkWELL reward
+  component. The smooth exponential curve points to a broken reward calculation on a near-empty vault,
+  not real yield. Both vaults removed from `YS_VAULTS` in `collector.js`, `tracker.html`, `chart.html`,
+  and `index.html` (lockstep). Collector now emits 115 rows/day (was 117).
+- Historical rows 2026-09-19 → 2026-10-05 (20–401%) remain in `master.csv` untouched.
+- **Gap found, not yet fixed:** `cfg.maxApy` (50%) only filters DefiLlama pools *before* Morpho
+  enrichment overwrites APY, so a bad Morpho `netApy` sails through until it hits Gate 3's 500% cap —
+  which then fails the whole day. See `docs/VPS_COLLECTOR_PLAN.md` → Known follow-ups.
+
 ## 2026-08-26 — Duplicate YS-vault rows fixed (collector + viewer + data clean) · SW no longer needs Ctrl+F5
 
 ### Fixed — duplicate vaults in the viewer (root cause: DefiLlama symbol collisions)

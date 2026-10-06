@@ -270,6 +270,14 @@ recur going forward: 00:01 UTC = 08:01 Perth sits just past the pre-dawn danger 
 
 ## Known follow-ups (viewer) — not blocking, record so they aren't lost
 
+- **(2026-10-06) Moonwell Ecosystem USDC (V1 0xE1bA…b773 + V2 0xbB2F…77c9, Base) removed** after its
+  Morpho `netApy` inflated to 534% and failed Gate 3. David wants to **keep an eye on it** — likely a
+  broken reward calc, not an unwanted vault. Re-add both entries (git history, commit of 2026-10-06)
+  once Morpho's `netApy` looks sane again; a watch mechanism is still to be designed.
+- **(2026-10-06) `maxApy` not applied after Morpho enrichment.** `cfg.maxApy` (50) filters DefiLlama
+  pools, then `enrichMorpho` overwrites `apy` with `netApy` unchecked; bad values only stop at Gate 3
+  (500%), which fails the *whole day* for one row. Options: re-apply the cap post-enrich (drop/flag the
+  row), or make APY out-of-band a per-row drop + alert instead of a day-level fail.
 - **`YS_VAULTS` is now duplicated across THREE files** — `tracker.html`, `chart.html`, and (as of the
   viewer build) `index.html`. All three hold a full verbatim copy of the ~46-entry whitelist + match
   patterns; nothing links them. **Risk:** a vault add/rename/pattern change (which recurs when DefiLlama
