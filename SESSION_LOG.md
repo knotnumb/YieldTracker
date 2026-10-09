@@ -1,5 +1,14 @@
 # Session Log
 
+## 2026-10-09 — Daily "behind origin" explained; decided to leave as is
+
+- David asked why he now has to pull daily. Cause: the VPS collector pushes a data commit every day
+  (since 2026-08-16); the 2026-09-26 fetch-first rule just made the gap visible.
+- **Decision (David): keep the daily push as is.** The push *is* the off-VPS backup and feeds the
+  GitHub Pages viewer. Local pulls are optional, only needed before code edits. Rejected: dropping
+  snapshots from the repo (doesn't stop daily commits, `master.csv` still changes) and a separate
+  data branch (not worth the work).
+
 ## 2026-10-06 — Collector Gate 3 failure: Moonwell Ecosystem vaults removed
 
 - **Alert:** `Gate 3 (value sanity): APY out of band: 534.0102 (pool="MWUSDC")`; no row written.
