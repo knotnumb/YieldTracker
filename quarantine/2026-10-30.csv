@@ -1,0 +1,2 @@
+date,rank,pool,project,chain,tvl,tvl_raw,apy,base_apy,reward_apy,base_apy_7d,il_7d,avg_30d,inception_apy,top_10_pct,total_pool,total_borrowed,avail_liquidity,supply_cap_util,collateral_exposure,exit_fee,reason
+2026-10-30,1,USDC,AlphaGrowth,Base,$452.0k,451983.201395,86.60897308560418,86.60897308560418,,,,,,,451983.201395,,0.056876,,,0,"APY 86.61% outside [-10, 50]"
