@@ -323,7 +323,7 @@
 <div class="app-bar">
   <div>
     <div class="app-name">DeFi Yield Tracker</div>
-    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-10-06a</div>
+    <div class="app-meta sub">Local-first · Dropbox-synced · Perth AWST · v2026-11-16a</div>
   </div>
   <div class="signal-badge">
     <span class="signal-dot"></span>
@@ -425,7 +425,9 @@ let morphoData = {}; // keyed by vault address
 
 const DEPOSIT_SIZE = 20000;
 const MIN_TVL = 500000;
-const MIN_LIQUIDITY = Math.min(250000, 4 * DEPOSIT_SIZE); // = $80k
+// $180k = YieldSeeker's own liquidity floor (seen in its vault details, 2026-11-16) — David chose to match
+// it. Was min($250k, 4 × deposit) = $80k. DEPOSIT_SIZE still drives the max-allocation warning.
+const MIN_LIQUIDITY = 180000;
 const MAX_UTIL = 0.95;
 const EXIT_FEE_WARN_PCT = 0.005; // % — warn when an ERC4626 previewRedeem haircut exceeds this (matches the Avantis block threshold)
 
@@ -487,14 +489,20 @@ const YS_VAULTS = [
     type: 'aggregator'
   },
   {
-    name: 'AlphaGrowth USDC',
-    match: { project: /alphagrowth/i },
+    name: 'AlphaGrowth Base RWA',
+    match: { project: /alphagrowth/i, pool: /^usdc$/i },
+    morpho: null,
+    type: 'lending'
+  },
+  {
+    name: 'AlphaGrowth Base',
+    match: { project: /alphagrowth/i, pool: /^base usdc$/i },
     morpho: null,
     type: 'lending'
   },
   {
     name: 'yoVaultUSD',
-    match: { pool: /yoUSD|yovault/i },
+    match: { project: /^yo( protocol)?$/i, pool: /^(usdc|yousd|yovault(usd)?)$/i, chain: /base/i }, // EURC = yo's euro vault, excluded
     minApy: 16,
     rewardsUnpriced: 'YO',  // YO token not yet launched — reward APY unavailable from DefiLlama
     morpho: null,
@@ -606,6 +614,8 @@ const YS_VAULTS = [
   { name: 'Riva x Steakhouse USDC',             morphoV2: { address: '0xbEeF006fb43820C864894892db0eCFEee3FdF587', chainId: 8453 }, type: 'lending' },
   { name: 'Ethena x Steakhouse USDC',           morphoV2: { address: '0xBeEfF0be997Cca5B1c13A7433c2004637975739e', chainId: 8453 }, type: 'lending' },
   { name: 'Avantgarde USDC Conservative',       morphoV2: { address: '0xE34D43CA9152D198B60654868C8cD197196a492f', chainId: 8453 }, type: 'lending' },
+  { name: 'KPK USDC Yield',                     morphoV2: { address: '0x392B3CCf36C8adB8094F45573346B457414cD752', chainId: 8453 }, type: 'lending' },
+  { name: 'Noon Ecosystem Vault',               morphoV2: { address: '0x8B12106a70FE2F8bB255F691f1CF9a9ccfB278AF', chainId: 8453 }, dlPool: /^noonecousdc$/i, type: 'lending' },
 ];
 
 function matchVault(row, vault) {
@@ -681,10 +691,19 @@ const OFFCHAIN_VAULTS = [
     // aggregator — no liquidityRpc; blocked in YS (no exit liquidity)
   },
   {
-    name: 'AlphaGrowth USDC Base Vault',
+    // Two AlphaGrowth Euler vaults (2026-11-16): pool names keep them apart; RWA keeps 'USDC' for history.
+    name: 'AlphaGrowth Base RWA',
     address: '0x4C1aeda9B43EfcF1da1d1755b18802aAbe90f61E',
     network: 'base', chain: 'Base', project: 'AlphaGrowth', pool: 'USDC',
-    matchRe: { project: /alphagrowth/i },
+    matchRe: { project: /alphagrowth/i, pool: /^usdc$/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6, eulerApy: true },
+    liquidityRpc: { rpc: 'https://base.drpc.org', token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 }
+  },
+  {
+    name: 'AlphaGrowth Base',
+    address: '0x0A1a3b5f2041F33522C4efc754a7D096f880eE16',
+    network: 'base', chain: 'Base', project: 'AlphaGrowth', pool: 'Base USDC',
+    matchRe: { project: /alphagrowth/i, pool: /^base usdc$/i },
     erc4626: { rpc: 'https://base.drpc.org', decimals: 6, eulerApy: true },
     liquidityRpc: { rpc: 'https://base.drpc.org', token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 }
   },
@@ -692,8 +711,9 @@ const OFFCHAIN_VAULTS = [
     name: 'yoVaultUSD',
     address: '0x0000000f2eB9f69274678c76222B35eEc7588a65',
     network: 'base', chain: 'Base', project: 'Yo', pool: 'yoVaultUSD',
-    matchRe: { pool: /yovault/i },
-    erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true }
+    // Matches DefiLlama's row (USDC / yo protocol) so it is enriched, not duplicated (2026-11-16).
+    matchRe: { project: /^yo( protocol)?$/i, pool: /^(usdc|yousd|yovault(usd)?)$/i, chain: /base/i },
+    erc4626: { rpc: 'https://base.drpc.org', decimals: 6, shareApy: true, overrideApy: true }
     // no liquidityRpc — aggregator
   },
   {
@@ -733,7 +753,7 @@ const OFFCHAIN_VAULTS = [
     name: 'Yearn OG USDC',
     address: '0xef417a2512C5a41f69AE4e021648b69a7CdE5D03',
     network: 'base', chain: 'Base', project: 'Morpho', pool: 'ymvOG-USDC',
-    matchRe: { project: /morpho/i, pool: /ymvog.?usdc/i, chain: /base/i },
+    matchRe: { project: /morpho/i, pool: /ymvog.?usdc|^re7usdc$/i, chain: /base/i }, // DefiLlama labels it RE7USDC
     erc4626: { rpc: 'https://base.drpc.org', decimals: 6 }
   },
   {
@@ -853,7 +873,7 @@ async function fetchEulerLendingApy(address, rpc, decimals, usdcToken) {
   const supplyRatePerSec = borrowRatePerSec * utilisation * (1 - interestFee);
   // annualise with per-second compounding (365.25 days = 31,557,600 s)
   const apy = (Math.pow(1 + supplyRatePerSec, 31_557_600) - 1) * 100;
-  return apy > 0 ? apy : null;
+  return apy > 0 ? { apy, util: parseFloat((utilisation * 100).toFixed(2)) } : null;
 }
 
 // Derive annualised APY from ERC4626 share price growth over ~24h.
@@ -939,7 +959,7 @@ async function fetchAaveLiquidity() {
     const util = parseFloat(((1 - available / totalSupply) * 100).toFixed(2));
 
     let row = parsedRows.find(r =>
-      /aave/i.test(r.project) && /usdc/i.test(r.pool) && /base/i.test(r.chain)
+      /aave v3/i.test(r.project) && /^usdc$/i.test(r.pool) && /base/i.test(r.chain)
     );
     if (row) {
       row.avail_liquidity = available;
@@ -979,13 +999,20 @@ async function fetchOffchainVaults() {
         // eulerApy vaults (AlphaGrowth): override DL's APY with on-chain Euler rate.
         // DL often lags or uses a different methodology; the interest-rate model is ground truth.
         if (vault.erc4626?.eulerApy && vault.liquidityRpc) {
-          const derivedApy = await fetchEulerLendingApy(
+          const eu = await fetchEulerLendingApy(
             vault.address, vault.erc4626.rpc, vault.erc4626.decimals, vault.liquidityRpc.token
           ).catch(() => null);
-          if (derivedApy !== null) {
-            parsedRows[alreadyIdx].apy      = derivedApy;
-            parsedRows[alreadyIdx].base_apy = derivedApy;
+          if (eu !== null) {
+            parsedRows[alreadyIdx].apy      = eu.apy;
+            parsedRows[alreadyIdx].base_apy = eu.apy;
+            parsedRows[alreadyIdx].supply_cap_util = eu.util;
           }
+        }
+        // overrideApy (yo, 2026-11-16): DefiLlama's yo APY (~4.6%) isn't what holders earn — the vault's
+        // own share price grows ~0.4%/yr. Replace DL's figure with the share-price APY.
+        if (vault.erc4626?.overrideApy && vault.erc4626.shareApy) {
+          const sp = await fetchSharePriceApy(vault.address, vault.erc4626.rpc).catch(() => null);
+          if (sp !== null) { parsedRows[alreadyIdx].apy = sp; parsedRows[alreadyIdx].base_apy = sp; }
         }
         // liquidityRpc vaults (Revert, AlphaGrowth): precise withdrawal liquidity from chain.
         if (vault.liquidityRpc) {
@@ -1025,11 +1052,12 @@ async function fetchOffchainVaults() {
       const tvlDisplay = tvl >= 1e6 ? `$${(tvl/1e6).toFixed(2)}m`
         : tvl >= 1e3 ? `$${(tvl/1e3).toFixed(1)}k` : `$${tvl.toFixed(0)}`;
 
-      let derivedApy = null;
+      let derivedApy = null, eulerUtil = null;
       if (vault.erc4626.eulerApy && vault.liquidityRpc) {
-        derivedApy = await fetchEulerLendingApy(
+        const eu = await fetchEulerLendingApy(
           vault.address, rpc, decimals, vault.liquidityRpc.token
         ).catch(() => null);
+        if (eu) { derivedApy = eu.apy; eulerUtil = eu.util; }
       } else if (vault.erc4626.shareApy) {
         derivedApy = await fetchSharePriceApy(vault.address, rpc).catch(() => null);
       }
@@ -1064,7 +1092,7 @@ async function fetchOffchainVaults() {
         base_apy_7d: null, il_7d: null,
         avg_30d: null, inception_apy: null, top_10_pct: null,
         total_pool: tvl, total_borrowed: null,
-        avail_liquidity, supply_cap_util: null, collateral_exposure: null,
+        avail_liquidity, supply_cap_util: eulerUtil, collateral_exposure: null,
         exit_fee_pct,
         raw: ''
       });
@@ -1445,6 +1473,8 @@ async function injectMorphoV2Vaults() {
     // Idempotent: drop any prior injected row for this vault before re-adding
     const existing = parsedRows.findIndex(r => r.v2addr === addr);
     if (existing !== -1) parsedRows.splice(existing, 1);
+    // dlPool: DefiLlama's own row for this vault (e.g. NOONECOUSDC) — drop it, the Morpho V2 row replaces it.
+    if (vault.dlPool) parsedRows = parsedRows.filter(r => !(/morpho/i.test(r.project) && /base/i.test(r.chain) && vault.dlPool.test(r.pool)));
 
     parsedRows.push({
       pool: vault.name, project: 'morpho', chain: 'Base',
@@ -1526,6 +1556,10 @@ function evaluateVault(vault, row) {
 
     if (utilisationPct !== null && utilisationPct >= MAX_UTIL) {
       failures.push(`Supply cap utilisation ${(utilisationPct * 100).toFixed(1)}% ≥ 95% — vault near full`);
+    }
+    // No figure = not checked, not "passed" (2026-11-16). Kept eligible, but flagged.
+    if (liquidityUsd === null) {
+      warnings.push('Liquidity not checked today (no figure) — verify before entry');
     }
   }
 

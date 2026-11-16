@@ -33,7 +33,7 @@
 Local-first DeFi stablecoin yield tracker. `tracker.html` is a single-file vanilla JS app run from
 `file://` in Brave/Chrome, reading/writing a local data folder via the File System Access API.
 
-Current version: `v2026-10-06a`
+Current version: `v2026-11-16a` (tracker + viewer `VIEWER_VERSION` — bump both on change)
 
 ## Repo map
 
@@ -56,7 +56,8 @@ docs/             on-demand reference (see pointers below)
 **Docs — read when working in that area:**
 - `docs/VPS_COLLECTOR_PLAN.md` — collector/viewer plan, step 6, known follow-ups
 - `docs/VAULT_DATA_NOTES.md` — Morpho (V1/V2, liquidity, address:chainId), off-chain vaults
-  (shareApy, exit fee), chart aliases, config shape, tracker.html code landmarks
+  (shareApy, exit fee), chart aliases, config shape, tracker.html code landmarks, **per-vault
+  gotchas + how to add a YieldSeeker vault** (read before editing any match rule)
 - `docs/BOOKMARKLET_PARSER.md` — bookmarklet output + `parseScrape` formats
 
 **Viewer note:** `YS_VAULTS` + `PROTOCOL_SLUG_ALIASES` are duplicated across `tracker.html`,

@@ -71,3 +71,24 @@ the YS rule's pool regex.
   `liquidityRpc` (vault holds ~$0 idle; funds deploy to Spark). 0% withdrawal fee verified 2026-07-18.
 - **40 Acres (Harvest, Base):** `blockedReason` — no exit liquidity. Its APY climbs daily because of 40
   Acres' dynamic fee at 100% utilisation (real, not a data bug — confirmed 2026-10-06).
+
+## Per-vault gotchas (2026-11-16)
+
+Read before touching these vaults' match rules — each cost a session to find.
+
+| Vault | Gotcha | What we do |
+|---|---|---|
+| **Aave Base USDC** | DefiLlama also lists an **Aave v4** USDC pool on Base. A loose `/aave/` + `/usdc/` match put v3's liquidity on the v4 row whenever v4 sorted first by APY (blank v3 liquidity on 11-12, 11-15, 11-16 — looked like flaky RPC, wasn't). | Match `aave v3` + exact `^usdc$` only (collector + tracker). Read is also retried 3× and logs a failure line. |
+| **Compound USDC (Base)** | DefiLlama gives no liquidity. | Comet `0xb125…Eb2F`: liquidity = USDC `balanceOf(comet)`, util = `getUtilization()` / 1e16 → %. |
+| **SparkFi (sUSDC)** | Vault holds ~$0–40 idle USDC; funds are deployed into Spark. Whether withdrawals are limited to that balance is **unverified**. | **Decision: do NOT use `balanceOf` as liquidity** (would mark it ineligible on a guess). It shows the amber "Liquidity not checked" warning instead. Revisit only with proof of how its withdrawals source funds. |
+| **yoVaultUSD** | DefiLlama names it `USDC / yo protocol` and reports ~4.6% APY; the vault's own share price grows **~0.4%/yr** (30d: 1.071139 → 1.071528). DefiLlama likely counts unpriced YO rewards. yo also has an **EURC** vault on Base that a loose "any yo protocol" rule mis-tagged as yoVaultUSD. | Off-chain entry matches DefiLlama's row (no second copy) and `overrideApy` replaces DL's APY with the share-price APY. Viewer/chart rules require pool USDC (EURC excluded). |
+| **Yearn OG USDC (V1)** | DefiLlama labels it **`RE7USDC`** (morpho blue); our off-chain entry injected a second `ymvOG-USDC` copy. | Off-chain `matchRe` also accepts `^re7usdc$` → one row. Don't confuse with the V2 vault **"Re7 USDC"** (with a space). |
+| **Noon Ecosystem Vault (V2)** | DefiLlama has its own copy `NOONECOUSDC`. | V2 entry `dlPool: /^noonecousdc$/i` drops DL's row; the Morpho V2 row replaces it. Use `dlPool` for any future V2 vault DL also lists. |
+| **AlphaGrowth (Euler)** | **Two** vaults: Base RWA `0x4C1a…f61E` (~90% APY, 99.8% util — genuine) and Base `0x0A1a…eE16`. Neither is on DefiLlama. | Kept apart by pool name: RWA = `USDC` (history continuity), Base = `Base USDC`. Euler APYs are exempt from the 50% quarantine cap (1000% hard cap); utilisation is now saved. |
+| **Otto Earns ottoUSD** | TVL ~$230 — **real** (YieldSeeker agrees), not a bad read. | Nothing. |
+| **Avantis USDC** | Absent from DefiLlama since 2026-09-22, so absent from our data. Hard-blocked (exit fee) anyway. | Nothing for now. |
+
+**Adding a YieldSeeker vault:** ask YieldSeeker's chat "<vault> details plz" for the address, check it with the Morpho
+API (`vaultV2ByAddress` / `vaultByAddress`, chainId 8453) or on-chain, then add it in lockstep to `collector.js`,
+`tracker.html`, `index.html`, `chart.html`. Check whether DefiLlama already lists it under another name (→ match that
+row, or `dlPool` for V2) or you'll get a duplicate.

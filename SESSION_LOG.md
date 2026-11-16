@@ -1,5 +1,19 @@
 # Session Log
 
+## 2026-11-16 — "Where did my blocked vaults go?" → stale cache + eligibility fixes (v2026-11-16a)
+
+- **Symptom:** viewer showed a plain list, no Eligible/Ineligible split. **Cause:** David's browser held an old
+  cached copy of `index.html` (pre-comparison-columns). Ctrl+Shift+R fixed it. **Prevention:** version label +
+  update banner.
+- Real faults found in the eligibility view: blank liquidity = silent pass (Compound, Aave, SparkFi); Aave
+  blank caused by an Aave **v4** row stealing v3's figure; duplicates (yo ×3 incl. EURC, Yearn OG ×2, Noon ×2);
+  AlphaGrowth RWA hidden by the 50% quarantine cap though genuine.
+- Added KPK, Noon, AlphaGrowth Base; liquidity floor → $180k (YieldSeeker's floor); yo APY → share price.
+- **Decisions:** SparkFi idle balance NOT used as liquidity (amber warning instead); Otto's $230 TVL is real;
+  Avantis absent since 09-22 left as is. All per-vault findings → `docs/VAULT_DATA_NOTES.md` § Per-vault gotchas.
+- Tested: `YT_MODE=emit` (117 rows, all gates pass) + viewer logic on that output (23 eligible / 21 ineligible,
+  no duplicates). David checked locally before ship.
+
 ## 2026-10-09 — Daily "behind origin" explained; decided to leave as is
 
 - David asked why he now has to pull daily. Cause: the VPS collector pushes a data commit every day

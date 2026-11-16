@@ -397,9 +397,10 @@ const YS_VAULTS = [
   { name: 'Revert Lend Base USDC',            pool: /usdc/i,                       project: /revert/i                     },
   { name: 'Tokemak baseUSD',                  pool: /baseusd/i,                    project: /tokemak/i                    },
   { name: 'Otto Earns ottoUSD',               pool: /ottousd/i,                    project: /tokemak/i                    },
-  { name: 'AlphaGrowth USDC',                 pool: /usdc/i,                       project: /alphagrowth/i                },
+  { name: 'AlphaGrowth Base RWA',             pool: /^usdc$/i,                    project: /alphagrowth/i                },
+  { name: 'AlphaGrowth Base',                 pool: /^base usdc$/i,               project: /alphagrowth/i                },
   { name: 'yoVaultUSD',                       pool: /yoUSD|yovault/i,              chain: /base/i                         }, // Era 1 & 2
-  { name: 'yoVaultUSD',                       project: /yo protocol/i,             chain: /base/i                         }, // Era 3: pool → 'USDC'
+  { name: 'yoVaultUSD',                       pool: /^usdc$/i, project: /yo protocol/i, chain: /base/i         }, // Era 3: pool → 'USDC'
   { name: 'Yearn OG USDC',                    pool: /ymvog.?usdc|re7usdc/i,        project: /morpho/i, chain: /base/i                     },
   { name: 'UltraYield USDC',                  pool: /ultra.*usdc|ultrayield|edgeusdc/i, project: /morpho/i, chain: /base/i               },
   { name: 'Moonwell USDC',                    pool: /^usdc$/i,                     project: /moonwell lending/i, chain: /base/i },
@@ -432,6 +433,8 @@ const YS_VAULTS = [
   { name: 'Riva x Steakhouse USDC',           pool: /^riva x steakhouse usdc$/i,          project: /morpho/i,     chain: /base/i },
   { name: 'Ethena x Steakhouse USDC',         pool: /^ethena x steakhouse usdc$/i,        project: /morpho/i,     chain: /base/i },
   { name: 'Avantgarde USDC Conservative',     pool: /^avantgarde usdc conservative$/i,    project: /morpho/i,     chain: /base/i },
+  { name: 'KPK USDC Yield',                   pool: /^kpk usdc yield$/i,                  project: /morpho/i,     chain: /base/i },
+  { name: 'Noon Ecosystem Vault',             pool: /^noon ecosystem vault$/i,            project: /morpho/i,     chain: /base/i },
   // ── Non-Morpho additions (v2026-07-18a) ──
   { name: 'Compound USDC',                    pool: /^usdc$/i,                            project: /compound/i,   chain: /base/i },
   { name: 'Spark USDC Vault (SparkFi)',       pool: /^usdc$/i,                            project: /sparkfi/i,    chain: /base/i },

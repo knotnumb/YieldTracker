@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-11-16 — v2026-11-16a · Eligibility fixes, new vaults, update banner
+
+**Why:** David opened the viewer after a break and saw a plain list with none of his blocked/eligibility
+rules. His browser was showing an old cached copy of the page (with fresh figures, so nothing looked wrong).
+Checking the real eligibility view then turned up several data faults.
+
+### Added
+- **Viewer version label + "New version available — Update now" banner** (`index.html`). On load and when the
+  tab regains focus, fetches the server's `index.html` (no-store) and compares `VIEWER_VERSION`; the button
+  unregisters the service worker, clears caches and reloads.
+- **Vaults:** KPK USDC Yield, Noon Ecosystem Vault (Morpho V2), AlphaGrowth Base (Euler, `0x0A1a…eE16`).
+- **Compound V3 Base USDC liquidity + utilisation** read on-chain (was blank → passed by default).
+- **Amber "Liquidity not checked today" warning** when a non-aggregator vault has no liquidity figure
+  (tracker + viewer). A blank no longer passes silently.
+
+### Changed
+- **Liquidity floor $80k → $180k** — YieldSeeker's own floor (seen in its vault details); David chose to match.
+- **On-chain APYs exempt from the 50% quarantine cap** (1000% hard cap instead). AlphaGrowth Base RWA's ~90% is
+  genuine (Euler shows 89.8%, borrow 100%, util 99.76%); quarantining hid it instead of showing it ineligible.
+- **Euler utilisation saved** to `supply_cap_util` (was computed for the APY, never recorded).
+- AlphaGrowth `0x4C1a…` renamed **AlphaGrowth Base RWA**; match rules narrowed so the two AlphaGrowth vaults stay apart.
+
+### Fixed
+- **Aave Base USDC liquidity blank on some days** — DefiLlama now also lists an **Aave v4** USDC pool on Base; the
+  loose match wrote v3's liquidity onto the v4 row whenever v4 sorted first (11-12, 11-15, 11-16). Now v3 +
+  exact `USDC` only, with a 3× retry that logs failures.
+- **Duplicate vault rows:** yoVaultUSD ×3 (incl. yo's **EURC** vault mis-tagged as yoVaultUSD at 9.86%), Yearn OG
+  USDC ×2 (DefiLlama calls it `RE7USDC`), Noon ×2 (DefiLlama's `NOONECOUSDC`). Each now merges into one row.
+- **yoVaultUSD APY** now from its share price (~0.4%) instead of DefiLlama's ~4.6%, which isn't what holders earn.
+
+### Not changed (decision)
+- **SparkFi liquidity:** the vault's ~$0 idle balance is not used as liquidity (unverified whether withdrawals are
+  limited to it). It shows the amber warning. Details → `docs/VAULT_DATA_NOTES.md` § Per-vault gotchas.
+
 ## 2026-10-06 (b) — Collector quarantine: bad rows set aside instead of failing the day
 
 ### Changed — `collector.js` gate 3 split into per-row and day-level checks

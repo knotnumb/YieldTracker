@@ -121,11 +121,23 @@ Click **Fetch Protocol Data**. This runs three enrichment passes:
 - **Euler interest-rate APY** — reads the live borrow rate, utilisation, and protocol fee directly from the Euler V2 vault contract
 - **Available liquidity** — reads the underlying token balance held by the vault
 
-**Aave V3 Base** — queries on-chain for USDC supply APY and liquidity.
+**Aave V3 Base** — queries on-chain for USDC supply APY and liquidity (v3 only — DefiLlama also lists an Aave v4 pool).
+
+**Compound V3 Base** — available liquidity (USDC held by the Comet contract) and utilisation read on-chain.
 
 ### 3 — Check <img src="ys-logo.png" height="16" alt="" style="vertical-align:middle"> YieldSeeker panel
 
 The **YieldSeeker** panel (section 05) automatically filters the enriched results against the pre-configured vault watchlist. Each eligible vault shows its APY, TVL, available liquidity, and supply cap status. Vaults flagged as operationally blocked (e.g. no exit liquidity) are shown with a ⊘ marker.
+
+**Eligibility rules** (same in the tracker and the online viewer):
+
+| Rule | Limit |
+|---|---|
+| TVL | at least $500k |
+| Available liquidity | at least **$180k** (YieldSeeker's own floor) — not applied to aggregators |
+| Utilisation | below 95% — not applied to aggregators |
+| Exit fee | warning above 0.005% |
+| No liquidity figure that day | stays eligible, with an amber **"Liquidity not checked today"** warning — a blank is never a silent pass |
 
 > YieldSeeker curates a selection of stablecoin yield vaults focused on capital safety and exit liquidity. Learn more at [yieldseeker.xyz](https://www.yieldseeker.xyz/).
 
@@ -141,7 +153,8 @@ Click **Save Snapshot + Append to Master**. This:
 
 The **online viewer** (`index.html`) is the public, hosted face of the tracker — no data folder, no setup. It reads the latest day from `master.csv` and shows a ranked **"best stablecoin yields"** list, labelled **"as of DATE (UTC)"**.
 
-- **Layout presets:** Best APY · By Chain · By Protocol · Blue-chip (largest TVL) · YieldSeeker
+- **Layout presets:** Best APY · By Chain · By Protocol · Blue-chip (largest TVL) · YieldSeeker — the **YieldSeeker** view splits the watchlist into **✓ Eligible / ⊘ Ineligible** cards with the reason each vault fails
+- **Always up to date:** the header shows the viewer version (e.g. `viewer v2026-11-16a`). If your browser is holding an older copy, a **"New version available — Update now"** bar appears; one click clears the old copy and reloads. (Fresh *figures* on an old *page* used to hide this.)
 - Filter by chain, minimum TVL, or search; a **Compact** density toggle — your choices are remembered
 - **Tap any row** to expand full detail (base/reward split, 7d, 30d average, available liquidity, cap utilisation, etc.)
 - Each row has a **"↗"** link to that protocol on [DefiLlama](https://defillama.com)
@@ -156,7 +169,8 @@ implausible value (APY above **50%** or below −10%, impossible TVL, blank/NaN 
 as normal. Telegram sends a **"⚠️ partial"** alert naming the set-aside rows. The viewer never shows quarantined
 rows; once checked, a genuine one can be promoted back into `master.csv` by hand. More than 5 set-aside rows
 in one day, a data source being down, or a big drop in row count still **fails the whole day** (those mean
-something systemic is wrong).
+something systemic is wrong). **Exception:** an APY read directly from the vault's own contract (Euler rate model, e.g.
+AlphaGrowth Base RWA at ~90%) is genuine and only set aside above 1000% — the eligibility rules judge it instead.
 
 ---
 

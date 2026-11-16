@@ -262,6 +262,7 @@
   <div>
     <div class="app-name">YieldTracker</div>
     <div class="app-meta" id="asOf">Best stablecoin yields · loading…</div>
+    <div class="app-meta" id="appVersion"></div>
   </div>
   <div>
     <a class="linkbtn" href="chart.html">Graphs →</a>
@@ -299,6 +300,7 @@
   </div>
 </div>
 
+<div id="updateBanner"></div>
 <div id="loadStatus"></div>
 
 <div class="panel" id="listPanel" style="display:none">
@@ -330,9 +332,10 @@ const YS_VAULTS = [
   { name: 'Revert Lend Base USDC',            pool: /usdc/i,                       project: /revert/i                     },
   { name: 'Tokemak baseUSD',                  pool: /baseusd/i,                    project: /tokemak/i                    },
   { name: 'Otto Earns ottoUSD',               pool: /ottousd/i,                    project: /tokemak/i                    },
-  { name: 'AlphaGrowth USDC',                 pool: /usdc/i,                       project: /alphagrowth/i                },
-  { name: 'yoVaultUSD',                       pool: /yoUSD|yovault/i,              chain: /base/i                         },
-  { name: 'yoVaultUSD',                       project: /yo protocol/i,             chain: /base/i                         },
+  { name: 'AlphaGrowth Base RWA',             pool: /^usdc$/i,                    project: /alphagrowth/i                },
+  { name: 'AlphaGrowth Base',                 pool: /^base usdc$/i,               project: /alphagrowth/i                },
+  // yo USDC only (2026-11-16): the old 'any yo protocol' rule also caught yo's EURC vault.
+  { name: 'yoVaultUSD',                       pool: /^(usdc|yousd|yovault(usd)?)$/i, project: /^yo( protocol)?$/i, chain: /base/i },
   { name: 'Yearn OG USDC',                    pool: /ymvog.?usdc|re7usdc/i,        project: /morpho/i, chain: /base/i                     },
   { name: 'UltraYield USDC',                  pool: /ultra.*usdc|ultrayield|edgeusdc/i, project: /morpho/i, chain: /base/i               },
   { name: 'Moonwell USDC',                    pool: /^usdc$/i,                     project: /moonwell lending/i, chain: /base/i },
@@ -363,6 +366,8 @@ const YS_VAULTS = [
   { name: 'Riva x Steakhouse USDC',           pool: /^riva x steakhouse usdc$/i,          project: /morpho/i,     chain: /base/i },
   { name: 'Ethena x Steakhouse USDC',         pool: /^ethena x steakhouse usdc$/i,        project: /morpho/i,     chain: /base/i },
   { name: 'Avantgarde USDC Conservative',     pool: /^avantgarde usdc conservative$/i,    project: /morpho/i,     chain: /base/i },
+  { name: 'KPK USDC Yield',                   pool: /^kpk usdc yield$/i,                  project: /morpho/i,     chain: /base/i },
+  { name: 'Noon Ecosystem Vault',             pool: /^noon ecosystem vault$/i,            project: /morpho/i,     chain: /base/i },
   { name: 'Compound USDC',                    pool: /^usdc$/i,                            project: /compound/i,   chain: /base/i },
   { name: 'Spark USDC Vault (SparkFi)',       pool: /^usdc$/i,                            project: /sparkfi/i,    chain: /base/i },
 ];
@@ -381,8 +386,8 @@ function isYS(v) {
 // don't apply to them (matches tracker.html evaluateVault). Names from collector OFFCHAIN_VAULTS.
 const AGGREGATOR_NAMES = new Set(['40 Acres USDC Vault', 'Tokemak baseUSD', 'Otto Earns ottoUSD', 'yoVaultUSD']);
 
-// YieldSeeker eligibility thresholds — kept in sync with tracker.html.
-const MIN_TVL = 500000, MIN_LIQUIDITY = 80000, MAX_UTIL = 95, EXIT_FEE_WARN = 0.005;
+// YieldSeeker eligibility thresholds — kept in sync with tracker.html. Liquidity $180k = YieldSeeker's own floor (2026-11-16).
+const MIN_TVL = 500000, MIN_LIQUIDITY = 180000, MAX_UTIL = 95, EXIT_FEE_WARN = 0.005;
 
 // Reconstruct the YieldSeeker eligibility verdict from the stored row. Exit-fee is now a
 // real master.csv column (blank on historical rows collected before the schema addition).
@@ -396,6 +401,9 @@ function evaluateVault(v) {
       failures.push(`Available liquidity ${fmtUsd(v.avail_liquidity)} below ${fmtUsd(MIN_LIQUIDITY)}`);
     if (v.supply_cap_util !== null && v.supply_cap_util >= MAX_UTIL)
       failures.push(`Utilisation ${v.supply_cap_util.toFixed(1)}% at/above ${MAX_UTIL}% cap`);
+    // No figure = not checked, not "passed" (2026-11-16). Kept eligible, but flagged.
+    if (v.avail_liquidity === null)
+      warnings.push('Liquidity not checked today (no figure) — verify before entry');
   }
   if (v.exit_fee !== null && v.exit_fee > EXIT_FEE_WARN)
     warnings.push(`Exit fee ~${v.exit_fee.toFixed(3)}% on withdrawal (> ${EXIT_FEE_WARN}% threshold)`);
@@ -758,6 +766,38 @@ async function init() {
 }
 
 init();
+
+// ============ Version label + "new version" banner ============
+// Why: an old cached copy of this page can keep showing fresh figures, so nothing looks
+// wrong (2026-11-16: an old cached copy hid the Eligible/Ineligible view). On load and whenever the tab
+// comes back into view, fetch the server's index.html (no-store) and compare its version.
+// Bump VIEWER_VERSION on every change to this page — it is what the check compares.
+const VIEWER_VERSION = 'v2026-11-16a';
+document.getElementById('appVersion').textContent = 'viewer ' + VIEWER_VERSION;
+
+async function checkForUpdate() {
+  try {
+    const res = await fetch('index.html', { cache: 'no-store' });
+    if (!res.ok) return;
+    const m = (await res.text()).match(/const VIEWER_VERSION = '([^']+)'/);
+    if (!m || m[1] <= VIEWER_VERSION) return;   // same, older (offline cache) or unreadable
+    document.getElementById('updateBanner').innerHTML =
+      `<div class="status info">New version available (${escHtml(m[1])}; you have ${escHtml(VIEWER_VERSION)}). ` +
+      `<button onclick="applyUpdate()" style="margin-left:8px">Update now</button></div>`;
+  } catch (e) { /* offline — keep the current copy */ }
+}
+
+async function applyUpdate() {
+  try {
+    if ('serviceWorker' in navigator)
+      for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+    if (window.caches) for (const k of await caches.keys()) await caches.delete(k);
+  } catch (e) { /* reload anyway */ }
+  location.reload();
+}
+
+checkForUpdate();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
